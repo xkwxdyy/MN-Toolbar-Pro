@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sample Table with Custom Tooltips</title>
+<style>
+  /* 表格样式 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  /* 单元格边框样式 */
+  th, td {
+    border: 1px solid black;
+    padding: 10px;
+    text-align: left;
+    position: relative; /* 为悬浮提示定位 */
+  }
+
+  /* 第一行的背景颜色 - 低饱和度红色 */
+  .red-background {
+    background-color: hsl(0, 50%, 85%);
+  }
+
+  /* 第二行的背景颜色 - 低饱和度蓝色 */
+  .blue-background {
+    background-color: hsl(240, 50%, 85%);
+  }
+
+  /* 第三行的背景颜色 - 低饱和度绿色 */
+  .green-background {
+    background-color: hsl(120, 50%, 85%);
+  }
+
+  /* 自定义悬浮提示样式 */
+  .tooltip {
+    display: none;
+    position: absolute;
+    z-index: 1;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px;
+    background-color: lavender; /* 淡紫色背景 */
+    color: black;
+    text-align: center;
+    border-radius: 6px;
+    font-size: larger; /* 更大的字体 */
+  }
+
+  /* 悬浮提示的小箭头 */
+  .tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: lavender transparent transparent transparent;
+  }
+
+  /* 当鼠标悬停时显示悬浮提示 */
+  th:hover .tooltip, td:hover .tooltip {
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<table>
+  <!-- 表头 -->
+  <tr class="red-background">
+    <th>年份<span class="tooltip">测试</span></th>
+    <th>月份<span class="tooltip">测试</span></th>
+    <th>星期<span class="tooltip">测试</span></th>
+    <th>天数<span class="tooltip">测试</span></th>
+  </tr>
+  <!-- 第二行 -->
+  <tr class="blue-background">
+    <td>2024<span class="tooltip">测试</span></td>
+    <td>1<span class="tooltip">测试</span></td>
+    <td>星期二<span class="tooltip">测试</span></td>
+    <td>31<span class="tooltip">测试</span></td>
+  </tr>
+  <!-- 第三行 -->
+  <tr class="green-background">
+    <td>2024<span class="tooltip">测试</span></td>
+    <td>2<span class="tooltip">测试</span></td>
+    <td>星期三<span class="tooltip">测试</span></td>
+    <td>28<span class="tooltip">测试</span></td>
+  </tr>
+</table>
+
+</body>
+</html>
