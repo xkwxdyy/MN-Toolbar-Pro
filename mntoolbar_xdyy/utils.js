@@ -104,7 +104,7 @@ function creatNote(title="",content=undefined,color = undefined) {
  * @param {MbBookNote} parent 
  * @param {MbBookNote} targetNote 
  */
-function addChildNote(parent,targetNote,colorInheritance=false) {
+function addChildNote(parent, targetNote, colorInheritance=false) {
   undoGroupingWithRefresh(parent.notebookId, ()=>{
     if (colorInheritance) {
       targetNote.colorIndex = parent.colorIndex
@@ -135,15 +135,12 @@ function addBrotherNote(brother,targetNote,colorInheritance=false) {
  * @param {MbBookNote} parent 
  * @param {String} title 
  * @param {String} content
- * @param {Number} color
+ * @param {Number} colorIndex
  */
-function createChildNote(parent,title="",content=undefined,color=undefined) {
+function createChildNote(parent, title="", content=undefined) {
   let child
   undoGroupingWithRefresh(parent.notebookId, ()=>{
-    child = creatNote(title,content)
-    if (color !== undefined) {
-      child.colorIndex = color
-    }
+    child = creatNote(title, content, parent.colorIndex)
     parent.addChild(child)
   })
   return child

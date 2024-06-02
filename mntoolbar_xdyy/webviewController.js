@@ -207,7 +207,7 @@ viewWillLayoutSubviews: function() {
         if (des.content) {
           content = detectAndReplace(des.content)
         }
-        let color = undefined
+        // let color = undefined
         // if (des.color) {
         //   switch (des.color) {
         //     case "{{parent}}":
@@ -218,7 +218,7 @@ viewWillLayoutSubviews: function() {
         //       break;
         //   }
         // }
-        createChildNote(focusNote,title,content,color)
+        createChildNote(focusNote, title, content)
         // copyJSON(des)
         break;
       case "copy":
@@ -382,6 +382,13 @@ viewWillLayoutSubviews: function() {
         }
         // showHUD(targetNoteid)
         studyController().focusNoteInFloatMindMapById(targetNoteid)
+        break;
+      case "openURL":
+        // 从剪贴板获取URL并打开
+        
+        let url = UIPasteboard.generalPasteboard().string;  // 从剪贴板获取字符串并赋值给url
+        showHUD(url);  // 调用显示HUD的函数并传入url作为参数
+        Application.sharedInstance().openURL(NSURL.URLWithString(url));  // 使用Application实例打开传入的URL
         break;
       default:
         showHUD("Not supported yet...")
@@ -723,7 +730,7 @@ try {
       setLocalDataByKey({open:true,frame:self.view.frame},"MNToolbar_windowState")
     }
     // copy(JSON.stringify(self.currentFrame))
-  },
+  }
 });
 toolbarController.prototype.setButtonLayout = function (button,targetAction) {
     button.autoresizingMask = (1 << 0 | 1 << 3);
