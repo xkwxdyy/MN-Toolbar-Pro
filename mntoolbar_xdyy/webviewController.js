@@ -189,11 +189,22 @@ viewWillLayoutSubviews: function() {
     // copyJSON(des)
     switch (des.action) {
       case "cloneAndMerge":
-        showHUD("cloneAndMerge")
+        // showHUD("cloneAndMerge")
         let targetNoteId= getNoteIdByURL(des.target)
         undoGroupingWithRefresh(notebookid,()=>{
           getFocusNotes().forEach(focusNote=>{
             cloneAndMerge(focusNote, targetNoteId)
+          })
+        })
+        break;
+      case "cloneAndMergeForSpecialColor":
+        // showHUD("cloneAndMergeForSpecialColor")
+        let commonColorTargetNoteId= getNoteIdByURL(des.commonColorTarget)
+        let specialColorTargetNoteId= getNoteIdByURL(des.specialColorTarget)
+        let colorIndex = des.colorIndex
+        undoGroupingWithRefresh(notebookid,()=>{
+          getFocusNotes().forEach(focusNote=>{
+            cloneAndMergeForSpecialColor(focusNote, colorIndex, commonColorTargetNoteId, specialColorTargetNoteId)
           })
         })
         break;

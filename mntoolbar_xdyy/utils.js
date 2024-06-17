@@ -489,6 +489,16 @@ function cloneAndMerge(currentNote,targetNoteId) {
   currentNote.merge(getNoteById(clonedNoteId))
 }
 
+function cloneAndMergeForSpecialColor(currentNote, colorIndex,commonColorTargetNoteId,specialColorTargetNoteId) {
+  let commonColorClonedNoteId = cloneNote(commonColorTargetNoteId)
+  let specialColorClonedNoteId = cloneNote(specialColorTargetNoteId)
+  if (currentNote.colorIndex === colorIndex) {
+    currentNote.merge(getNoteById(specialColorClonedNoteId))
+  } else {
+    currentNote.merge(getNoteById(commonColorClonedNoteId))
+  }
+}
+
 function getVarInfo(text) {
   let config = {}
   let hasClipboardText = text.includes("{{clipboardText}}")
