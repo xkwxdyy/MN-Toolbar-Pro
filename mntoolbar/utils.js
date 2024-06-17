@@ -4,9 +4,15 @@ class toolbarUtils {
   constructor(name) {
     this.name = name;
   }
+  static errorLog = []
   static version
   static currentNoteId
   static currentSelection
+  /**
+   * @type {MNNote[]}
+   * @static
+   */
+  static sourceToRemove = []
 
   static init(){
     this.app = Application.sharedInstance()
@@ -35,6 +41,7 @@ class toolbarUtils {
         break;
       case 2:
         info.type = "macOS"
+        break;
       default:
         break;
     }
@@ -160,6 +167,7 @@ class toolbarUtils {
               break;
           default:
               this.showHUD('Invalid direction');
+              break;
       }
   }
   static getVarInfo(text) {
@@ -254,6 +262,7 @@ class toolbarUtils {
         break;
       case "excerptText":
         note.excerptText = ""
+        break;
       case "comments":
         let commentLength = note.comments.length
         let comment
@@ -296,7 +305,9 @@ class toolbarUtils {
           }else{
             note.removeCommentByIndex(i)
           }
+          break;
         }
+        break;
       default:
         break;
     }
@@ -314,6 +325,7 @@ class toolbarUtils {
         break;
       case "excerptText":
         note.excerptText = content
+        break;
       default:
         break;
     }
@@ -378,15 +390,16 @@ class toolbarUtils {
       }
       if (text.includes("{{excerptTexts}}")) {
         // MNUtil.undoGrouping(()=>{
-          note.notes.map(note=>{
-            if (note.excerptText) {
-              let targetText = note.excerptText
+          note.notes.map(n=>{
+            if (n.excerptText) {
+              let targetText = n.excerptText
               if (des.trim) {
                 targetText = targetText.trim()
               }
               textList.push(text.replace('{{excerptTexts}}',targetText))
-              if (des.removeSource && note.noteId !== note.noteId) {
-                  note.excerptText = ""
+              if (des.removeSource && n.noteId !== note.noteId) {
+                this.sourceToRemove.push(n)
+                  // n.excerptText = ""
               }
             }
           })
@@ -436,6 +449,15 @@ class toolbarUtils {
     }else{
       return height
     }
+  }
+  static addErrorLog(error,source,info){
+    MNUtil.showHUD("MN Toolbar Error ("+source+"): "+error)
+    if (info) {
+      this.errorLog.push({error:error.toString(),source:source,info:info,time:(new Date(Date.now())).toString()})
+    }else{
+      this.errorLog.push({error:error.toString(),source:source,time:(new Date(Date.now())).toString()})
+    }
+    MNUtil.copyJSON(this.errorLog)
   }
   static html(content){
     return `<!DOCTYPE html>
@@ -552,6 +574,69 @@ class toolbarUtils {
     let extensionFolder = this.getExtensionFolder(fullPath)
     return NSFileManager.defaultManager().fileExistsAtPath(extensionFolder+"/marginnote.extension.mnutils/main.js")
   }
+  /**
+   * 
+   * @param {MNNote} note 
+   * @param {*} des 
+   */
+  static focus(note,des){
+    let targetNote = note
+    if (des.source) {
+      switch (des.source) {
+        case "parentNote":
+          targetNote = note.parentNote
+          if (!targetNote) {
+            MNUtil.showHUD("No parentNote!")
+            return
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    if (!des.target) {
+      MNUtil.showHUD("Missing param: target")
+      return
+    }
+    switch (des.target) {
+        case "doc":
+          targetNote.focusInDocument()
+          break;
+        case "mindmap":
+          targetNote.focusInMindMap()
+          break;
+        case "both":
+          targetNote.focusInDocument()
+          targetNote.focusInMindMap()
+          break;
+        case "floatMindmap":
+          targetNote.focusInFloatMindMap()
+          break;
+        default:
+          MNUtil.showHUD("No valid value for target!")
+          break;
+      }
+    }
+  static setColor(colorIndex){
+    let fillIndex = -1
+    let description = toolbarConfig.actions["color"+colorIndex].description
+    if (MNUtil.isValidJSON(description)) {
+      let des = JSON.parse(description)
+      if ("fillPattern" in des) {
+        fillIndex = des.fillPattern
+      }
+    }
+    // MNUtil.copy(description+fillIndex)
+    let focusNotes = MNNote.getFocusNotes()
+    MNUtil.undoGrouping(()=>{
+      focusNotes.map(note=>{
+        note.colorIndex = colorIndex
+        if (fillIndex !== -1) {
+          note.fillIndex = fillIndex
+        }
+      })
+    })
+  }
 }
 
 class toolbarConfig {
@@ -565,6 +650,7 @@ class toolbarConfig {
   static action = []
   static init(){
     this.dynamic = this.getByDefault("MNToolbar_dynamic",false)
+    this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})
     this.windowState = this.getByDefault("MNToolbar_windowState",{})
     this.action = this.getByDefault("MNToolbar_action", this.getDefaultActionKeys())
     this.actions = this.getByDefault("MNToolbar_actionConfig", this.getActions())
@@ -602,6 +688,18 @@ class toolbarConfig {
       }
     })
   }
+  static checkLogoStatus(addon){
+  // try {
+    if (this.addonLogos && (addon in this.addonLogos)) {
+      return this.addonLogos[addon]
+    }else{
+      return true
+    }
+  // } catch (error) {
+  //   toolbarUtils.addErrorLog(error, "checkLogoStatus")
+  //   return true
+  // }
+  }
 static template(action) {
   let config = {action:action}
   switch (action) {
@@ -634,6 +732,7 @@ static template(action) {
     case "addChildNote":
       config.title = "title"
       config.content = "{{clipboardText}}"
+      break;
     default:
       break;
   }
@@ -676,7 +775,9 @@ static getActions() {
     "custom6":{name:"Custom 6",image:"custom6",description: this.template("showInFloatWindow")},
     "custom7":{name:"Custom 7",image:"custom7",description: this.template("setContent")},
     "custom8":{name:"Custom 8",image:"custom8",description: this.template("addComment")},
-    "custom9":{name:"Custom 9",image:"custom9",description: this.template("removeComment")}
+    "custom9":{name:"Custom 9",image:"custom9",description: this.template("removeComment")},
+    "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
+    "edit":{name:"edit",image:"edit",description:"MN Editor"}
   }
 }
 static getDefaultActionKeys() {
@@ -700,6 +801,9 @@ static save(key,value = undefined) {
         break;
       case "MNToolbar_actionConfig":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.actions,key)
+        break;
+      case "MNToolbar_addonLogos":
+        NSUserDefaults.standardUserDefaults().setObjectForKey(this.addonLogos,key)
         break;
       default:
         toolbarUtils.showHUD("Not supported")
@@ -730,5 +834,13 @@ static reset(){
   this.actions = this.getActions()
   this.save("MNToolbar_action")
   this.save("MNToolbar_actionConfig")
+}
+static getDescription(index){
+  let actionName = toolbarConfig.action[index]
+  if (actionName in toolbarConfig.actions) {
+    return JSON.parse(toolbarConfig.actions[actionName].description)
+  }else{
+    return JSON.parse(toolbarConfig.getActions()[actionName].description)
+  }
 }
 }

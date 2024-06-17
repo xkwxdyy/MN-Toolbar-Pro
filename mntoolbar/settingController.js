@@ -35,8 +35,9 @@ try {
   MNUtil.showHUD(error)
 }
     self.selectedItem = toolbarConfig.action[0]
+    let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
     try {
-      self.setButtonText(toolbarConfig.action,self.selectedItem)
+      self.setButtonText(allActions,self.selectedItem)
       self.setTextview(self.selectedItem)
       self.settingView.hidden = false
     } catch (error) {
@@ -91,47 +92,29 @@ viewWillLayoutSubviews: function() {
   changeOpacityTo:function (opacity) {
     self.view.layer.opacity = opacity
   },
-  openSettingView:function () {
-    let self = getSettingController()
-    if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
-    // self.settingController.view.hidden = false
-    if (!self.settingView) {
-      self.createSettingView()
-    }else{
-    }
-    self.settingViewLayout()
-    
-    try {
-      self.setButtonText(self.config.promptNames,self.config.currentPrompt)
-      self.setTextview(self.config.currentPrompt)
-      self.settingView.hidden = false
-    } catch (error) {
-    MNUtil.showHUD(error,self.view.window,2)
-      
-    }
-
-    // self.view.addSubview(self.tabView)
-  },
   moveTopTapped :function () {
     let self = getSettingController()
-    toolbarUtils.moveElement(toolbarConfig.action, self.selectedItem, "top")
-    self.setButtonText(toolbarConfig.action,self.selectedItem)
+    let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
+    toolbarUtils.moveElement(allActions, self.selectedItem, "top")
+    self.setButtonText(allActions,self.selectedItem)
     // MNUtil.postNotification("MNToolbarRefreshLayout",{})
     // NSNotificationCenter.defaultCenter().postNotificationNameObjectUserInfo("MNToolbarRefreshLayout", self.window, {})
-    self.toolbarController.setToolbarButton(toolbarConfig.action)
+    self.toolbarController.setToolbarButton(allActions)
     toolbarConfig.save("MNToolbar_action")
   },
   moveForwardTapped :function () {
     let self = getSettingController()
-    toolbarUtils.moveElement(toolbarConfig.action, self.selectedItem, "up")
-    self.setButtonText(toolbarConfig.action,self.selectedItem)
-    self.toolbarController.setToolbarButton(toolbarConfig.action)
+    let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
+    toolbarUtils.moveElement(allActions, self.selectedItem, "up")
+    self.setButtonText(allActions,self.selectedItem)
+    self.toolbarController.setToolbarButton(allActions)
     toolbarConfig.save("MNToolbar_action")
   },
   moveBackwardTapped :function () {
-    toolbarUtils.moveElement(toolbarConfig.action, self.selectedItem, "down")
-    self.setButtonText(toolbarConfig.action,self.selectedItem)
-    self.toolbarController.setToolbarButton(toolbarConfig.action)
+    let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
+    toolbarUtils.moveElement(allActions, self.selectedItem, "down")
+    self.setButtonText(allActions,self.selectedItem)
+    self.toolbarController.setToolbarButton(allActions)
     toolbarConfig.save("MNToolbar_action")
 
   },
@@ -261,7 +244,10 @@ viewWillLayoutSubviews: function() {
     self.currentFrame  = self.view.frame
   },
   advancedButtonTapped: function (params) {
-    return;
+    self.advanceView.hidden = false
+    self.configView.hidden = true
+    MNButton.setColor(self.configButton, "#9bb2d6", 0.8)
+    MNButton.setColor(self.advancedButton, "#457bd3", 0.8)
   },
   configButtonTapped: function (params) {
     self.configView.hidden = false
@@ -271,7 +257,7 @@ viewWillLayoutSubviews: function() {
   },
   configSaveTapped: async function (params) {
     // MNUtil.copy(self.selectedItem)
-    if (!self.selectedItem.includes("custom") && !self.selectedItem.includes("color")) {
+    if (!self.selectedItem.includes("custom") && !self.selectedItem.includes("color") && self.selectedItem !== "ocr") {
       MNUtil.showHUD("Only available for Custom Action!")
       return
     }
@@ -279,17 +265,55 @@ viewWillLayoutSubviews: function() {
     let selected = self.selectedItem
     let input = await self.getWebviewContent()
     // toolbarUtils.copy(selected)
-    toolbarConfig.actions[selected].description = input
-    toolbarConfig.actions[selected].name = self.titleInput.text
-    self.toolbarController.actions = toolbarConfig.actions
-    if (self.toolbarController.dynamicToolbar) {
-      self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
+    if (MNUtil.isValidJSON(input)) {
+      toolbarConfig.actions[selected].description = input
+      toolbarConfig.actions[selected].name = self.titleInput.text
+      self.toolbarController.actions = toolbarConfig.actions
+      if (self.toolbarController.dynamicToolbar) {
+        self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
+      }
+      toolbarConfig.save("MNToolbar_actionConfig")
+      MNUtil.showHUD("Save Custom Action: "+self.titleInput.text)
+    }else{
+      MNUtil.showHUD("Invalid JSON format!")
     }
-    toolbarConfig.save("MNToolbar_actionConfig")
-    MNUtil.showHUD("Save Custom Action: "+self.titleInput.text)
     } catch (error) {
       MNUtil.showHUD(error)
     }
+  },
+  configRunTapped: async function (params) {
+  try {
+    let selected = self.selectedItem
+    if (selected.includes("custom")  || selected.includes("color") || selected === "ocr") {
+      let input = await self.getWebviewContent()
+      // toolbarUtils.copy(selected)
+      if (MNUtil.isValidJSON(input)) {
+        toolbarConfig.actions[selected].description = input
+        toolbarConfig.actions[selected].name = self.titleInput.text
+        self.toolbarController.actions = toolbarConfig.actions
+        if (self.toolbarController.dynamicToolbar) {
+          self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
+        }
+        toolbarConfig.save("MNToolbar_actionConfig")
+        MNUtil.showHUD("Save & Run Custom Action: "+self.titleInput.text)
+      }else{
+        MNUtil.showHUD("Invalid JSON format!")
+        return
+      }
+    }
+    if (selected.includes("custom")) {
+      self.toolbarController.customAction(selected)
+      return
+    }
+    if (selected.includes("color")) {
+      let colorIndex = parseInt(selected.split("color")[1])
+      toolbarUtils.setColor(colorIndex)
+      return
+    }
+    MNUtil.showHUD("Not supported")
+  } catch (error) {
+    MNUtil.showHUD(error)
+  }
   },
   toggleSelected:function (sender) {
     sender.isSelected = !sender.isSelected
@@ -308,6 +332,16 @@ viewWillLayoutSubviews: function() {
       MNButton.setColor(sender, "#ffffff", 0.8)
     }
   },
+  toggleAddonLogo:function (button) {
+    if (toolbarUtils.checkSubscribe(true)) {
+      let addonName = button.addon
+      toolbarConfig.addonLogos[addonName] = !toolbarConfig.checkLogoStatus(addonName)
+      button.setTitleForState(addonName+": "+(toolbarConfig.checkLogoStatus(addonName)?"✅":"❌"),0)
+      toolbarConfig.save("MNToolbar_addonLogos")
+      MNUtil.refreshAddonCommands()
+    }
+  }
+  
 });
 settingController.prototype.init = function () {
   this.custom = false;
@@ -367,6 +401,7 @@ settingController.prototype.settingViewLayout = function (){
     this.webviewInput.frame = {x:10,y:215,width:width-20,height:height-320}
     this.titleInput.frame = {x:10,y:175,width:width-20,height:35}
     this.saveButton.frame = {x:width-80,y:height-100,width:70,height:30}
+    this.runButton.frame = {x:width-155,y:height-100,width:70,height:30}
     this.scrollview.frame = {x:10,y:15,width:width-20,height:150}
     this.scrollview.contentSize = {width:width-20,height:height};
     this.configReset.frame = {x:width-75,y:130,width:60,height:30}
@@ -389,6 +424,11 @@ settingController.prototype.settingViewLayout = function (){
     settingFrame.x = 100
     settingFrame.width = 90
     this.advancedButton.frame = settingFrame
+    this.editorButton.frame = MNUtil.genFrame(10, 10, width-20, 35)
+    this.chatAIButton.frame = MNUtil.genFrame(10, 50, width-20, 35)
+    this.snipasteButton.frame = MNUtil.genFrame(10, 90, width-20, 35)
+    this.autoStyleButton.frame = MNUtil.genFrame(10, 130, width-20, 35)
+    this.browserButton.frame = MNUtil.genFrame(10, 170, width-20, 35)
 }
 
 
@@ -421,6 +461,35 @@ try {
   this.advancedButton.setTitleForState("Advanced",0)
   this.advancedButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
   
+  this.createButton("editorButton","toggleAddonLogo:","advanceView")
+  this.editorButton.layer.opacity = 1.0
+  this.editorButton.addon = "MNEditor"
+  this.editorButton.setTitleForState("MNEditor: "+(toolbarConfig.checkLogoStatus("MNEditor")?"✅":"❌"),0)
+  this.editorButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+
+  this.createButton("chatAIButton","toggleAddonLogo:","advanceView")
+  this.chatAIButton.layer.opacity = 1.0
+  this.chatAIButton.addon = "MNChatAI"
+  this.chatAIButton.setTitleForState("MNChatAI: "+(toolbarConfig.checkLogoStatus("MNChatAI")?"✅":"❌"),0)
+  this.chatAIButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+
+  this.createButton("snipasteButton","toggleAddonLogo:","advanceView")
+  this.snipasteButton.layer.opacity = 1.0
+  this.snipasteButton.addon = "MNSnipaste"
+  this.snipasteButton.setTitleForState("MNSnipaste: "+(toolbarConfig.checkLogoStatus("MNSnipaste")?"✅":"❌"),0)
+  this.snipasteButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+
+  this.createButton("autoStyleButton","toggleAddonLogo:","advanceView")
+  this.autoStyleButton.layer.opacity = 1.0
+  this.autoStyleButton.addon = "MNAutoStyle"
+  this.autoStyleButton.setTitleForState("MNAutoStyle: "+(toolbarConfig.checkLogoStatus("MNAutoStyle")?"✅":"❌"),0)
+  this.autoStyleButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+  
+  this.createButton("browserButton","toggleAddonLogo:","advanceView")
+  this.browserButton.layer.opacity = 1.0
+  this.browserButton.addon = "MNBrowser"
+  this.browserButton.setTitleForState("MNBrowser: "+(toolbarConfig.checkLogoStatus("MNBrowser")?"✅":"❌"),0)
+  this.browserButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
 
   this.scrollview = UIScrollView.new()
   this.configView.addSubview(this.scrollview)
@@ -461,9 +530,13 @@ try {
   this.saveButton.layer.opacity = 1.0
   this.saveButton.setTitleForState("Save",0)
 
+  this.createButton("runButton","configRunTapped:","configView")
+  this.runButton.layer.opacity = 1.0
+  this.runButton.setTitleForState("Run",0)
+  
   let color = ["#ffffb4","#ccfdc4","#b4d1fb","#f3aebe","#ffff54","#75fb4c","#55bbf9","#ea3323","#ef8733","#377e47","#173dac","#be3223","#ffffff","#dadada","#b4b4b4","#bd9fdc"]
 } catch (error) {
-  MNUtil.showHUD(error)
+  toolbarUtils.addErrorLog(error, "createSettingView")
 }
 }
 /**
@@ -472,6 +545,7 @@ try {
 settingController.prototype.setButtonText = function (names,highlight) {
     this.words = names
     let actions = toolbarConfig.actions
+    let defaultActions = toolbarConfig.getActions()
     names.map((word,index)=>{
       let buttonName = "nameButton"+index
       if (!this[buttonName]) {
@@ -483,7 +557,11 @@ settingController.prototype.setButtonText = function (names,highlight) {
       this[buttonName].id = word
       this[buttonName].isSelected = (word === highlight)
       MNButton.setColor(this[buttonName], (word === highlight)?"#9bb2d6":"#ffffff", 0.8)
-      MNButton.setImage(this[buttonName], this.mainPath+`/${actions[word].image}.png`)
+      if (word in actions) {
+        MNButton.setImage(this[buttonName], this.mainPath+`/${actions[word].image}.png`)
+      }else{
+        MNButton.setImage(this[buttonName], this.mainPath+`/${defaultActions[word].image}.png`)
+      }
       // this[buttonName].titleEdgeInsets = {top:0,left:-100,bottom:0,right:-50}
       // this[buttonName].setTitleForState(this.imagePattern[index]===this.textPattern[index]?` ${this.imagePattern[index]} `:"-1",0) 
     })
@@ -495,14 +573,16 @@ settingController.prototype.setButtonText = function (names,highlight) {
 settingController.prototype.setTextview = function (name) {
       // let entries           =  NSUserDefaults.standardUserDefaults().objectForKey('MNBrowser_entries');
       let actions = toolbarConfig.actions
-      let text  = actions[name].name
-      let description = actions[name].description
+      let defaultActions = toolbarConfig.getActions()
+      let action = (name in actions)?actions[name]:defaultActions[name]
+      let text  = action.name
+      let description = action.description
       this.titleInput.text= text
       if (MNUtil.isValidJSON(description)) {
         this.setWebviewContent(description)
       }else{
         actions = toolbarConfig.getActions()
-        description = actions[name].description
+        description = action.description
         this.setWebviewContent(description)
       }
       // if (!text.system) {
@@ -542,8 +622,6 @@ settingController.prototype.refreshLayout = function () {
     let buttonWidth = 40
     let buttonHeight = 40
     this.locs = [];
-    // showHUD("refresh")
-    // copy(this.words)
     this.words.map((word,index)=>{
       // let title = word
       if (xLeft+initX+buttonWidth > viewFrame.width-10) {
@@ -594,7 +672,8 @@ settingController.prototype.show = function (frame) {
   this.view.hidden = false
   this.miniMode = false
   // MNUtil.showHUD("message")
-  this.setButtonText(toolbarConfig.action,this.selectedItem)
+  let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
+  this.setButtonText(allActions,this.selectedItem)
   this.toolbarController.setToolbarButton(toolbarConfig.action)
   this.hideAllButton()
   MNUtil.animate(()=>{

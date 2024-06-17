@@ -45,7 +45,7 @@ JSB.newAddon = function (mainPath) {
         MNUtil.addObserver(self, 'onPopupMenuOnNote:', 'PopupMenuOnNote')
         MNUtil.addObserver(self, 'onToggleDynamic:', 'toggleDynamic')
         MNUtil.addObserver(self, 'onClosePopupMenuOnNote:', 'ClosePopupMenuOnNote')
-        // MNUtil.addObserver(self, 'onMNToolbarRefreshLayout:', 'MNToolbarRefreshLayout')
+        MNUtil.addObserver(self, 'onRemoveMNToolbar:', 'removeMNToolbar')
       },
 
       sceneDidDisconnect: function () { // Window disconnect 在插件页面关闭插件（不是删除）
@@ -294,7 +294,7 @@ JSB.newAddon = function (mainPath) {
             image: 'logo.png',
             object: self,
             selector: 'toggleAddon:',
-            checked: false
+            checked: toolbarConfig.dynamic
           };
         } else {
           return null;
@@ -312,6 +312,10 @@ JSB.newAddon = function (mainPath) {
         toolbarConfig.save("MNToolbar_dynamic")
         // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbar_dynamic")
         self.testController.dynamic = toolbarConfig.dynamic
+      },
+      onRemoveMNToolbar:function (params) {
+        self.addonController.view.removeFromSuperview()
+        toolbarConfig.addonLogos = {}
       },
       toggleAddon:function (sender) {
         if (typeof MNUtil === 'undefined') return
@@ -357,6 +361,7 @@ JSB.newAddon = function (mainPath) {
           toolbarConfig.remove("MNToolbar_action")
           toolbarConfig.remove("MNToolbar_actionConfig")
         }
+        MNUtil.postNotification("removeMNToolbar", {})
       },
 
       applicationWillEnterForeground: function () {
