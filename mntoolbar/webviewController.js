@@ -16,6 +16,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.currentFrame = self.view.frame
     self.buttonNumber = 9
     self.mode = 0
+    self.sideMode = ""
     self.moveDate = Date.now()
     self.settingMode = false
     self.view.layer.shadowOffset = {width: 0, height: 0};
@@ -581,14 +582,19 @@ try {
     let x = location.x
     if (x<20) {
       x = 0
+      self.sideMode = "left"
+      self.splitMode = false
     }
     if (x>studyFrame.width-60) {
       x = studyFrame.width-40
+      self.sideMode = "right"
+      self.splitMode = false
     }
     if (splitLine && docMapSplitMode===1) {
       if (x<splitLine && x>splitLine-40) {
         x = splitLine-20
         self.splitMode = true
+        self.sideMode = ""
       }else{
         self.splitMode = false
       }
@@ -902,22 +908,22 @@ toolbarController.prototype.customAction = async function (actionName) {
     let foundMatchingParentNote = false;
     switch (des.action) {
       case "cloneAndMerge":
-        try {
-          MNUtil.showHUD("cloneAndMerge")
-          targetNoteId= MNUtil.getNoteIdByURL(des.target)
-          MNUtil.undoGrouping(()=>{
-            try {
-              MNNote.getFocusNotes().forEach(focusNote=>{
-                toolbarUtils.cloneAndMerge(focusNote.note, targetNoteId)
-              })
-            } catch (error) {
-              MNUtil.showHUD(error)
-            }
+      try {
+        MNUtil.showHUD("cloneAndMerge")
+        targetNoteId= MNUtil.getNoteIdByURL(des.target)
+        MNUtil.undoGrouping(()=>{
+          try {
+            
+          MNNote.getFocusNotes().forEach(focusNote=>{
+            toolbarUtils.cloneAndMerge(focusNote.note, targetNoteId)
           })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
+          } catch (error) {
+            MNUtil.showHUD(error)
+          }
+        })
+      } catch (error) {
+        MNUtil.showHUD(error)
+      }
       case "cloneAndMergeDifferentForSpecialColor":
         try {
           // MNUtil.showHUD("cloneAndMergeDifferentForSpecialColor")

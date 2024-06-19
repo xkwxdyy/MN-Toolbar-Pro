@@ -429,6 +429,7 @@ settingController.prototype.settingViewLayout = function (){
     this.snipasteButton.frame = MNUtil.genFrame(10, 90, width-20, 35)
     this.autoStyleButton.frame = MNUtil.genFrame(10, 130, width-20, 35)
     this.browserButton.frame = MNUtil.genFrame(10, 170, width-20, 35)
+    this.OCRButton.frame = MNUtil.genFrame(10, 210, width-20, 35)
 }
 
 
@@ -490,6 +491,12 @@ try {
   this.browserButton.addon = "MNBrowser"
   this.browserButton.setTitleForState("MNBrowser: "+(toolbarConfig.checkLogoStatus("MNBrowser")?"✅":"❌"),0)
   this.browserButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+
+  this.createButton("OCRButton","toggleAddonLogo:","advanceView")
+  this.OCRButton.layer.opacity = 1.0
+  this.OCRButton.addon = "MNOCR"
+  this.OCRButton.setTitleForState("MNOCR: "+(toolbarConfig.checkLogoStatus("MNOCR")?"✅":"❌"),0)
+  this.OCRButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
 
   this.scrollview = UIScrollView.new()
   this.configView.addSubview(this.scrollview)

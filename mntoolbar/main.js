@@ -64,9 +64,10 @@ JSB.newAddon = function (mainPath) {
 
       notebookWillOpen: function (notebookid) {
         if (typeof MNUtil === 'undefined') return
+        let studyView = MNUtil.app.studyController(self.window).view
         if (MNUtil.studyMode < 3) {
           MNUtil.refreshAddonCommands();
-          MNUtil.studyView.addSubview(self.addonController.view);
+          studyView.addSubview(self.addonController.view);
           self.addonController.view.hidden = true;
           self.addonController.dynamic = toolbarConfig.dynamic
           self.addonController.notebookid = notebookid
@@ -114,8 +115,11 @@ JSB.newAddon = function (mainPath) {
         // let noteid = sender.userInfo.note.noteId
         // var pasteBoard = UIPasteboard.generalPasteboard()
         // pasteBoard.string = url
+        if (self.window !== MNUtil.currentWindow || !toolbarConfig.dynamic) {
+          return
+        }
 
-        if (!self.appInstance.checkNotifySenderInWindow(sender, self.window) || !toolbarConfig.dynamic) return; // Don't process message from other window
+        // if (!self.appInstance.checkNotifySenderInWindow(sender, self.window) || !toolbarConfig.dynamic) return; // Don't process message from other window
         self.onPopupMenuOnNoteTime = Date.now()
         self.noteid = sender.userInfo.note.noteId
         toolbarUtils.currentNoteId = sender.userInfo.note.noteId
@@ -261,10 +265,29 @@ JSB.newAddon = function (mainPath) {
             currentFrame.y = studyFrame.height-20              
           }
           currentFrame.height = toolbarUtils.checkHeight(currentFrame.height)
-          if (self.addonController.splitMode && splitLine) {
-            currentFrame.x = splitLine-20
+          if (self.addonController.splitMode) {
+            if (splitLine) {
+              currentFrame.x = splitLine-20
+            }else{
+              if (currentFrame.x < studyFrame.width*0.5) {
+                currentFrame.x = 0
+              }else{
+                currentFrame.x = studyFrame.width-40
+              }
+            }
           }
-
+          if (self.addonController.sideMode) {
+            switch (self.addonController.sideMode) {
+              case "left":
+                currentFrame.x = 0
+                break;
+              case "right":
+                currentFrame.x = studyFrame.width-40
+                break;
+              default:
+                break;
+            }
+          }
           currentFrame.width = 40
           if (currentFrame.x > (studyFrame.width-40)) {
             currentFrame.x = studyFrame.width-40
