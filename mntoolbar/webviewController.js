@@ -887,28 +887,266 @@ toolbarController.prototype.customAction = async function (actionName) {
     }
     let des = JSON.parse(toolbarConfig.actions[actionName].description)
     let focusNote = MNNote.getFocusNote()
+    let focusNotes = MNNote.getFocusNotes()
     // MNUtil.showHUD("message"+(focusNote instanceof MNNote))
     let notebookid = focusNote ? focusNote.notebookId : undefined
     let title,content,color,config
-    let targetNoteId
+    let targetNoteId,parentNoteId
+    let colorIndex
+    let focusNoteColorIndex
+    let templateNoteId
+    let parentNoteLightYellow = false
+    let parentNote,parenNoteTitle,focusNoteTitle
+    let newTitle
+    let parentNoteIdIndex
+    let foundMatchingParentNote = false;
     switch (des.action) {
       case "cloneAndMerge":
-      try {
-        MNUtil.showHUD("cloneAndMerge")
-        targetNoteId= MNUtil.getNoteIdByURL(des.target)
-        MNUtil.undoGrouping(()=>{
-          try {
-            
-          MNNote.getFocusNotes().forEach(focusNote=>{
-            toolbarUtils.cloneAndMerge(focusNote.note, targetNoteId)
+        try {
+          MNUtil.showHUD("cloneAndMerge")
+          targetNoteId= MNUtil.getNoteIdByURL(des.target)
+          MNUtil.undoGrouping(()=>{
+            try {
+              MNNote.getFocusNotes().forEach(focusNote=>{
+                toolbarUtils.cloneAndMerge(focusNote.note, targetNoteId)
+              })
+            } catch (error) {
+              MNUtil.showHUD(error)
+            }
           })
-          } catch (error) {
-            MNUtil.showHUD(error)
-          }
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "cloneAndMergeDifferentForSpecialColor":
+        try {
+          // MNUtil.showHUD("cloneAndMergeDifferentForSpecialColor")
+          let commonColorTargetNoteId = MNUtil.getNoteIdByURL(des.commonColorTarget)
+          let specialColorTargetNoteId = MNUtil.getNoteIdByURL(des.specialColorTarget)
+          let colorIndex = des.colorIndex
+          MNUtil.undoGrouping(()=>{
+            try {
+              MNNote.getFocusNotes().forEach(focusNote=>{
+                toolbarUtils.cloneAndMergeDifferentForSpecialColor(focusNote, colorIndex, commonColorTargetNoteId, specialColorTargetNoteId)
+              })
+            } catch (error) {
+              MNUtil.showHUD(error)
+            }
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "convertNoteToNonexcerptVersion":
+        MNUtil.showHUD("卡片转化为非摘录版本")
+        try {
+          toolbarUtils.convertNoteToNonexcerptVersion(focusNotes)
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "ifExceptVersion":
+        if (focusNote.excerptText) {
+          MNUtil.showHUD("摘录版本")
+        } else {
+          MNUtil.showHUD("非摘录版本")
+        }
+        break;
+      case "makeCards":
+        // MNUtil.showHUD("制卡")
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            // 初始化
+            parentNoteLightYellow = false
+            descendantNotes = []
+            focusNoteColorIndex = focusNote.note.colorIndex
+            // 只对淡蓝色、淡粉色、深绿色、深蓝色、淡紫色的卡片进行制卡
+            if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
+              // 1. 先将卡变成非摘录版本
+              // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
+              if (focusNote.excerptText) {
+                // MNUtil.showHUD("摘录版本")
+                toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+                // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就没了（因为被合并到其它卡片了）
+                // 所以下面的代码不会执行，这就产生了一个效果：
+                // 点击第一次：将摘录版本变成非摘录版本
+                // 点击第二次：开始制卡
+                // 误打误撞产生最佳效果了属于是
+              }
+              // 2. 获取到第一个淡黄色卡片的父卡片
+              // 检测父卡片是否是淡黄色的，不是的话获取父卡片的父卡片，直到是淡黄色为止，获取第一次出现的淡黄色的父卡片作为 parentNote
+              parentNote = focusNote.parentNote
+              if (parentNote) {
+                while (parentNote) {
+                  if (parentNote.colorIndex == 0) {
+                    parentNoteLightYellow = true
+                    break
+                  }
+                  parentNote = parentNote.parentNote
+                }
+                // 如果检测的父卡片都不是黄色的，就只合并第一层模版
+                // 注意如果是子脑图的独立卡片并不是没有父节点，坍缩成子脑图的那张卡片就是父节点，而且不会再往上检测了（也就是坍缩的卡片的父节点不会被纳入到独立卡片的父节点的父节点）
+                if (!parentNoteLightYellow) {
+                  // 先检测合并过了没，避免重复合并
+                  if (focusNote.getCommentIndex("相关链接：") == -1) {
+                    MNUtil.showHUD("没有淡黄色的父卡片，合并第一层模版")
+                    switch (focusNoteColorIndex) {
+                      case 2: // 淡蓝色：定义类
+                        // 71AAED0A-5972-4F72-8282-B558879EFD96
+                        templateNoteId= getNoteIdByURL("71AAED0A-5972-4F72-8282-B558879EFD96")
+                        cloneAndMerge(focusNote, templateNoteId)
+                        break;
+                      case 3: // 淡粉色：反例
+                        // DCD8A253-C991-4798-9546-4B36D19CD260
+                        templateNoteId= getNoteIdByURL("DCD8A253-C991-4798-9546-4B36D19CD260")
+                        cloneAndMerge(focusNote, templateNoteId)
+                        break;
+                      case 9: // 深绿色：思想方法
+                        // F3F263B4-B7C8-4514-922A-35180D4F60CF
+                        templateNoteId= getNoteIdByURL("F3F263B4-B7C8-4514-922A-35180D4F60CF")
+                        cloneAndMerge(focusNote, templateNoteId)
+                        break;
+                      case 10: // 深蓝色：定理命题
+                        // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
+                        templateNoteId= getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
+                        cloneAndMerge(focusNote, templateNoteId)
+                        break;
+                      case 15: // 淡紫色：例子
+                        // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
+                        templateNoteId= getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
+                        cloneAndMerge(focusNote, templateNoteId)
+                        break;
+                    }
+                  }
+                }
+              } else {
+                // 如果没有父卡片，那就只合并一层模版
+                // 先检测合并过了没，避免重复合并
+                if (focusNote.getCommentIndex("相关链接：") == -1) {
+                  MNUtil.showHUD("没有父卡片，合并第一层模版")
+                  switch (focusNoteColorIndex) {
+                    case 2: // 淡蓝色：定义类
+                      // 71AAED0A-5972-4F72-8282-B558879EFD96
+                      templateNoteId= getNoteIdByURL("71AAED0A-5972-4F72-8282-B558879EFD96")
+                      cloneAndMerge(focusNote, templateNoteId)
+                      break;
+                    case 3: // 淡粉色：反例
+                      // DCD8A253-C991-4798-9546-4B36D19CD260
+                      templateNoteId= getNoteIdByURL("DCD8A253-C991-4798-9546-4B36D19CD260")
+                      cloneAndMerge(focusNote, templateNoteId)
+                      break;
+                    case 9: // 深绿色：思想方法
+                      // F3F263B4-B7C8-4514-922A-35180D4F60CF
+                      templateNoteId= getNoteIdByURL("F3F263B4-B7C8-4514-922A-35180D4F60CF")
+                      cloneAndMerge(focusNote, templateNoteId)
+                      break;
+                    case 10: // 深蓝色：定理命题
+                      // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
+                      templateNoteId= getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
+                      cloneAndMerge(focusNote, templateNoteId)
+                      break;
+                    case 15: // 淡紫色：例子
+                      // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
+                      templateNoteId= getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
+                      cloneAndMerge(focusNote, templateNoteId)
+                      break;
+                  }
+                }
+              }
+              parentNoteId = parentNote.noteId
+              // MNUtil.showHUD(parentNoteId)
+              parentNoteIdIndex = focusNote.getCommentIndex("marginnote4app://note/" + parentNoteId)
+              // 如果已经链接过了（说明已经制卡过了）就不再制卡，防止误触点了两次
+              if (parentNoteIdIndex == -1) { // 说明里面没有父卡片的链接，说明没有制卡
+                // 3. 合并模版卡（第一层合并）
+                switch (focusNoteColorIndex) {
+                  case 2: // 淡蓝色：定义类
+                    // 71AAED0A-5972-4F72-8282-B558879EFD96
+                    templateNoteId= getNoteIdByURL("71AAED0A-5972-4F72-8282-B558879EFD96")
+                    cloneAndMerge(focusNote, templateNoteId)
+                    break;
+                  case 3: // 淡粉色：反例
+                    // DCD8A253-C991-4798-9546-4B36D19CD260
+                    templateNoteId= getNoteIdByURL("DCD8A253-C991-4798-9546-4B36D19CD260")
+                    cloneAndMerge(focusNote, templateNoteId)
+                    break;
+                  case 9: // 深绿色：思想方法
+                    // F3F263B4-B7C8-4514-922A-35180D4F60CF
+                    templateNoteId= getNoteIdByURL("F3F263B4-B7C8-4514-922A-35180D4F60CF")
+                    cloneAndMerge(focusNote, templateNoteId)
+                    break;
+                  case 10: // 深蓝色：定理命题
+                    // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
+                    templateNoteId= getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
+                    cloneAndMerge(focusNote, templateNoteId)
+                    break;
+                  case 15: // 淡紫色：例子
+                    // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
+                    templateNoteId= getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
+                    cloneAndMerge(focusNote, templateNoteId)
+                    break;
+                }
+                // 4. 和第一个黄色层级的父卡片双向链接
+                parentNote.appendNoteLink(focusNote, "Both")
+                // 5. 根据第一个黄色层级的父卡片修改卡片标题前缀
+                parenNoteTitle = parentNote.noteTitle
+                focusNoteTitle = focusNote.noteTitle
+                let contentFromParenNoteTitle = parenNoteTitle.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
+                // MNUtil.showHUD(contentFromParenNoteTitle)
+                // 检查【xxx】格式，并捕获xxx内容
+                let matchResult = focusNoteTitle.match(/^【([^】]*)/);
+                // MNUtil.showHUD(matchResult)
+                if (matchResult) { // 如果有匹配结果
+                  let capturedText = matchResult[1];
+                  // 检查是否包含 capturedText 并且是否需要补上】
+                  if (capturedText.includes(contentFromParenNoteTitle) && !focusNoteTitle.includes("】")) {
+                    focusNote.noteTitle = focusNoteTitle + "】";
+                  } else if (!capturedText.includes(contentFromParenNoteTitle)) {
+                    // 如果不包含 capturedText，替换原有【】内容
+                    if (focusNoteColorIndex == 2) {
+                      // 淡蓝色（定义类）的要在【】后加 “; ”
+                      newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + contentFromParenNoteTitle + "】; ");
+                    } else {
+                      newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + contentFromParenNoteTitle + "】");
+                    }
+                    focusNote.noteTitle = newTitle;
+                  }
+                } else { // 如果标题不是以【xxx开头
+                  if (focusNoteColorIndex == 2) {
+                    // 淡蓝色（定义类）的要在【】后加 “; ”
+                    newTitle = "【" + contentFromParenNoteTitle + "】; " + focusNoteTitle;
+                  } else {
+                    newTitle = "【" + contentFromParenNoteTitle + "】" + focusNoteTitle;
+                  }
+                  focusNote.noteTitle = newTitle;
+                }
+                // 6. 合并“应用”或“相关概念”卡片（第二层合并，在链接之后）
+                // 要注意浅蓝色的第二层不一样
+                if (focusNoteColorIndex == 2) {
+                  // E7854116-C137-4E17-B194-78052C984D2A
+                  templateNoteId= getNoteIdByURL("E7854116-C137-4E17-B194-78052C984D2A")
+                  cloneAndMerge(focusNote, templateNoteId)
+                } else {
+                  // 0B488930-0447-4DD0-8236-C27621BEA8F2
+                  templateNoteId= getNoteIdByURL("0B488930-0447-4DD0-8236-C27621BEA8F2")
+                  cloneAndMerge(focusNote, templateNoteId)
+                }
+              } else {
+                MNUtil.showHUD("不要重复制卡！")
+              }
+            } else {
+              MNUtil.showHUD("此颜色的卡片无法制卡！")
+            }
+          })
         })
-      } catch (error) {
-        MNUtil.showHUD(error)
-      }
+        break;
+      case "showColorIndex":
+        // MNUtil.showHUD("getColorIndex")
+        // // focusNote = MNNote.getFocusNote()
+        // MNUtil.undoGrouping(
+        //   focusNote.note.appendTextComment("ColorIndex:" + focusNote.note.colorIndex)
+        // )
+        MNUtil.showHUD("ColorIndex: " + focusNote.note.colorIndex)
         break;
       case "cloneAsChildNote":
         MNUtil.showHUD("cloneAsChildNote")

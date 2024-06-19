@@ -637,6 +637,66 @@ class toolbarUtils {
       })
     })
   }
+  // 夏大鱼羊自定义函数
+
+  // 根据卡片的颜色合并特殊的卡片
+  /**
+   * 
+   * @param {MbBookNote|MNNote} currentNote 
+   * @param {string} commonColorTargetNoteId
+   * @param {string} specialColorTargetNoteId 
+   */
+  static cloneAndMergeDifferentForSpecialColor(currentNote, colorIndex, commonColorTargetNoteId,specialColorTargetNoteId) {
+    let commonColorTargetNote = MNNote.clone(commonColorTargetNoteId)
+    let specialColorTargetNote = MNNote.clone(specialColorTargetNoteId)
+    if (currentNote.colorIndex === colorIndex) {
+      currentNote.merge(specialColorTargetNote.note)
+    } else {
+      currentNote.merge(commonColorTargetNote.note)
+    }
+  }
+
+  // 将卡片变成非摘录版本
+  // 需求：https://github.com/xkwxdyy/mnTextHandler/discussions/3
+  /**
+    * 1. 复制卡片标题到剪切板
+    * 2. 去掉卡片标题
+    * 3. 生成卡片的兄弟卡片，标题为复制的内容
+    * 4. 将旧卡片合并到新的兄弟卡片中
+    */
+  /**
+    *
+    * @param {MbBookNote} parent
+    * @param {String} title
+    * @param {Number} colorIndex
+    */
+  static convertNoteToNonexcerptVersion(note) {
+    let config = {}
+    let newNote
+    let parent
+    // let newNoteList = []
+    MNUtil.undoGrouping(()=>{
+      // focusNotes.forEach(
+        // note=>{
+          config.title = note.noteTitle
+          config.content = ""
+          config.markdown = true
+          config.color = note.colorIndex
+          // 获取旧卡片的父卡片
+          parent = note.parentNote
+          // 创建新兄弟卡片，标题为旧卡片的标题
+          newNote = parent.createChildNote(config)
+          // parent.addChild(newnote)
+          // 清除旧卡片的标题
+          note.noteTitle = ""
+          // 将旧卡片合并到新卡片中
+          newNote.merge(note)
+          // newNoteList.push(newNote)
+        // }
+      // )
+    })
+    // return newNoteList
+  }
 }
 
 class toolbarConfig {
@@ -700,147 +760,147 @@ class toolbarConfig {
   //   return true
   // }
   }
-static template(action) {
-  let config = {action:action}
-  switch (action) {
-    case "cloneAndMerge":
-      config.target = toolbarUtils.version.version+"app://note/xxxx"
-      break
-    case "link":
-      config.target = toolbarUtils.version.version+"app://note/xxxx"
-      config.type = "Both"
-      break
-    case "clearContent":
-      config.target = "title"
-      break
-    case "setContent":
-      config.target = "title"//excerptText,comment
-      config.content = "test"
-      break
-    case "addComment":
-      config.content = "test"
-      break
-    case "removeComment":
-      config.index = 1//0表示全部，设一个特别大的值表示最后一个
-      break
-    case "copy":
-      config.target = "title"
-      break
-    case "showInFloatWindow":
-      config.target = toolbarUtils.version+"app://note/xxxx"
-      break
-    case "addChildNote":
-      config.title = "title"
-      config.content = "{{clipboardText}}"
-      break;
-    default:
-      break;
-  }
-  return JSON.stringify(config,null,2)
-}
-static getActions() {
-  return {
-    "copy":{name:"Copy",image:"copyExcerptPic",description:"Copy"},
-    "searchInEudic":{name:"Search in Eudic",image:"searchInEudic",description:"Search in Eudic"},
-    "switchTitleorExcerpt":{name:"Switch title",image:"switchTitleorExcerpt",description:"Switch title"},
-    "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
-    "search":{name:"Search",image:"search",description:"Search"},
-    "bigbang":{name:"Bigbang",image:"bigbang",description:"Bigbang"},
-    "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
-    "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"},
-    "setting":{name:"Setting",image:"setting",description:"Setting"},
-    "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
-    "clearFormat":{name:"Clear Format",image:"clearFormat",description:"Clear Format"},
-    "color0":{name:"Set Color 1",image:"color0",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color1":{name:"Set Color 2",image:"color1",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color2":{name:"Set Color 3",image:"color2",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color3":{name:"Set Color 4",image:"color3",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color4":{name:"Set Color 5",image:"color4",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color5":{name:"Set Color 6",image:"color5",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color6":{name:"Set Color 7",image:"color6",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color7":{name:"Set Color 8",image:"color7",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color8":{name:"Set Color 9",image:"color8",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color9":{name:"Set Color 10",image:"color9",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color10":{name:"Set Color 11",image:"color10",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color11":{name:"Set Color 12",image:"color11",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color12":{name:"Set Color 13",image:"color12",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color13":{name:"Set Color 14",image:"color13",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color14":{name:"Set Color 15",image:"color14",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color15":{name:"Set Color 16",image:"color15",description:JSON.stringify({fillPattern:-1},null,2)},
-    "custom1":{name:"Custom 1",image:"custom1",description: this.template("cloneAndMerge")},
-    "custom2":{name:"Custom 2",image:"custom2",description: this.template("link")},
-    "custom3":{name:"Custom 3",image:"custom3",description: this.template("clearContent")},
-    "custom4":{name:"Custom 4",image:"custom4",description: this.template("copy")},
-    "custom5":{name:"Custom 5",image:"custom5",description: this.template("addChildNote")},
-    "custom6":{name:"Custom 6",image:"custom6",description: this.template("showInFloatWindow")},
-    "custom7":{name:"Custom 7",image:"custom7",description: this.template("setContent")},
-    "custom8":{name:"Custom 8",image:"custom8",description: this.template("addComment")},
-    "custom9":{name:"Custom 9",image:"custom9",description: this.template("removeComment")},
-    "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
-    "edit":{name:"edit",image:"edit",description:"MN Editor"}
-  }
-}
-static getDefaultActionKeys() {
-  let actions = this.getActions()
-  return Object.keys(actions)
-}
-static save(key,value = undefined) {
-  if (value) {
-    NSUserDefaults.standardUserDefaults().setObjectForKey(value,key)
-  }else{
-    // showHUD(key)
-    switch (key) {
-      case "MNToolbar_windowState":
-        NSUserDefaults.standardUserDefaults().setObjectForKey(this.windowState,key)
-        break;
-      case "MNToolbar_dynamic":
-        NSUserDefaults.standardUserDefaults().setObjectForKey(this.dynamic,key)
-        break;
-      case "MNToolbar_action":
-        NSUserDefaults.standardUserDefaults().setObjectForKey(this.action,key)
-        break;
-      case "MNToolbar_actionConfig":
-        NSUserDefaults.standardUserDefaults().setObjectForKey(this.actions,key)
-        break;
-      case "MNToolbar_addonLogos":
-        NSUserDefaults.standardUserDefaults().setObjectForKey(this.addonLogos,key)
+  static template(action) {
+    let config = {action:action}
+    switch (action) {
+      case "cloneAndMerge":
+        config.target = toolbarUtils.version.version+"app://note/xxxx"
+        break
+      case "link":
+        config.target = toolbarUtils.version.version+"app://note/xxxx"
+        config.type = "Both"
+        break
+      case "clearContent":
+        config.target = "title"
+        break
+      case "setContent":
+        config.target = "title"//excerptText,comment
+        config.content = "test"
+        break
+      case "addComment":
+        config.content = "test"
+        break
+      case "removeComment":
+        config.index = 1//0表示全部，设一个特别大的值表示最后一个
+        break
+      case "copy":
+        config.target = "title"
+        break
+      case "showInFloatWindow":
+        config.target = toolbarUtils.version+"app://note/xxxx"
+        break
+      case "addChildNote":
+        config.title = "title"
+        config.content = "{{clipboardText}}"
         break;
       default:
-        toolbarUtils.showHUD("Not supported")
         break;
     }
+    return JSON.stringify(config,null,2)
   }
-  NSUserDefaults.standardUserDefaults().synchronize()
-}
-
-static get(key) {
-  return NSUserDefaults.standardUserDefaults().objectForKey(key)
-}
-
-static getByDefault(key,defaultValue) {
-  let value = NSUserDefaults.standardUserDefaults().objectForKey(key)
-  if (value === undefined) {
-    NSUserDefaults.standardUserDefaults().setObjectForKey(defaultValue,key)
-    return defaultValue
+  static getActions() {
+    return {
+      "copy":{name:"Copy",image:"copyExcerptPic",description:"Copy"},
+      "searchInEudic":{name:"Search in Eudic",image:"searchInEudic",description:"Search in Eudic"},
+      "switchTitleorExcerpt":{name:"Switch title",image:"switchTitleorExcerpt",description:"Switch title"},
+      "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
+      "search":{name:"Search",image:"search",description:"Search"},
+      "bigbang":{name:"Bigbang",image:"bigbang",description:"Bigbang"},
+      "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
+      "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"},
+      "setting":{name:"Setting",image:"setting",description:"Setting"},
+      "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
+      "clearFormat":{name:"Clear Format",image:"clearFormat",description:"Clear Format"},
+      "color0":{name:"Set Color 1",image:"color0",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color1":{name:"Set Color 2",image:"color1",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color2":{name:"Set Color 3",image:"color2",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color3":{name:"Set Color 4",image:"color3",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color4":{name:"Set Color 5",image:"color4",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color5":{name:"Set Color 6",image:"color5",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color6":{name:"Set Color 7",image:"color6",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color7":{name:"Set Color 8",image:"color7",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color8":{name:"Set Color 9",image:"color8",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color9":{name:"Set Color 10",image:"color9",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color10":{name:"Set Color 11",image:"color10",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color11":{name:"Set Color 12",image:"color11",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color12":{name:"Set Color 13",image:"color12",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color13":{name:"Set Color 14",image:"color13",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color14":{name:"Set Color 15",image:"color14",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color15":{name:"Set Color 16",image:"color15",description:JSON.stringify({fillPattern:-1},null,2)},
+      "custom1":{name:"Custom 1",image:"custom1",description: this.template("cloneAndMerge")},
+      "custom2":{name:"Custom 2",image:"custom2",description: this.template("link")},
+      "custom3":{name:"Custom 3",image:"custom3",description: this.template("clearContent")},
+      "custom4":{name:"Custom 4",image:"custom4",description: this.template("copy")},
+      "custom5":{name:"Custom 5",image:"custom5",description: this.template("addChildNote")},
+      "custom6":{name:"Custom 6",image:"custom6",description: this.template("showInFloatWindow")},
+      "custom7":{name:"Custom 7",image:"custom7",description: this.template("setContent")},
+      "custom8":{name:"Custom 8",image:"custom8",description: this.template("addComment")},
+      "custom9":{name:"Custom 9",image:"custom9",description: this.template("removeComment")},
+      "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
+      "edit":{name:"edit",image:"edit",description:"MN Editor"}
+    }
   }
-  return value
-}
-
-static remove(key) {
-  NSUserDefaults.standardUserDefaults().removeObjectForKey(key)
-}
-static reset(){
-  this.action = this.getDefaultActionKeys()
-  this.actions = this.getActions()
-  this.save("MNToolbar_action")
-  this.save("MNToolbar_actionConfig")
-}
-static getDescription(index){
-  let actionName = toolbarConfig.action[index]
-  if (actionName in toolbarConfig.actions) {
-    return JSON.parse(toolbarConfig.actions[actionName].description)
-  }else{
-    return JSON.parse(toolbarConfig.getActions()[actionName].description)
+  static getDefaultActionKeys() {
+    let actions = this.getActions()
+    return Object.keys(actions)
   }
-}
+  static save(key,value = undefined) {
+    if (value) {
+      NSUserDefaults.standardUserDefaults().setObjectForKey(value,key)
+    }else{
+      // showHUD(key)
+      switch (key) {
+        case "MNToolbar_windowState":
+          NSUserDefaults.standardUserDefaults().setObjectForKey(this.windowState,key)
+          break;
+        case "MNToolbar_dynamic":
+          NSUserDefaults.standardUserDefaults().setObjectForKey(this.dynamic,key)
+          break;
+        case "MNToolbar_action":
+          NSUserDefaults.standardUserDefaults().setObjectForKey(this.action,key)
+          break;
+        case "MNToolbar_actionConfig":
+          NSUserDefaults.standardUserDefaults().setObjectForKey(this.actions,key)
+          break;
+        case "MNToolbar_addonLogos":
+          NSUserDefaults.standardUserDefaults().setObjectForKey(this.addonLogos,key)
+          break;
+        default:
+          toolbarUtils.showHUD("Not supported")
+          break;
+      }
+    }
+    NSUserDefaults.standardUserDefaults().synchronize()
+  }
+
+  static get(key) {
+    return NSUserDefaults.standardUserDefaults().objectForKey(key)
+  }
+
+  static getByDefault(key,defaultValue) {
+    let value = NSUserDefaults.standardUserDefaults().objectForKey(key)
+    if (value === undefined) {
+      NSUserDefaults.standardUserDefaults().setObjectForKey(defaultValue,key)
+      return defaultValue
+    }
+    return value
+  }
+
+  static remove(key) {
+    NSUserDefaults.standardUserDefaults().removeObjectForKey(key)
+  }
+  static reset(){
+    this.action = this.getDefaultActionKeys()
+    this.actions = this.getActions()
+    this.save("MNToolbar_action")
+    this.save("MNToolbar_actionConfig")
+  }
+  static getDescription(index){
+    let actionName = toolbarConfig.action[index]
+    if (actionName in toolbarConfig.actions) {
+      return JSON.parse(toolbarConfig.actions[actionName].description)
+    }else{
+      return JSON.parse(toolbarConfig.getActions()[actionName].description)
+    }
+  }
 }
