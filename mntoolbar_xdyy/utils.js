@@ -79,9 +79,8 @@ function currentNotebook() {
   return getNoteBookById(notebookId)
 }
 
-function creatNote(title="",content=undefined,color = undefined) {
+function createNote(title="",content=undefined,color = undefined) {
   try {
-    
   let notebook = currentNotebook()
   let note = Note.createWithTitleNotebookDocument(title, notebook,currentDocController().document)
   if (content) {
@@ -140,7 +139,7 @@ function addBrotherNote(brother,targetNote,colorInheritance=false) {
 function createChildNote(parent, title="", content=undefined) {
   let child
   undoGroupingWithRefresh(parent.notebookId, ()=>{
-    child = creatNote(title, content, parent.colorIndex)
+    child = createNote(title, content, parent.colorIndex)
     parent.addChild(child)
   })
   return child
@@ -157,7 +156,7 @@ function createBrotherNote(brother,title="",content=undefined,colorInheritance=f
   }
   let parent = brother.parentNote
   undoGroupingWithRefresh(parent.notebookId, ()=>{
-    let child = creatNote(title,content)
+    let child = createNote(title,content)
     if (colorInheritance) {
       child.colorIndex = brother.colorIndex
     }
@@ -489,7 +488,7 @@ function cloneAndMerge(currentNote,targetNoteId) {
   currentNote.merge(getNoteById(clonedNoteId))
 }
 
-function cloneAndMergeForSpecialColor(currentNote, colorIndex,commonColorTargetNoteId,specialColorTargetNoteId) {
+function cloneAndMergeDifferentForSpecialColor(currentNote, colorIndex,commonColorTargetNoteId,specialColorTargetNoteId) {
   let commonColorClonedNoteId = cloneNote(commonColorTargetNoteId)
   let specialColorClonedNoteId = cloneNote(specialColorTargetNoteId)
   if (currentNote.colorIndex === colorIndex) {

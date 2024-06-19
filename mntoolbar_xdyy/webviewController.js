@@ -197,14 +197,14 @@ viewWillLayoutSubviews: function() {
           })
         })
         break;
-      case "cloneAndMergeForSpecialColor":
-        // showHUD("cloneAndMergeForSpecialColor")
+      case "cloneAndMergeDifferentForSpecialColor":
+        // showHUD("cloneAndMergeDifferentForSpecialColor")
         let commonColorTargetNoteId= getNoteIdByURL(des.commonColorTarget)
         let specialColorTargetNoteId= getNoteIdByURL(des.specialColorTarget)
         let colorIndex = des.colorIndex
         undoGroupingWithRefresh(notebookid,()=>{
           getFocusNotes().forEach(focusNote=>{
-            cloneAndMergeForSpecialColor(focusNote, colorIndex, commonColorTargetNoteId, specialColorTargetNoteId)
+            cloneAndMergeDifferentForSpecialColor(focusNote, colorIndex, commonColorTargetNoteId, specialColorTargetNoteId)
           })
         })
         break;
