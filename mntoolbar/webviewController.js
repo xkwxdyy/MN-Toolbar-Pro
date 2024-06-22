@@ -217,8 +217,8 @@ try {
       return
     }
     let focusNote = MNNote.getFocusNote()
-    if (focusNote.excerptText) {
-      if (focusNote.excerptPic) {
+    if (focusNote.excerptText.trim() || (focusNote.excerptPic && focusNote.excerptPic.paint)) {
+      if (focusNote.excerptPic && !focusNote.textFirst && focusNote.excerptPic.paint) {
         MNUtil.copyImage(focusNote.excerptPicData)
         MNUtil.showHUD('摘录图片已复制')
       }else{
@@ -241,6 +241,15 @@ try {
         case "HtmlNote":
           MNUtil.copy(firstComment.text)
           MNUtil.showHUD('尝试复制该类型评论: '+firstComment.type)
+          break;
+        case "LinkNote":
+          if (firstComment.q_hpic && !focusNote.textFirst && firstComment.q_hpic.paint) {
+            MNUtil.copyImage(MNUtil.getMediaByHash(firstComment.q_hpic.paint))
+            MNUtil.showHUD('图片已复制')
+          }else{
+            MNUtil.copy(firstComment.q_htext)
+            MNUtil.showHUD('首条评论已复制')
+          }
           break;
         default:
           MNUtil.showHUD('暂不支持的评论类型: '+firstComment.type)
@@ -1296,19 +1305,11 @@ toolbarController.prototype.customAction = async function (actionName) {
         break;
       case "removeComment":
         MNUtil.showHUD("removeComment")
-        let commentIndex = des.index+1
-        if (commentIndex) {
-          let focusNotes = MNNote.getFocusNotes()
-          MNUtil.undoGrouping(()=>{
-            focusNotes.forEach(note => {
-              let commentLength = note.comments.length
-              if (commentIndex > commentLength) {
-                commentIndex = commentLength
-              }
-              note.removeCommentByIndex(commentIndex-1)
-            })
-          })
-        }
+        toolbarUtils.removeComment(des)
+        break;
+      case "moveComment":
+        MNUtil.showHUD("moveComment")
+        toolbarUtils.moveComment(des)
         break;
       case "link":
         let linkType = des.linkType ?? "Both"

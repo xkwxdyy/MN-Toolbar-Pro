@@ -459,6 +459,171 @@ class toolbarUtils {
     }
     MNUtil.copyJSON(this.errorLog)
   }
+  static removeComment(des){
+    let focusNotes = MNNote.getFocusNotes()
+    if (des.find) {
+      let condition  = des.find
+      MNUtil.undoGrouping(()=>{
+        focusNotes.forEach(note=>{
+          let indices = note.getCommentIndicesByCondition(condition)
+          if (!indices.length) {
+            MNUtil.showHUD("No match")
+            return
+          }
+          if (des.multi) {
+            note.removeCommentsByIndices(indices)
+          }else{
+            indices = MNUtil.sort(indices,"increment")
+            note.removeCommentByIndex(indices[0])
+          }
+        })
+      })
+      return
+    }
+    if (des.type) {
+      let type = Array.isArray(des.type) ? des.type : [des.type]
+      MNUtil.undoGrouping(()=>{
+        focusNotes.forEach(note=>{
+          if (des.multi) {
+            let commentsToRemove = []
+            note.comments.forEach((comment,index)=>{
+              if (type.includes(comment.type)) {
+                commentsToRemove.push(index)
+              }
+            })
+            if (!commentsToRemove.length) {
+              MNUtil.showHUD("No match")
+              return
+            }
+            note.removeCommentsByIndices(commentsToRemove)
+          }else{
+            let index = note.comments.findIndex(comment=>type.includes(comment.type))
+            if (index < 0) {
+              MNUtil.showHUD("No match")
+              return
+            }
+            note.removeCommentByIndex(index)
+          }
+        })
+      })
+      return
+    }
+    if (des.multi) {
+      let commentIndices = Array.isArray(des.index)? des.index : [des.index]
+      commentIndices = MNUtil.sort(commentIndices,"decrement")
+      // MNUtil.copyJSON(commentIndices)
+      if (!commentIndices.length) {
+        MNUtil.showHUD("No match")
+        return
+      }
+      MNUtil.undoGrouping(()=>{
+        focusNotes.forEach(note => {
+          note.removeCommentsByIndices(commentIndices)
+        })
+      })
+    }else{
+      let commentIndex = des.index+1
+      if (commentIndex) {
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(note => {
+            let commentLength = note.comments.length
+            if (commentIndex > commentLength) {
+              commentIndex = commentLength
+            }
+            note.removeCommentByIndex(commentIndex-1)
+          })
+        })
+      }
+    }
+  
+  }
+  static moveComment(des){
+    let focusNotes = MNNote.getFocusNotes()
+    let commentIndex
+    if (des.find) {
+      let condition  = des.find
+      MNUtil.undoGrouping(()=>{
+        focusNotes.forEach(note=>{
+          let indices = note.getCommentIndicesByCondition(condition)
+          if (!indices.length) {
+            MNUtil.showHUD("No match")
+            return
+          }
+          if (indices.length && "to" in des) {
+            switch (typeof des.to) {
+              case "string":
+                note.moveCommentByAction(indices[0],des.to)
+                break;
+              case "number":
+                note.moveComment(indices[0], des.to)
+                break
+              default:
+                break;
+            }
+            return
+          }
+        })
+      })
+      return
+    }
+    if (des.type && "to" in des) {
+      let type = Array.isArray(des.type) ? des.type : [des.type]
+      switch (typeof des.to) {
+        case "string":
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(note=>{
+                let index = note.comments.findIndex(comment=>type.includes(comment.type))
+                if (index == -1) {
+                  MNUtil.showHUD("No match")
+                  return
+                }
+                note.moveCommentByAction(index,des.to)
+            })
+          })
+          break;
+        case "number":
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(note=>{
+                let index = note.comments.findIndex(comment=>type.includes(comment.type))
+                if (index == -1) {
+                  MNUtil.showHUD("No match")
+                  return
+                }
+                note.moveComment(index,des.to)
+            })
+          })
+          break
+        default:
+          break;
+      }
+      return
+    }
+    commentIndex = des.index
+    if (commentIndex === undefined) {
+      MNUtil.showHUD("Invalid index!")
+    }
+    if ("to" in des) {
+      switch (typeof des.to) {
+        case "string":
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(note => {
+              note.moveCommentByAction(commentIndex, des.to)
+            })
+          })
+          break;
+        case "number":
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(note => {
+              note.moveComment(commentIndex, des.to)
+            })
+          })
+          break
+        default:
+          break;
+      }
+    }
+  
+  }
   static html(content){
     return `<!DOCTYPE html>
 <html lang="en">
@@ -760,147 +925,147 @@ class toolbarConfig {
   //   return true
   // }
   }
-  static template(action) {
-    let config = {action:action}
-    switch (action) {
-      case "cloneAndMerge":
-        config.target = toolbarUtils.version.version+"app://note/xxxx"
-        break
-      case "link":
-        config.target = toolbarUtils.version.version+"app://note/xxxx"
-        config.type = "Both"
-        break
-      case "clearContent":
-        config.target = "title"
-        break
-      case "setContent":
-        config.target = "title"//excerptText,comment
-        config.content = "test"
-        break
-      case "addComment":
-        config.content = "test"
-        break
-      case "removeComment":
-        config.index = 1//0表示全部，设一个特别大的值表示最后一个
-        break
-      case "copy":
-        config.target = "title"
-        break
-      case "showInFloatWindow":
-        config.target = toolbarUtils.version+"app://note/xxxx"
-        break
-      case "addChildNote":
-        config.title = "title"
-        config.content = "{{clipboardText}}"
+static template(action) {
+  let config = {action:action}
+  switch (action) {
+    case "cloneAndMerge":
+      config.target = toolbarUtils.version.version+"app://note/xxxx"
+      break
+    case "link":
+      config.target = toolbarUtils.version.version+"app://note/xxxx"
+      config.type = "Both"
+      break
+    case "clearContent":
+      config.target = "title"
+      break
+    case "setContent":
+      config.target = "title"//excerptText,comment
+      config.content = "test"
+      break
+    case "addComment":
+      config.content = "test"
+      break
+    case "removeComment":
+      config.index = 1//0表示全部，设一个特别大的值表示最后一个
+      break
+    case "copy":
+      config.target = "title"
+      break
+    case "showInFloatWindow":
+      config.target = toolbarUtils.version+"app://note/xxxx"
+      break
+    case "addChildNote":
+      config.title = "title"
+      config.content = "{{clipboardText}}"
+      break;
+    default:
+      break;
+  }
+  return JSON.stringify(config,null,2)
+}
+static getActions() {
+  return {
+    "copy":{name:"Copy",image:"copyExcerptPic",description:"Copy"},
+    "searchInEudic":{name:"Search in Eudic",image:"searchInEudic",description:"Search in Eudic"},
+    "switchTitleorExcerpt":{name:"Switch title",image:"switchTitleorExcerpt",description:"Switch title"},
+    "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
+    "search":{name:"Search",image:"search",description:"Search"},
+    "bigbang":{name:"Bigbang",image:"bigbang",description:"Bigbang"},
+    "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
+    "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"},
+    "setting":{name:"Setting",image:"setting",description:"Setting"},
+    "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
+    "clearFormat":{name:"Clear Format",image:"clearFormat",description:"Clear Format"},
+    "color0":{name:"Set Color 1",image:"color0",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color1":{name:"Set Color 2",image:"color1",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color2":{name:"Set Color 3",image:"color2",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color3":{name:"Set Color 4",image:"color3",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color4":{name:"Set Color 5",image:"color4",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color5":{name:"Set Color 6",image:"color5",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color6":{name:"Set Color 7",image:"color6",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color7":{name:"Set Color 8",image:"color7",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color8":{name:"Set Color 9",image:"color8",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color9":{name:"Set Color 10",image:"color9",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color10":{name:"Set Color 11",image:"color10",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color11":{name:"Set Color 12",image:"color11",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color12":{name:"Set Color 13",image:"color12",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color13":{name:"Set Color 14",image:"color13",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color14":{name:"Set Color 15",image:"color14",description:JSON.stringify({fillPattern:-1},null,2)},
+    "color15":{name:"Set Color 16",image:"color15",description:JSON.stringify({fillPattern:-1},null,2)},
+    "custom1":{name:"Custom 1",image:"custom1",description: this.template("cloneAndMerge")},
+    "custom2":{name:"Custom 2",image:"custom2",description: this.template("link")},
+    "custom3":{name:"Custom 3",image:"custom3",description: this.template("clearContent")},
+    "custom4":{name:"Custom 4",image:"custom4",description: this.template("copy")},
+    "custom5":{name:"Custom 5",image:"custom5",description: this.template("addChildNote")},
+    "custom6":{name:"Custom 6",image:"custom6",description: this.template("showInFloatWindow")},
+    "custom7":{name:"Custom 7",image:"custom7",description: this.template("setContent")},
+    "custom8":{name:"Custom 8",image:"custom8",description: this.template("addComment")},
+    "custom9":{name:"Custom 9",image:"custom9",description: this.template("removeComment")},
+    "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
+    "edit":{name:"edit",image:"edit",description:"MN Editor"}
+  }
+}
+static getDefaultActionKeys() {
+  let actions = this.getActions()
+  return Object.keys(actions)
+}
+static save(key,value = undefined) {
+  if (value) {
+    NSUserDefaults.standardUserDefaults().setObjectForKey(value,key)
+  }else{
+    // showHUD(key)
+    switch (key) {
+      case "MNToolbar_windowState":
+        NSUserDefaults.standardUserDefaults().setObjectForKey(this.windowState,key)
+        break;
+      case "MNToolbar_dynamic":
+        NSUserDefaults.standardUserDefaults().setObjectForKey(this.dynamic,key)
+        break;
+      case "MNToolbar_action":
+        NSUserDefaults.standardUserDefaults().setObjectForKey(this.action,key)
+        break;
+      case "MNToolbar_actionConfig":
+        NSUserDefaults.standardUserDefaults().setObjectForKey(this.actions,key)
+        break;
+      case "MNToolbar_addonLogos":
+        NSUserDefaults.standardUserDefaults().setObjectForKey(this.addonLogos,key)
         break;
       default:
+        toolbarUtils.showHUD("Not supported")
         break;
     }
-    return JSON.stringify(config,null,2)
   }
-  static getActions() {
-    return {
-      "copy":{name:"Copy",image:"copyExcerptPic",description:"Copy"},
-      "searchInEudic":{name:"Search in Eudic",image:"searchInEudic",description:"Search in Eudic"},
-      "switchTitleorExcerpt":{name:"Switch title",image:"switchTitleorExcerpt",description:"Switch title"},
-      "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
-      "search":{name:"Search",image:"search",description:"Search"},
-      "bigbang":{name:"Bigbang",image:"bigbang",description:"Bigbang"},
-      "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
-      "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"},
-      "setting":{name:"Setting",image:"setting",description:"Setting"},
-      "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
-      "clearFormat":{name:"Clear Format",image:"clearFormat",description:"Clear Format"},
-      "color0":{name:"Set Color 1",image:"color0",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color1":{name:"Set Color 2",image:"color1",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color2":{name:"Set Color 3",image:"color2",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color3":{name:"Set Color 4",image:"color3",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color4":{name:"Set Color 5",image:"color4",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color5":{name:"Set Color 6",image:"color5",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color6":{name:"Set Color 7",image:"color6",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color7":{name:"Set Color 8",image:"color7",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color8":{name:"Set Color 9",image:"color8",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color9":{name:"Set Color 10",image:"color9",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color10":{name:"Set Color 11",image:"color10",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color11":{name:"Set Color 12",image:"color11",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color12":{name:"Set Color 13",image:"color12",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color13":{name:"Set Color 14",image:"color13",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color14":{name:"Set Color 15",image:"color14",description:JSON.stringify({fillPattern:-1},null,2)},
-      "color15":{name:"Set Color 16",image:"color15",description:JSON.stringify({fillPattern:-1},null,2)},
-      "custom1":{name:"Custom 1",image:"custom1",description: this.template("cloneAndMerge")},
-      "custom2":{name:"Custom 2",image:"custom2",description: this.template("link")},
-      "custom3":{name:"Custom 3",image:"custom3",description: this.template("clearContent")},
-      "custom4":{name:"Custom 4",image:"custom4",description: this.template("copy")},
-      "custom5":{name:"Custom 5",image:"custom5",description: this.template("addChildNote")},
-      "custom6":{name:"Custom 6",image:"custom6",description: this.template("showInFloatWindow")},
-      "custom7":{name:"Custom 7",image:"custom7",description: this.template("setContent")},
-      "custom8":{name:"Custom 8",image:"custom8",description: this.template("addComment")},
-      "custom9":{name:"Custom 9",image:"custom9",description: this.template("removeComment")},
-      "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
-      "edit":{name:"edit",image:"edit",description:"MN Editor"}
-    }
-  }
-  static getDefaultActionKeys() {
-    let actions = this.getActions()
-    return Object.keys(actions)
-  }
-  static save(key,value = undefined) {
-    if (value) {
-      NSUserDefaults.standardUserDefaults().setObjectForKey(value,key)
-    }else{
-      // showHUD(key)
-      switch (key) {
-        case "MNToolbar_windowState":
-          NSUserDefaults.standardUserDefaults().setObjectForKey(this.windowState,key)
-          break;
-        case "MNToolbar_dynamic":
-          NSUserDefaults.standardUserDefaults().setObjectForKey(this.dynamic,key)
-          break;
-        case "MNToolbar_action":
-          NSUserDefaults.standardUserDefaults().setObjectForKey(this.action,key)
-          break;
-        case "MNToolbar_actionConfig":
-          NSUserDefaults.standardUserDefaults().setObjectForKey(this.actions,key)
-          break;
-        case "MNToolbar_addonLogos":
-          NSUserDefaults.standardUserDefaults().setObjectForKey(this.addonLogos,key)
-          break;
-        default:
-          toolbarUtils.showHUD("Not supported")
-          break;
-      }
-    }
-    NSUserDefaults.standardUserDefaults().synchronize()
-  }
+  NSUserDefaults.standardUserDefaults().synchronize()
+}
 
-  static get(key) {
-    return NSUserDefaults.standardUserDefaults().objectForKey(key)
-  }
+static get(key) {
+  return NSUserDefaults.standardUserDefaults().objectForKey(key)
+}
 
-  static getByDefault(key,defaultValue) {
-    let value = NSUserDefaults.standardUserDefaults().objectForKey(key)
-    if (value === undefined) {
-      NSUserDefaults.standardUserDefaults().setObjectForKey(defaultValue,key)
-      return defaultValue
-    }
-    return value
+static getByDefault(key,defaultValue) {
+  let value = NSUserDefaults.standardUserDefaults().objectForKey(key)
+  if (value === undefined) {
+    NSUserDefaults.standardUserDefaults().setObjectForKey(defaultValue,key)
+    return defaultValue
   }
+  return value
+}
 
-  static remove(key) {
-    NSUserDefaults.standardUserDefaults().removeObjectForKey(key)
+static remove(key) {
+  NSUserDefaults.standardUserDefaults().removeObjectForKey(key)
+}
+static reset(){
+  this.action = this.getDefaultActionKeys()
+  this.actions = this.getActions()
+  this.save("MNToolbar_action")
+  this.save("MNToolbar_actionConfig")
+}
+static getDescription(index){
+  let actionName = toolbarConfig.action[index]
+  if (actionName in toolbarConfig.actions) {
+    return JSON.parse(toolbarConfig.actions[actionName].description)
+  }else{
+    return JSON.parse(toolbarConfig.getActions()[actionName].description)
   }
-  static reset(){
-    this.action = this.getDefaultActionKeys()
-    this.actions = this.getActions()
-    this.save("MNToolbar_action")
-    this.save("MNToolbar_actionConfig")
-  }
-  static getDescription(index){
-    let actionName = toolbarConfig.action[index]
-    if (actionName in toolbarConfig.actions) {
-      return JSON.parse(toolbarConfig.actions[actionName].description)
-    }else{
-      return JSON.parse(toolbarConfig.getActions()[actionName].description)
-    }
-  }
+}
 }
