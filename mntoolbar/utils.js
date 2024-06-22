@@ -802,66 +802,6 @@ class toolbarUtils {
       })
     })
   }
-  // 夏大鱼羊自定义函数
-
-  // 根据卡片的颜色合并特殊的卡片
-  /**
-   * 
-   * @param {MbBookNote|MNNote} currentNote 
-   * @param {string} commonColorTargetNoteId
-   * @param {string} specialColorTargetNoteId 
-   */
-  static cloneAndMergeDifferentForSpecialColor(currentNote, colorIndex, commonColorTargetNoteId,specialColorTargetNoteId) {
-    let commonColorTargetNote = MNNote.clone(commonColorTargetNoteId)
-    let specialColorTargetNote = MNNote.clone(specialColorTargetNoteId)
-    if (currentNote.colorIndex === colorIndex) {
-      currentNote.merge(specialColorTargetNote.note)
-    } else {
-      currentNote.merge(commonColorTargetNote.note)
-    }
-  }
-
-  // 将卡片变成非摘录版本
-  // 需求：https://github.com/xkwxdyy/mnTextHandler/discussions/3
-  /**
-    * 1. 复制卡片标题到剪切板
-    * 2. 去掉卡片标题
-    * 3. 生成卡片的兄弟卡片，标题为复制的内容
-    * 4. 将旧卡片合并到新的兄弟卡片中
-    */
-  /**
-    *
-    * @param {MbBookNote} parent
-    * @param {String} title
-    * @param {Number} colorIndex
-    */
-  static convertNoteToNonexcerptVersion(note) {
-    let config = {}
-    let newNote
-    let parent
-    // let newNoteList = []
-    MNUtil.undoGrouping(()=>{
-      // focusNotes.forEach(
-        // note=>{
-          config.title = note.noteTitle
-          config.content = ""
-          config.markdown = true
-          config.color = note.colorIndex
-          // 获取旧卡片的父卡片
-          parent = note.parentNote
-          // 创建新兄弟卡片，标题为旧卡片的标题
-          newNote = parent.createChildNote(config)
-          // parent.addChild(newnote)
-          // 清除旧卡片的标题
-          note.noteTitle = ""
-          // 将旧卡片合并到新卡片中
-          newNote.merge(note)
-          // newNoteList.push(newNote)
-        // }
-      // )
-    })
-    // return newNoteList
-  }
 }
 
 class toolbarConfig {
