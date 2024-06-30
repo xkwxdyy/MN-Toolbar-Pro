@@ -14,7 +14,11 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.isLoading = false;
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
-    self.buttonNumber = 9
+    self.buttonNumber = 20
+    if (self.dynamicWindow) {
+      self.buttonNumber = 9
+    }
+    // self.buttonNumber = 9
     self.mode = 0
     self.sideMode = ""
     self.moveDate = Date.now()
@@ -25,7 +29,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.view.layer.shadowColor = UIColor.colorWithWhiteAlpha(0.5, 1);
     self.view.layer.opacity = 1.0
     self.view.layer.cornerRadius = 5
-    self.view.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0.8)
+    self.view.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
     if (toolbarConfig.action.length == 27) {
       toolbarConfig.action = toolbarConfig.action.concat(["custom1","custom2","custom3","custom4","custom5","custom6","custom7","custom8","custom9"])
     }
@@ -40,19 +44,21 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
 
     // <<< search button <<<
     // >>> move button >>>
-    self.moveButton = UIButton.buttonWithType(0);
-    self.setButtonLayout(self.moveButton)
+    // self.moveButton = UIButton.buttonWithType(0);
+    // self.setButtonLayout(self.moveButton)
     // <<< move button <<<
     // self.imageModeButton.setTitleForState('🔍', 0);
     // self.tabButton      = UIButton.buttonWithType(0);
         // >>> screen button >>>
     self.screenButton = UIButton.buttonWithType(0);
     self.setButtonLayout(self.screenButton,"changeScreen:")
+    self.screenButton.layer.cornerRadius = 7;
+
     // let command = self.keyCommandWithInputModifierFlagsAction('d',1 << 0,'test:')
     // let command = UIKeyCommand.keyCommandWithInputModifierFlagsAction('d',1 << 0,'test:')
     // <<< screen button <<<
     self.moveGesture = new UIPanGestureRecognizer(self,"onMoveGesture:")
-    self.moveButton.addGestureRecognizer(self.moveGesture)
+    self.view.addGestureRecognizer(self.moveGesture)
     self.moveGesture.view.hidden = false
     // self.moveGesture.addTargetAction(self,"onMoveGesture:")
     // self.moveButton.addGestureRecognizer(self.moveGesture)
@@ -81,16 +87,16 @@ viewWillLayoutSubviews: function() {
     var xRight    = xLeft + 40
     var yTop      = viewFrame.y
     var yBottom   = yTop + viewFrame.height
-    self.moveButton.frame = {x: 0 ,y: 0,width: 40,height: 15};
+    // self.moveButton.frame = {x: 0 ,y: 0,width: 40,height: 15};
     self.screenButton.frame = {x: 0 ,y: yBottom-15,width: 40,height: 15};
 
     let initX = 0
-    let initY = 20
+    let initY = 0
     for (let index = 0; index < self.buttonNumber; index++) {
       initX = 0
       self["ColorButton"+index].frame = {  x: xLeft+initX,  y: initY,  width: 40,  height: 40,};
-      initY = initY+40
-      self["ColorButton"+index].hidden = (initY > yBottom)
+      initY = initY+45
+      self["ColorButton"+index].hidden = (initY > (yBottom+5))
     }
 
   },
@@ -263,6 +269,8 @@ try {
   copyAsMarkdownLink(button) {
     self.onClick = true
 try {
+  
+
     const nodes = MNNote.getFocusNotes()
 
     let text = ""
@@ -332,13 +340,13 @@ try {
           // 去除划重点留下的 ****
           note.noteTitle = text.replace(/\*\*(.*?)\*\*/g, "$1")
           note.excerptText = title
-        } else if (title == text) {
+        }else if (title == text) {
           // 如果摘录与标题相同，MN 只显示标题，此时我们必然想切换到摘录
           note.noteTitle = ""
         }
       })
     }
-    MNUtil.showHUD("标题转换完成")
+    // MNUtil.showHUD("标题转换完成")
     if (self.dynamicWindow) {
       self.hideAfterDelay()
     }
@@ -401,9 +409,13 @@ try {
   },
   edit: function (params) {
     let noteId = undefined
-    let foucsNote = MNNote.getFocusNote()
-    if (foucsNote) {
-      noteId = foucsNote.noteId
+    if (self.dynamicWindow && toolbarUtils.currentNoteId) {
+      noteId = toolbarUtils.currentNoteId
+    }else{
+      let foucsNote = MNNote.getFocusNote()
+      if (foucsNote) {
+        noteId = foucsNote.noteId
+      }
     }
     let studyFrame = MNUtil.studyView.bounds
     let beginFrame = self.view.frame
@@ -421,83 +433,13 @@ try {
       }
       MNUtil.postNotification("openInEditor",{noteId:noteId,beginFrame:beginFrame,endFrame:endFrame})
     }
-
-    // MNUtil.showHUD("Unavailable")
   },
-  ocr: async function (button) {
+  ocr: async function () {
     if (typeof ocrUtils === 'undefined') {
       MNUtil.showHUD("MN Toolbar: Please install 'MN OCR' first!")
       return
     }
-    let des = toolbarConfig.getDescription(button.index)
-try {
-    let foucsNote = MNNote.getFocusNote()
-    let imageData = MNUtil.getDocImage(true,true)
-    if (!imageData) {
-      imageData = MNNote.getImageFromNote(foucsNote)
-    }
-    if (!imageData) {
-      MNUtil.showHUD("No image found")
-      return
-    }
-    if (!imageData) {
-      return
-    }
-    self.currentTime = Date.now()
-    let res
-    switch (des.source) {
-      case "doc2x":
-        res = await ocrNetwork.doc2xOCR(imageData)
-        break
-      case "simpletex":
-        res = await ocrNetwork.simpleTexOCR(imageData)
-        break
-      default:
-        res = await ocrNetwork.OCR(imageData)
-        break
-    }
-    // MNUtil.copyJSON(res)
-    if (res) {
-      MNUtil.showHUD("Time usage: "+(Date.now()-self.currentTime)+" ms")
-      switch (des.target) {
-        case "comment":
-          if (foucsNote) {
-            MNUtil.undoGrouping(()=>{
-              foucsNote.appendMarkdownComment(res)
-              MNUtil.showHUD("Append to comment")
-            })
-          }else{
-            MNUtil.copy(res)
-          }
-          break;
-        case "clipboard":
-          MNUtil.copy(res)
-          MNUtil.showHUD("Save to clipboard")
-          break;
-        case "excerpt":
-          if (foucsNote) {
-            MNUtil.undoGrouping(()=>{
-              foucsNote.excerptText =  res
-              MNUtil.showHUD("Set to excerpt")
-            })
-            if (foucsNote.excerptPic && !foucsNote.textFirst) {
-              MNUtil.delay(0.5).then(()=>{
-                MNUtil.excuteCommand("EditTextMode")
-              })
-            }
-          }else{
-            MNUtil.copy(res)
-          }
-          break;
-        default:
-          break;
-      }
-    }
-      
-    } catch (error) {
-      MNUtil.showHUD(error)
-      MNUtil.copy(error)
-    }
+    toolbarUtils.ocr()
   },
   setting: function () {
     let self = getToolbarController()
@@ -551,7 +493,11 @@ try {
     button.doubleClick = true
   },
   onMoveGesture:function (gesture) {
+  try {
+    
+
     let self = getToolbarController()
+    // MNUtil.showHUD("move")
     self.onAnimate = false
     if (self.dynamicWindow) {
       // self.hideAfterDelay()
@@ -564,11 +510,7 @@ try {
     if ( (Date.now() - self.moveDate) > 100) {
       let translation = gesture.translationInView(MNUtil.studyView)
       let locationToBrowser = gesture.locationInView(self.view)
-      let locationToButton = gesture.locationInView(gesture.view)
-      let buttonFrame = self.moveButton.frame
-      let newY = locationToButton.y-translation.y 
-      let newX = locationToButton.x-translation.x
-      if (gesture.state !== 3 && (newY<buttonFrame.height+5 && newY>-5 && newX<buttonFrame.width+5 && newX>-5 && Math.abs(translation.y)<20 && Math.abs(translation.x)<20)) {
+      if (gesture.state === 1 ) {
         gesture.locationToBrowser = {x:locationToBrowser.x-translation.x,y:locationToBrowser.y-translation.y}
       }
     }
@@ -587,6 +529,7 @@ try {
       y = studyFrame.height-15
     }
     let x = location.x
+    self.sideMode = ""
     if (x<20) {
       x = 0
       self.sideMode = "left"
@@ -610,33 +553,51 @@ try {
     }
     if (self.custom) {
       self.customMode = "None"
-      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(self.lastFrame.height)}
+      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(self.lastFrame.height,self.buttonNumber)}
       self.currentFrame  = self.view.frame
     }else{
-      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(frame.height)}
+      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(frame.height,self.buttonNumber)}
       self.currentFrame  = self.view.frame
 
     }
     if (gesture.state === 3) {
+      // self.resi
       toolbarConfig.save("MNToolbar_windowState",{open:true,frame:self.view.frame})
       self.setToolbarLayout()
     }
     self.custom = false;
+  } catch (error) {
+    toolbarUtils.addErrorLog(error, "onMoveGesture")
+  }
   },
   onResizeGesture:function (gesture) {
     self.onClick = true
     self.custom = false;
+    self.onResize = true
     let baseframe = gesture.view.frame
     let locationInView = gesture.locationInView(gesture.view)
     let frame = self.view.frame
     let height = locationInView.y+baseframe.y+baseframe.height*0.5
-    height = toolbarUtils.checkHeight(height)
+    if (frame.y + height > MNUtil.studyView.bounds.height) {
+      height = MNUtil.studyView.bounds.height - frame.y
+    }
+    height = toolbarUtils.checkHeight(height,self.buttonNumber)
     self.view.frame = {x:frame.x,y:frame.y,width:40,height:height}
     self.currentFrame  = self.view.frame
-    if (self.dynamicWindow) {
-      toolbarConfig.save("MNToolbar_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
-    }else{
-      toolbarConfig.save("MNToolbar_windowState",{open:true,frame:self.view.frame})
+    if (gesture.state === 3) {
+      let buttomNumber = Math.floor(height/45)
+      // MNUtil.showHUD("message"+buttomNumbers)
+      self.view.bringSubviewToFront(self.screenButton)
+      let windowState = toolbarConfig.windowState
+      if (self.dynamicWindow) {
+        windowState.dynamicButton = buttomNumber
+        // toolbarConfig.save("MNToolbar_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
+      }else{
+        windowState.frame = self.view.frame
+        windowState.open = true
+      }
+      toolbarConfig.save("MNToolbar_windowState",windowState)
+      self.onResize = false
     }
   },
 });
@@ -663,12 +624,15 @@ toolbarController.prototype.setColorButtonLayout = function (button,targetAction
     button.autoresizingMask = (1 << 0 | 1 << 3);
     button.setTitleColorForState(UIColor.blackColor(),0);
     button.setTitleColorForState(toolbarConfig.highlightColor, 1);
-    button.backgroundColor = UIColor.colorWithHexString(color).colorWithAlphaComponent(0.8);
-    // button.layer.cornerRadius = 5;
+    button.backgroundColor = UIColor.colorWithHexString(color).colorWithAlphaComponent(0.9);
+    button.layer.cornerRadius = 10;
     button.layer.masksToBounds = true;
     if (targetAction) {
-      button.removeTargetActionForControlEvents(this, targetAction, 1 << 6)
-      button.addTargetActionForControlEvents(this, targetAction, 1 << 6);
+      //1，3，4按下就触发，不用抬起
+      //64按下再抬起
+      let number = 64
+      button.removeTargetActionForControlEvents(this, targetAction, number)
+      button.addTargetActionForControlEvents(this, targetAction, number);
       button.addTargetActionForControlEvents(this, "doubleClick:", 1 << 1);
     }
     this.view.addSubview(button);
@@ -680,7 +644,7 @@ toolbarController.prototype.setColorButtonLayout = function (button,targetAction
 toolbarController.prototype.show = async function (frame) {
   let preFrame = this.view.frame
   preFrame.width = 40
-  preFrame.height = toolbarUtils.checkHeight(preFrame.height)
+  preFrame.height = toolbarUtils.checkHeight(preFrame.height,this.buttonNumber)
   if (preFrame.x < 0) {
     preFrame.x = 0
   }
@@ -694,12 +658,12 @@ toolbarController.prototype.show = async function (frame) {
   this.view.layer.opacity = 0.2
   if (frame) {
     frame.width = 40
-    frame.height = toolbarUtils.checkHeight(frame.height)
+    frame.height = toolbarUtils.checkHeight(frame.height,this.buttonNumber)
     this.view.frame = frame
     this.currentFrame = frame
   }
   this.view.hidden = false
-  this.moveButton.hidden = true
+  // this.moveButton.hidden = true
   this.screenButton.hidden = true
   for (let index = 0; index < this.buttonNumber; index++) {
     this["ColorButton"+index].hidden = true
@@ -714,7 +678,7 @@ toolbarController.prototype.show = async function (frame) {
   }).then(()=>{
     try {
       this.view.layer.borderWidth = 0
-      this.moveButton.hidden = false
+      // this.moveButton.hidden = false
       this.screenButton.hidden = false
       let number = preFrame.height/40
       if (number > 9) {
@@ -769,7 +733,7 @@ toolbarController.prototype.hide = function (frame) {
   for (let index = 0; index < this.buttonNumber; index++) {
     this["ColorButton"+index].hidden = true
   }
-  this.moveButton.hidden = true
+  // this.moveButton.hidden = true
   this.screenButton.hidden = true
   // return
   // showHUD("frame:"+JSON.stringify(this.currentFrame))
@@ -831,6 +795,9 @@ try {
     if (this["ColorButton"+index]) {
     }else{
       this["ColorButton"+index] = UIButton.buttonWithType(0);
+      this["moveGesture"+index] = new UIPanGestureRecognizer(this,"onMoveGesture:")
+      this["ColorButton"+index].addGestureRecognizer(this["moveGesture"+index])
+      this["moveGesture"+index].view.hidden = false
     }
     this["ColorButton"+index].index = index
     if (actionName.includes("color")) {
@@ -878,15 +845,15 @@ toolbarController.prototype.setToolbarLayout = function () {
     var xRight    = xLeft + 40
     var yTop      = viewFrame.y
     var yBottom   = yTop + viewFrame.height
-    this.moveButton.frame = {x: 0 ,y: 0,width: 40,height: 15};
+    // this.moveButton.frame = {x: 0 ,y: 0,width: 40,height: 15};
     this.screenButton.frame = {x: 0 ,y: yBottom-15,width: 40,height: 15};
 
     let initX = 0
-    let initY = 20
+    let initY = 0
     for (let index = 0; index < this.buttonNumber; index++) {
       initX = 0
       this["ColorButton"+index].frame = {  x: xLeft+initX,  y: initY,  width: 40,  height: 40,};
-      initY = initY+40
+      initY = initY+45
       this["ColorButton"+index].hidden = (initY > yBottom)
     }
 }
@@ -900,27 +867,10 @@ toolbarController.prototype.customAction = async function (actionName) {
     }
     let des = JSON.parse(toolbarConfig.actions[actionName].description)
     let focusNote = MNNote.getFocusNote()
-    let focusNotes = MNNote.getFocusNotes()
     // MNUtil.showHUD("message"+(focusNote instanceof MNNote))
     let notebookid = focusNote ? focusNote.notebookId : undefined
     let title,content,color,config
-    let targetNoteId,parentNoteId,parentNoteUrl
-    let templateNoteId
-    let parentNote,focusNoteTitle
-    let parentNoteTitle = ""
-    let focusNoteType
-    let newTitle
-    let parentNoteIdIndex
-    let foundMatchingParentNote = false;
-    let focusNoteColorIndex = focusNote.note.colorIndex
-    let focusNoteComments,focusNoteCommentLength
-    let nonLinkNoteCommentsIndex
-    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：",true)
-    let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
-    let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
-    let keywordsHtmlCommentIndex = focusNote.getCommentIndex("关键词： ", true)
-    let testIndex
-    let ifParentNoteColorLightYellow
+    let targetNoteId
     switch (des.action) {
       case "cloneAndMerge":
       try {
@@ -928,7 +878,7 @@ toolbarController.prototype.customAction = async function (actionName) {
         targetNoteId= MNUtil.getNoteIdByURL(des.target)
         MNUtil.undoGrouping(()=>{
           try {
-            MNNote.getFocusNotes().forEach(focusNote=>{
+          MNNote.getFocusNotes().forEach(focusNote=>{
             toolbarUtils.cloneAndMerge(focusNote.note, targetNoteId)
           })
           } catch (error) {
@@ -938,6 +888,7 @@ toolbarController.prototype.customAction = async function (actionName) {
       } catch (error) {
         MNUtil.showHUD(error)
       }
+        break;
       case "cloneAsChildNote":
         MNUtil.showHUD("cloneAsChildNote")
         targetNoteId= MNUtil.getNoteIdByURL(des.target)
@@ -946,10 +897,6 @@ toolbarController.prototype.customAction = async function (actionName) {
             toolbarUtils.cloneAsChildNote(focusNote, targetNoteId)
           })
         })
-        break;
-
-      // 增加模板的层级，一般用于之前做好的知识库里，可能只有三层模板
-      case "addTopLayerTemplate":
         break;
       case "addChildNote":
         MNUtil.showHUD("addChildNote")
@@ -1213,12 +1160,19 @@ toolbarController.prototype.customAction = async function (actionName) {
             switch (des.target) {
               case "excerptText":
                 note.excerptText = mergedText
+                if ("markdown" in des) {
+                  note.excerptTextMarkdown = des.markdown
+                }
                 break;
               case "title":
                 note.noteTitle = mergedText
                 break;
               case "newComment":
-                note.appendMarkdownComment(mergedText)
+                if ("markdown" in des && des.markdown) {
+                  note.appendMarkdownComment(mergedText)
+                }else{
+                  note.appendTextComment(mergedText)
+                }
                 break;
               case "clipboard":
                 MNUtil.copy(mergedText)
@@ -1236,6 +1190,25 @@ toolbarController.prototype.customAction = async function (actionName) {
             })
             MNUtil.delay(1).then(()=>{
               toolbarUtils.sourceToRemove = []
+            })
+          })
+        }
+        if (Object.keys(toolbarUtils.commentToRemove).length) {
+          MNUtil.undoGrouping(()=>{
+            let commentInfos = Object.keys(toolbarUtils.commentToRemove)
+            commentInfos.forEach(noteId => {
+              let note = MNNote.new(noteId)
+              let sortedIndex = MNUtil.sort(toolbarUtils.commentToRemove[noteId],"decrement")
+              sortedIndex.forEach(commentIndex=>{
+                if (commentIndex < 0) {
+                  note.noteTitle = ""
+                }else{
+                  note.removeCommentByIndex(commentIndex)
+                }
+              })
+            })
+            MNUtil.delay(1).then(()=>{
+              toolbarUtils.commentToRemove = {}
             })
           })
         }
@@ -1293,229 +1266,7 @@ toolbarController.prototype.customAction = async function (actionName) {
         break;
       case "focus":
         toolbarUtils.focus(focusNote, des)
-        break;
-        case "cloneAndMergeDifferentForSpecialColor":
-          try {
-            // MNUtil.showHUD("cloneAndMergeDifferentForSpecialColor")
-            let commonColorTargetNoteId = MNUtil.getNoteIdByURL(des.commonColorTarget)
-            let specialColorTargetNoteId = MNUtil.getNoteIdByURL(des.specialColorTarget)
-            let colorIndex = des.colorIndex
-            MNUtil.undoGrouping(()=>{
-              try {
-                MNNote.getFocusNotes().forEach(focusNote=>{
-                  toolbarUtils.cloneAndMergeDifferentForSpecialColor(focusNote, colorIndex, commonColorTargetNoteId, specialColorTargetNoteId)
-                })
-              } catch (error) {
-                MNUtil.showHUD(error)
-              }
-            })
-          } catch (error) {
-            MNUtil.showHUD(error)
-          }
-          break;
-      // 夏大鱼羊定制函数
-      case "convertNoteToNonexcerptVersion":
-        MNUtil.showHUD("卡片转化为非摘录版本")
-        try {
-          MNUtil.undoGrouping(()=>{
-            focusNotes.forEach(focusNote=>{
-              if (focusNote.excerptText) {
-                toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
-              }
-            })
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
-      case "ifExceptVersion":
-        if (focusNote.excerptText) {
-          MNUtil.showHUD("摘录版本")
-        } else {
-          MNUtil.showHUD("非摘录版本")
-        }
-        break;
-      case "showColorIndex":
-        MNUtil.showHUD("ColorIndex: " + focusNote.note.colorIndex)
-        break;
-      case "showCommentType":
-        let focusNoteComments = focusNote.comments
-        let chosenComment = focusNoteComments[des.index-1]
-        MNUtil.showHUD("CommentType: " + chosenComment.type)
-        break;
-      case "changeLevelsInTemplateNoteComments": // 将模板卡片的“层级”降级
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.changeLevelsInTemplateNoteComments(focusNotes)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
-      case "convetHtmlToMarkdown":
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.convetHtmlToMarkdown(focusNote)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
-      case "addThoughts":
-        MNUtil.undoGrouping(()=>{
-          try {
-            /* 确定卡片类型 */
-            switch (focusNoteColorIndex) {
-              case 2: // 淡蓝色：定义类
-                focusNoteType = "definition"
-                break;
-              case 3: // 淡粉色：反例
-                focusNoteType = "antiexample"
-                break;
-              case 9: // 深绿色：思想方法
-                focusNoteType = "method"
-                break;
-              case 10: // 深蓝色：定理命题
-                focusNoteType = "theorem"
-                break;
-              case 15: // 淡紫色：例子
-                focusNoteType = "example"
-                break;
-            }
-
-            toolbarUtils.addThoughts(focusNote, focusNoteType)
-          } catch (error) {
-            MNUtil.showHUD(error)
-          }
-        })
-        break;
-      case "clearContentKeepText":
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.clearContentKeepText(focusNote)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
-      case "clearContentKeepExcerptAndImage":
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.clearContentKeepExcerptAndImage(focusNote)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
-      case "makeCards":
-        try {
-          // MNUtil.showHUD("制卡")
-          MNUtil.undoGrouping(()=>{
-            focusNotes.forEach(focusNote=>{
-              /* 初始化 */
-              let parentNoteType
-              let ifParentNoteColorLightYellow = false
-
-              /* 确定卡片类型 */
-              switch (focusNoteColorIndex) {
-                case 2: // 淡蓝色：定义类
-                  focusNoteType = "definition"
-                  break;
-                case 3: // 淡粉色：反例
-                  focusNoteType = "antiexample"
-                  break;
-                case 9: // 深绿色：思想方法
-                  focusNoteType = "method"
-                  break;
-                case 10: // 深蓝色：定理命题
-                  focusNoteType = "theorem"
-                  break;
-                case 15: // 淡紫色：例子
-                  focusNoteType = "example"
-                  break;
-              }
-
-              /* 预处理 */
-              /* 只对淡蓝色、淡粉色、深绿色、深蓝色、淡紫色的卡片进行制卡 */
-              if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
-                /* 先将卡变成非摘录版本 */
-                // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
-                if (focusNote.excerptText) {
-                  toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
-                  // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就失焦了（因为被合并到其它卡片了）
-                  // 所以下面的代码不会执行，这就产生了一个效果：
-                  // 点击第一次：将摘录版本变成非摘录版本
-                  // 点击第二次：开始制卡
-                  // 误打误撞产生最佳效果了属于是
-                }
-
-                /* 检测父卡片的存在和颜色 */
-                parentNote = focusNote.parentNote
-                if (parentNote) {
-                  // 有父节点
-                  // 检测父卡片是否是淡黄色的，不是的话获取父卡片的父卡片，直到是淡黄色为止，获取第一次出现的淡黄色的父卡片作为 parentNote
-                  while (parentNote) {
-                    if (parentNote.colorIndex == 0) {
-                      ifParentNoteColorLightYellow = true
-                      break
-                    }
-                    parentNote = parentNote.parentNote
-                  }
-                  parentNoteTitle = parentNote.noteTitle
-                  // 获取父卡片的 URL，用来判断是否与卡片进行链接
-                  parentNoteId = parentNote.noteId
-                  parentNoteUrl = "marginnote4app://note/" + parentNoteId
-
-                  if (ifParentNoteColorLightYellow == false) {
-                    // 有父卡片，但所有父卡片都不是淡黄色
-                    parentNoteType = "notLightYellow"
-                    // MNUtil.showHUD(parentNoteType)
-                  } else {
-                    // 有淡黄色的父卡片
-                    parentNoteType = "lightYellow"
-                    // MNUtil.showHUD(parentNoteType)
-                  }
-                } else {
-                  // 没有父卡片
-                  parentNoteType = "none"
-                  // MNUtil.showHUD(parentNoteType)
-                }
-              } 
-              // else {
-              //   MNUtil.showHUD("不支持对此颜色的卡片进行制卡！")
-              //   return // 使用 return 来提前结束函数, 避免了在内部函数中使用 break 导致的语法错误。
-              // }
-
-              /* 开始制卡 */
-              /* 合并第一层模板 */
-              toolbarUtils.makeCardsAuxFirstLayerTemplate(focusNote, focusNoteType)
-              /* 与父卡片的链接 */
-              toolbarUtils.makeCardsAuxLinkToParentNote(focusNote, parentNote, parentNoteTitle, parentNoteId)
-              /* 修改卡片前缀 */
-              toolbarUtils.makeCardsAuxChangefocusNotePrefix(focusNote, parentNoteTitle, focusNoteColorIndex)
-              /* 合并第二层模板 */
-              toolbarUtils.makeCardsAuxSecondLayerTemplate(focusNote, focusNoteType,focusNoteColorIndex)
-
-              // bug：先应用再证明时，无反应
-              /* 移动“应用：”和链接部分到最下方 */
-              toolbarUtils.makeCardsAuxMoveDownApplicationsComments(focusNote)
-              /* 
-                移动“证明：”到最上方
-                但要注意
-                - 反例类型的是“反例及证明：”
-                - 思想方法类型的是“原理：”
-              */
-              try {
-                toolbarUtils.makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType)
-              } catch (error) {
-                MNUtil.showHUD(error)
-              }
-            })
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
+        break 
       default:
         MNUtil.showHUD("Not supported yet...")
         break;
