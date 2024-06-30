@@ -8,13 +8,11 @@ class toolbarUtils {
   static version
   static currentNoteId
   static currentSelection
-  static isSubscribe = false
   /**
    * @type {MNNote[]}
    * @static
    */
   static sourceToRemove = []
-  static commentToRemove = {}
 
   static init(){
     this.app = Application.sharedInstance()
@@ -24,9 +22,6 @@ class toolbarUtils {
   }
   static showHUD(message,duration=2) {
     this.app.showHUD(message,this.focusWindow,2)
-  }
-  static refreshSubscriptionStatus(){
-    this.isSubscribe = this.checkSubscribe(false,false,true)
   }
 
   static appVersion() {
@@ -231,11 +226,6 @@ class toolbarUtils {
     if (!regParts) throw ""
     return new RegExp(regParts[1], regParts[2])
   }
-  /**
-   * 
-   * @param {*} range 
-   * @returns {MNNote[]}
-   */
   static getNotesByRange(range){
     if (range === undefined) {
       return [MNNote.getFocusNote()]
@@ -373,22 +363,9 @@ class toolbarUtils {
         break;
     }
   }
-  /**
-   * 
-   * @param {MNNote} note 
-   * @param {*} des 
-   * @returns 
-   */
   static getMergedText(note,des){
     let textList = []
     des.source.map(text=>{
-      if (text.includes("{{title}}") && des.removeSource) {
-        if (note.noteId in toolbarUtils.commentToRemove) {
-          toolbarUtils.commentToRemove[note.noteId].push(-1)
-        }else{
-          toolbarUtils.commentToRemove[note.noteId] = [-1]
-        }
-      }
       if (text.includes("{{tags}}")) {
         note.tags.map(tag=>{
           textList.push(text.replace('{{tags}}',tag))
@@ -396,31 +373,17 @@ class toolbarUtils {
         return
       }
       if (text.includes("{{textComments}}")) {
-        note.comments.map((comment,index)=>{
+        note.comments.map(comment=>{
           if (comment.type === "TextNote" && !/^marginnote\dapp:\/\/note\//.test(comment.text) && !comment.text.startsWith("#") ) {
-            textList.push(text.replace('{{textComments}}',(des.trim ? comment.text.trim(): comment.text)))
-            if (des.removeSource) {
-              if (note.noteId in toolbarUtils.commentToRemove) {
-                toolbarUtils.commentToRemove[note.noteId].push(index)
-              }else{
-                toolbarUtils.commentToRemove[note.noteId] = [index]
-              }
-            }
+            textList.push(text.replace('{{textComments}}',comment.text))
           }
         })
         return
       }
       if (text.includes("{{htmlComments}}")) {
-        note.comments.map((comment,index)=>{
+        note.comments.map(comment=>{
           if (comment.type === "HtmlNote") {
-            textList.push(text.replace('{{htmlComments}}',(des.trim ? comment.text.trim(): comment.text)))
-            if (des.removeSource) {
-              if (note.noteId in toolbarUtils.commentToRemove) {
-                toolbarUtils.commentToRemove[note.noteId].push(index)
-              }else{
-                toolbarUtils.commentToRemove[note.noteId] = [index]
-              }
-            }
+            textList.push(text.replace('{{htmlComments}}',comment.text))
           }
         })
         return
@@ -443,20 +406,10 @@ class toolbarUtils {
         // })
         return
       }
-
       textList.push(toolbarUtils.detectAndReplaceWithNote(text,note)) 
     })
-    if (des.format) {
-      textList = textList.map((text,index)=>{
-        return des.format.replace("{{element}}",text).replace("{{index}}",index+1)
-      })
-    }
     let join = des.join ?? ""
     let mergedText = textList.join(join)
-    if (des.replace) {
-      let ptt = new RegExp(des.replace[0], "g")
-      mergedText = mergedText.replace(ptt,des.replace[1])
-    }
     return mergedText
   }
   static replacVar(text,varInfo) {
@@ -488,19 +441,13 @@ class toolbarUtils {
     let config = this.getVarInfoWithNote(text,note)
     return this.replacVar(text,config)
   }
-  static checkHeight(height,maxButtons = 9){
-    if (height > 420 && !this.checkSubscribe(false,false,true)) {
-      return 420
-    }
-    // let maxNumber = this.isSubscribe?maxButtons:9
-    let maxHeights = 45*maxButtons+15
-    if (height > maxHeights) {
-      return maxHeights
-    }else if(height < 60){
-      return 60
+  static checkHeight(height){
+    if (height > 400) {
+      return 400
+    }else if(height < 80){
+      return 80
     }else{
-      let newHeight = 45*(Math.floor(height/45))+15
-      return newHeight
+      return height
     }
   }
   static addErrorLog(error,source,info){
@@ -512,159 +459,116 @@ class toolbarUtils {
     }
     MNUtil.copyJSON(this.errorLog)
   }
+  // 定义一个静态方法 removeComment，接受一个名为 des 的参数
   static removeComment(des){
-    let focusNotes = MNNote.getFocusNotes()
+    // 获取焦点笔记列表
+    let focusNotes = MNNote.getFocusNotes();
+
+    // 如果 des 包含 find 属性
     if (des.find) {
-      let condition  = des.find
-      MNUtil.undoGrouping(()=>{
-        focusNotes.forEach(note=>{
-          let indices = note.getCommentIndicesByCondition(condition)
-          if (!indices.length) {
-            MNUtil.showHUD("No match")
-            return
-          }
-          if (des.multi) {
-            note.removeCommentsByIndices(indices)
-          }else{
-            indices = MNUtil.sort(indices,"increment")
-            note.removeCommentByIndex(indices[0])
-          }
-        })
-      })
-      return
-    }
-    if (des.type) {
-      let type = Array.isArray(des.type) ? des.type : [des.type]
-      MNUtil.undoGrouping(()=>{
-        focusNotes.forEach(note=>{
-          if (des.multi) {
-            let commentsToRemove = []
-            note.comments.forEach((comment,index)=>{
-              if (type.includes(comment.type)) {
-                commentsToRemove.push(index)
-              }
-            })
-            if (!commentsToRemove.length) {
-              MNUtil.showHUD("No match")
-              return
-            }
-            note.removeCommentsByIndices(commentsToRemove)
-          }else{
-            let index = note.comments.findIndex(comment=>type.includes(comment.type))
-            if (index < 0) {
-              MNUtil.showHUD("No match")
-              return
-            }
-            note.removeCommentByIndex(index)
-          }
-        })
-      })
-      return
-    }
-    if (des.multi) {
-      let commentIndices = Array.isArray(des.index)? des.index : [des.index]
-      commentIndices = MNUtil.sort(commentIndices,"decrement")
-      // MNUtil.copyJSON(commentIndices)
-      if (!commentIndices.length) {
-        MNUtil.showHUD("No match")
-        return
-      }
-      MNUtil.undoGrouping(()=>{
-        focusNotes.forEach(note => {
-          note.removeCommentsByIndices(commentIndices)
-        })
-      })
-    }else{
-      let commentIndex = des.index+1
-      if (commentIndex) {
-        MNUtil.undoGrouping(()=>{
-          focusNotes.forEach(note => {
-            let commentLength = note.comments.length
-            if (commentIndex > commentLength) {
-              commentIndex = commentLength
-            }
-            note.removeCommentByIndex(commentIndex-1)
-          })
-        })
-      }
-    }
-  
-  }
-  static async ocr(){
-    if (typeof ocrUtils === 'undefined') {
-      MNUtil.showHUD("MN Toolbar: Please install 'MN OCR' first!")
-      return
-    }
-try {
-    let des = toolbarConfig.getDescriptionByName("ocr")
-    let foucsNote = MNNote.getFocusNote()
-    let imageData = MNUtil.getDocImage(true,true)
-    if (!imageData) {
-      imageData = MNNote.getImageFromNote(foucsNote)
-    }
-    if (!imageData) {
-      MNUtil.showHUD("No image found")
-      return
-    }
-    let buffer = des.buffer ?? true
-    // let res
-    let res = await ocrNetwork.OCR(imageData,des.source,buffer)
-    // switch (des.source) {
-    //   case "doc2x":
-    //     res = await ocrNetwork.doc2xOCR(imageData)
-    //     break
-    //   case "simpletex":
-    //     res = await ocrNetwork.simpleTexOCR(imageData)
-    //     break
-    //   default:
-    //     res = await ocrNetwork.OCR(imageData)
-    //     break
-    // }
-    if (res) {
-      switch (des.target) {
-        case "comment":
-          if (foucsNote) {
-            MNUtil.undoGrouping(()=>{
-              foucsNote.appendMarkdownComment(res)
-              MNUtil.showHUD("Append to comment")
-            })
-          }else{
-            MNUtil.copy(res)
-          }
-          break;
-        case "clipboard":
-          MNUtil.copy(res)
-          MNUtil.showHUD("Save to clipboard")
-          break;
-        case "excerpt":
-          if (foucsNote) {
-            MNUtil.undoGrouping(()=>{
-              foucsNote.excerptText =  res
-              foucsNote.excerptTextMarkdown = true
-              MNUtil.showHUD("Set to excerpt")
-            })
-            if (foucsNote.excerptPic && !foucsNote.textFirst) {
-              MNUtil.delay(0.5).then(()=>{
-                MNUtil.excuteCommand("EditTextMode")
-              })
-            }
-          }else{
-            MNUtil.copy(res)
-          }
-          break;
-        case "editor":
-          MNUtil.postNotification("editorInsert",{contents:[{type:"text",content:res}]})
-          break;
-        default:
-          break;
-      }
-    }
+      // 提取查找条件
+      let condition = des.find;
       
-    } catch (error) {
-      this.addErrorLog(error, "ocr")
+      // 使用 MNUtil.undoGrouping 包裹代码块，支持撤销操作
+      MNUtil.undoGrouping(() => {
+        // 遍历焦点笔记
+        focusNotes.forEach(note => {
+          // 获取满足条件的评论索引
+          let indices = note.getCommentIndicesByCondition(condition);
+          
+          // 如果没有匹配的索引
+          if (!indices.length) {
+            MNUtil.showHUD("No match"); // 显示无匹配信息
+            return; // 终止当前笔记遍历
+          }
+          
+          // 根据 multi 标志执行不同操作
+          if (des.multi) {
+            note.removeCommentsByIndices(indices); // 移除多个评论
+          } else {
+            indices = MNUtil.sort(indices, "increment"); // 对索引进行递增排序
+            note.removeCommentByIndex(indices[0]); // 移除第一个评论
+          }
+        });
+      });
+      return; // 结束方法执行
     }
-  
+
+    // 如果 des 包含 type 属性
+    if (des.type) {
+      // 提取评论类型
+      let type = Array.isArray(des.type) ? des.type : [des.type];
+      
+      // 使用 MNUtil.undoGrouping 包裹代码块，支持撤销操作
+      MNUtil.undoGrouping(() => {
+        // 遍历焦点笔记
+        focusNotes.forEach(note => {
+          // 根据 multi 标志执行不同操作
+          if (des.multi) {
+            let commentsToRemove = [];
+            // 遍历评论，找到需要移除的评论索引
+            note.comments.forEach((comment, index) => {
+              if (type.includes(comment.type)) {
+                commentsToRemove.push(index);
+              }
+            });
+            // 如果没有要移除的评论
+            if (!commentsToRemove.length) {
+              MNUtil.showHUD("No match"); // 显示无匹配信息
+              return; // 终止当前笔记遍历
+            }
+            note.removeCommentsByIndices(commentsToRemove); // 移除多个评论
+          } else {
+            let index = note.comments.findIndex(comment => type.includes(comment.type));
+            // 如果没有找到需要移除的评论
+            if (index < 0) {
+              MNUtil.showHUD("No match"); // 显示无匹配信息
+              return; // 终止当前笔记遍历
+            }
+            note.removeCommentByIndex(index); // 移除单个评论
+          }
+        });
+      });
+      return; // 结束方法执行
+    }
+
+    // 如果 des 包含 multi 属性
+    if (des.multi) {
+      // 提取评论索引数组
+      let commentIndices = Array.isArray(des.index) ? des.index : [des.index];
+      commentIndices = MNUtil.sort(commentIndices, "decrement"); // 对索引进行递减排序
+      
+      // 如果没有评论索引
+      if (!commentIndices.length) {
+        MNUtil.showHUD("No match"); // 显示无匹配信息
+        return; // 结束方法执行
+      }
+      
+      // 使用 MNUtil.undoGrouping 包裹代码块，支持撤销操作
+      MNUtil.undoGrouping(() => {
+        // 遍历焦点笔记
+        focusNotes.forEach(note => {
+          note.removeCommentsByIndices(commentIndices); // 移除多个评论
+        });
+      });
+    } else {
+      let commentIndex = des.index + 1; // 计算评论索引编号
+      if (commentIndex) {
+        // 使用 MNUtil.undoGrouping 包裹代码块，支持撤销操作
+        MNUtil.undoGrouping(() => {
+          // 遍历焦点笔记
+          focusNotes.forEach(note => {
+            let commentLength = note.comments.length;
+            if (commentIndex > commentLength) {
+              commentIndex = commentLength;
+            }
+            note.removeCommentByIndex(commentIndex - 1); // 移除单个评论
+          });
+        });
+      }
+    }
   }
+
   static moveComment(des){
     let focusNotes = MNNote.getFocusNotes()
     let commentIndex
@@ -838,19 +742,16 @@ try {
 `
   }
   /**
-   * count为true代表本次check会消耗一次免费额度（如果当天未订阅），如果为false则表示只要当天免费额度没用完，check就会返回true
-   * 开启ignoreFree则代表本次check只会看是否订阅，不管是否还有免费额度
+   * 
    * @returns {Boolean}
    */
-  static checkSubscribe(count = true, msg = true,ignoreFree = false){
+  static checkSubscribe(count = true){
     // return true
     if (typeof subscriptionConfig !== 'undefined') {
-      let res = subscriptionConfig.checkSubscribed(count,ignoreFree,msg)
+      let res = subscriptionConfig.checkSubscribed(count)
       return res
     }else{
-      if (msg) {
-        this.showHUD("Please install 'MN Subscription' first!")
-      }
+      this.showHUD("Please install 'MN Subscription' first!")
       return false
     }
   }
@@ -933,6 +834,485 @@ try {
       })
     })
   }
+  // 夏大鱼羊自定义函数
+
+  // 根据卡片的颜色合并特殊的卡片
+  /**
+   * 
+   * @param {MbBookNote|MNNote} currentNote 
+   * @param {string} commonColorTargetNoteId
+   * @param {string} specialColorTargetNoteId 
+   */
+  static cloneAndMergeDifferentForSpecialColor(currentNote, colorIndex, commonColorTargetNoteId,specialColorTargetNoteId) {
+    let commonColorTargetNote = MNNote.clone(commonColorTargetNoteId)
+    let specialColorTargetNote = MNNote.clone(specialColorTargetNoteId)
+    if (currentNote.colorIndex === colorIndex) {
+      currentNote.merge(specialColorTargetNote.note)
+    } else {
+      currentNote.merge(commonColorTargetNote.note)
+    }
+  }
+
+  // 将卡片变成非摘录版本
+  // 需求：https://github.com/xkwxdyy/mnTextHandler/discussions/3
+  /**
+    * 1. 复制卡片标题到剪切板
+    * 2. 去掉卡片标题
+    * 3. 生成卡片的兄弟卡片，标题为复制的内容
+    * 4. 将旧卡片合并到新的兄弟卡片中
+    */
+  /**
+    *
+    * @param {MbBookNote} parent
+    * @param {String} title
+    * @param {Number} colorIndex
+    */
+  static convertNoteToNonexcerptVersion(note) {
+    let config = {}
+    let newNote
+    let parent
+    // let newNoteList = []
+    MNUtil.undoGrouping(()=>{
+      // focusNotes.forEach(
+        // note=>{
+          config.title = note.noteTitle
+          config.content = ""
+          config.markdown = true
+          config.color = note.colorIndex
+          // 获取旧卡片的父卡片
+          parent = note.parentNote
+          // 创建新兄弟卡片，标题为旧卡片的标题
+          newNote = parent.createChildNote(config)
+          // parent.addChild(newnote)
+          // 清除旧卡片的标题
+          note.noteTitle = ""
+          // 将旧卡片合并到新卡片中
+          newNote.merge(note)
+          // newNoteList.push(newNote)
+        // }
+      // )
+    })
+    // return newNoteList
+  }
+
+  /* makeCards 的 aux 函数 */
+  // 合并第一层模板
+  static makeCardsAuxFirstLayerTemplate(focusNote, focusNoteType) {
+    let templateNoteId
+    let testIndex = focusNote.getCommentIndex("相关链接：", true)
+    // MNUtil.showHUD(testIndex)
+    if (testIndex == -1) { // 每种模板卡里都有“相关链接：”
+      switch (focusNoteType) {
+        case "definition":
+          // 71AAED0A-5972-4F72-8282-B558879EFD96
+          // templateNoteId= getNoteIdByURL("71AAED0A-5972-4F72-8282-B558879EFD96")
+          templateNoteId = "71AAED0A-5972-4F72-8282-B558879EFD96"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "theorem":
+          // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
+          // templateNoteId = getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
+          templateNoteId = "F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "example":
+          // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
+          // templateNoteId = getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
+          templateNoteId = "F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "antiexample":
+          // DCD8A253-C991-4798-9546-4B36D19CD260
+          // templateNoteId = getNoteIdByURL("DCD8A253-C991-4798-9546-4B36D19CD260")
+          templateNoteId = "DCD8A253-C991-4798-9546-4B36D19CD260"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "method":
+          // F3F263B4-B7C8-4514-922A-35180D4F60CF
+          // templateNoteId = getNoteIdByURL("F3F263B4-B7C8-4514-922A-35180D4F60CF")
+          templateNoteId = "F3F263B4-B7C8-4514-922A-35180D4F60CF"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+      }
+    }
+  }
+  static makeCardsAuxSecondLayerTemplate(focusNote, focusNoteType,focusNoteColorIndex) {
+    let templateNoteId
+    let testIndexI = focusNote.getCommentIndex("相关概念：", true)
+    let testIndexII = focusNote.getCommentIndex("应用：", true)
+    let testIndex = Math.max(testIndexI, testIndexII)
+    if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
+      if (testIndex == -1){
+        if (focusNoteType === "definition") {
+          templateNoteId = "E7854116-C137-4E17-B194-78052C984D2A"
+          cloneAndMerge(focusNote, templateNoteId)
+        } else {
+          templateNoteId = "0B488930-0447-4DD0-8236-C27621BEA8F2"
+          cloneAndMerge(focusNote, templateNoteId)
+        }
+      }
+    }
+  }
+  // 修改卡片前缀
+  static makeCardsAuxChangefocusNotePrefix(focusNote, parentNoteTitle, focusNoteColorIndex) {
+    let newTitle
+    // 有淡黄色的父卡片时，parentNoteTitle 非空（只考虑父卡片都有标题的情况）
+    if (parentNoteTitle) {
+      // MNUtil.showHUD(parentNoteTitle)
+      let focusNoteTitle = focusNote.noteTitle
+      let matchContentFromParentNoteTitle = parentNoteTitle.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
+      // let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.+)”：“(.+)”\s*相关(.+)/g)
+      // if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
+      //   MNUtil.showHUD("匹配成功");
+      // } else {
+      //   MNUtil.showHUD("匹配失败");
+      // }
+
+      // MNUtil.showHUD(matchContentFromParentNoteTitle)
+      // 检查【xxx】格式，并捕获xxx内容
+      let matchResult = focusNoteTitle.match(/^【([^】]*)/);
+      // MNUtil.showHUD(matchResult)
+      if (matchResult) { // 如果有匹配结果
+        // MNUtil.showHUD("匹配！")
+        let capturedText = matchResult[1];
+        // 检查是否包含 capturedText 并且是否需要补上】
+        if (capturedText.includes(matchContentFromParentNoteTitle) && !focusNoteTitle.includes("】")) {
+          focusNote.noteTitle = focusNoteTitle + "】";
+        } else if (!capturedText.includes(matchContentFromParentNoteTitle)) {
+          // 如果不包含 capturedText，替换原有【】内容
+          if (focusNoteColorIndex == 2) {
+            // 淡蓝色（定义类）的要在【】后加 “; ”
+            newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】; ");
+          } else {
+            newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】");
+          }
+          focusNote.noteTitle = newTitle;
+        }
+      } else { // 如果标题不是以【xxx开头
+        // MNUtil.showHUD("不匹配！")
+        if (focusNoteColorIndex == 2) {
+          // 淡蓝色（定义类）的要在【】后加 “; ”
+          newTitle = "【" + matchContentFromParentNoteTitle + "】; " + focusNoteTitle;
+        } else {
+          newTitle = "【" + matchContentFromParentNoteTitle + "】" + focusNoteTitle;
+        }
+        focusNote.noteTitle = newTitle;
+      }
+    }
+  }
+  static makeCardsAuxLinkToParentNote(focusNote, parentNote, parentNoteTitle, parentNoteId) {
+    /*
+      归类型的淡黄色卡片：双向链接
+      非归类型的淡黄色卡片：单向链接
+      其它卡片：不链接
+
+      要注意防止第二次链接
+    */
+    let parentNoteOldLinkIndex
+    let parentNoteNewLinkIndex
+    let linkHtmlCommentIndex
+    if (!focusNote.excerptText) { // 非摘录版本才开始链接
+      if (parentNoteTitle) { // 有 parentNoteTitle 说明是淡黄色卡片
+        let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.+)”：“(.+)”\s*相关(.+)/g)
+        if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
+          // 归类型的淡黄色卡片
+          let parentNoteOldUrl = "marginnote3app://note/" + parentNoteId
+          let parentNoteNewUrl = "marginnote4app://note/" + parentNoteId
+          parentNoteOldLinkIndex = focusNote.getCommentIndex(parentNoteOldUrl)
+          parentNoteNewLinkIndex = focusNote.getCommentIndex(parentNoteNewUrl)
+          linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：",true)
+          if ((parentNoteOldLinkIndex == -1) && (parentNoteNewLinkIndex == -1)) { // 防止第二次链接
+            parentNote.appendNoteLink(focusNote, "Both")
+            focusNote.moveComment(focusNote.note.comments.length-1, linkHtmlCommentIndex+1)  // 放在“相关链接：”下面
+          }
+        } else {
+          // 非归类型的淡黄色卡片
+          parentNoteOldLinkIndex = parentNote.getCommentIndex("marginnote3app://note/" + focusNote.noteId)
+          parentNoteNewLinkIndex = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+          if ((parentNoteOldLinkIndex == -1) && (parentNoteNewLinkIndex == -1)) { // 防止第二次链接
+            parentNote.appendNoteLink(focusNote, "To")
+          }
+        }
+      }
+    }
+  }
+
+  static makeCardsAuxMoveDownApplicationsComments(focusNote) {
+    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：",true)
+    let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+    let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
+    if (applicationHtmlCommentIndex !== -1) { // 存在“应用：”时进行处理
+      let focusNoteComments = focusNote.note.comments
+      let focusNoteCommentLength = focusNote.note.comments.length
+      let applicationsContentsIndex = []
+      applicationsContentsIndex.push(applicationHtmlCommentIndex)
+      let continuousLink = true
+      if (applicationHtmlCommentIndex !== focusNoteComments.length-1) { // “应用：”不是最后一个评论时进行处理
+        focusNoteComments.forEach((comment, index) => {
+          if (index > applicationHtmlCommentIndex) {
+            if (continuousLink) {
+              if (comment.type == "PaintNote") {  //  PaintNote 的 text 是 undefined，必须加判断，否则报错
+                continuousLink = false
+              } else {
+                if (comment.text.includes("marginnote4app") || comment.text.includes("marginnote3app")) {
+                  // MNUtil.showHUD("有链接！")
+                  applicationsContentsIndex.push(index)
+                } else {
+                  // MNUtil.showHUD("没有链接！")
+                  continuousLink = false
+                }
+              }
+            }
+          }
+        })
+      }
+      // MNUtil.showHUD(applicationsContentsIndex)
+      // if (focusNoteComments[proofHtmlCommentIndex+1].type !== "HtmlNote" || (applicationHtmlCommentIndex < proofHtmlCommentIndex)) {  // 有证明内容，或者是“应用：”在“证明：”前面的，才移动“应用：”
+      if ((applicationHtmlCommentIndex < proofHtmlCommentIndex) || (applicationHtmlCommentIndex < linkHtmlCommentIndex)) {  // “应用：”在“证明：”前面或在 “相关链接：”前面，才移动“应用：”
+        applicationsContentsIndex.forEach(
+          index => {
+            // 注意！用一次 moveComment 之后，原来的 index 就会减一
+            // 所以不能写成 focusNote.moveComment(index, focusNoteCommentLength-1)
+            focusNote.moveComment(applicationHtmlCommentIndex, focusNoteCommentLength-1)
+          }
+        )
+      }
+    }
+  }
+
+  // 问题所在：应用部分先往下移动了
+  static makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType) {
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let nonLinkNoteCommentsIndex = []
+    let proofHtmlCommentIndex
+    // let afterApplicationHtmlContinuousLink = true
+    switch (focusNoteType) {
+      case "method":
+        proofHtmlCommentIndex= focusNote.getCommentIndex("原理：", true)
+        break;
+      case "antiexample":
+        proofHtmlCommentIndex= focusNote.getCommentIndex("反例及证明：", true)
+        break;
+      default:
+        proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+        break;
+    }
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
+    // let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
+    // if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") { // 若“证明：”下面是 HtmlNote，则说明没有证明内容，就需要移动“证明：”
+      // 证明内容要么在最上方，要么在最下方，判断标准为“应用：”及链接后面有没有内容
+      // 要注意的是链接的判断要和证明内容的链接判断区分开，不能被证明内容的链接判断干扰
+      focusNoteComments.forEach((comment, index) => {
+        // if (comment.type == "PaintNote") {
+        //   MNUtil.showHUD("手写！")
+        // } else {
+        //   MNUtil.showHUD("不是手写！")
+        // }
+        if (index > applicationHtmlCommentIndex) {
+          // MNUtil.showHUD(index + ">" + applicationHtmlCommentIndex)
+          // if (comment.text.includes("marginnote4app")) {
+          //   afterApplicationHtmlContinuousLink = false
+          //   nonLinkNoteCommentsIndex.push(index)
+          // }
+
+          // [fixed] 无法移动手写的问题出在 PaintNote 的 text 是 undefined
+          if (comment.type == "PaintNote") {
+            nonLinkNoteCommentsIndex.push(index)
+          } else {
+            if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
+              nonLinkNoteCommentsIndex.push(index)
+            }
+          }
+        }
+      })
+      // MNUtil.showHUD(nonLinkNoteCommentsIndex)
+      if (nonLinkNoteCommentsIndex.length == 0) { // 说明“应用：”和链接下面没有证明内容，那就去最上方找，即先证明再制卡
+        focusNoteComments.forEach((comment, index) => {
+          if (comment.type !== "LinkNote") {
+            nonLinkNoteCommentsIndex.push(index)
+          }
+        })
+        focusNote.moveComment(proofHtmlCommentIndex, nonLinkNoteCommentsIndex[0])
+      } else {
+        // MNUtil.showHUD("在下方")
+        if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") {
+          // 此时没证明内容，将上面的内容移动下去
+          for (let i = proofHtmlCommentIndex+1; i < nonLinkNoteCommentsIndex[0]; i++) {
+            focusNote.moveComment(proofHtmlCommentIndex+1, focusNoteCommentLength-1);
+          }
+        } else {
+          // 证明在最下方，此时不移动“证明：”，而是把证明的内容移动上去
+          // bug：手写无法移动
+          for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, thoughtHtmlCommentIndex++) {
+            focusNote.moveComment(i, thoughtHtmlCommentIndex);
+          }
+        }
+      }
+    // }
+  }
+
+  // 增加思考
+  static addThoughts(focusNote, focusNoteType) {
+    let keywordsIHtmlCommentIndex = focusNote.getCommentIndex("关键词： ", true)
+    let keywordsIIHtmlCommentIndex = focusNote.getCommentIndex("关键词：", true)
+    let keywordsHtmlCommentIndex = Math.max(keywordsIHtmlCommentIndex, keywordsIIHtmlCommentIndex)  // 兼容两种“关键词：”
+    let definitionHtmlCommentIndex = focusNote.getCommentIndex("相关概念：", true)
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
+    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let nonLinkNoteCommentsIndex = []
+    let proofHtmlCommentIndex
+    // let afterApplicationHtmlContinuousLink = true
+    // switch (focusNoteType) {
+    //   case "method":
+    //     proofHtmlCommentIndex= focusNote.getCommentIndex("原理：", true)
+    //     break;
+    //   case "antiexample":
+    //     proofHtmlCommentIndex= focusNote.getCommentIndex("反例及证明：", true)
+    //     break;
+    //   default:
+    //     proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+    //     break;
+    // }
+    // if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") { // 若“证明：”下面是 HtmlNote，则说明没有证明内容，就需要移动“证明：”
+      // 证明内容要么在最上方，要么在最下方，判断标准为“应用：”及链接后面有没有内容
+      // 要注意的是链接的判断要和证明内容的链接判断区分开，不能被证明内容的链接判断干扰
+    if (focusNoteType == "definition") {
+      // 最后为“相关概念：”
+      // focusNoteComments.forEach((comment, index) => {
+      //   if (index > definitionHtmlCommentIndex) {
+      //     if (comment.type == "PaintNote") {
+      //       nonLinkNoteCommentsIndex.push(index)
+      //     } else {
+      //       if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
+      //         nonLinkNoteCommentsIndex.push(index)
+      //       }
+      //     }
+      //   }
+      // })
+
+      // 由于定义类卡片的“相关概念：”下方不是只有链接，所以不能用链接判断，否则会把相关概念的部分也移动上去，所以就改成了直接增加
+      focusNote.appendMarkdownComment("- ", linkHtmlCommentIndex)
+    } else {
+      // 最后为“应用：”
+      focusNoteComments.forEach((comment, index) => {
+        if (index > applicationHtmlCommentIndex) {
+          if (comment.type == "PaintNote") {
+            nonLinkNoteCommentsIndex.push(index)
+          } else {
+            if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
+              nonLinkNoteCommentsIndex.push(index)
+            }
+          }
+        }
+      })
+
+      if (nonLinkNoteCommentsIndex.length !== 0) {
+        for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, keywordsHtmlCommentIndex++) {
+          focusNote.moveComment(i, keywordsHtmlCommentIndex);
+        }
+      } else {
+        focusNote.appendMarkdownComment("- ", keywordsHtmlCommentIndex)
+      }
+    }
+  }
+
+  // 消除卡片内容，保留文字评论
+  static clearContentKeepText(focusNote) {
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let comment
+    focusNote.noteTitle = ""
+    // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+    for (let i = focusNoteCommentLength-1; i >= 0; i--) {
+      comment = focusNoteComments[i]
+      if (
+        (comment.type !== "TextNote") || 
+        (
+          (comment.type !== "PaintNote") && 
+          (
+            (comment.text.includes("marginnote4app")) 
+            || 
+            (comment.text.includes("marginnote3app"))
+          )
+        ) 
+      ) {
+        focusNote.removeCommentByIndex(i)
+      }
+    }
+  }
+
+  static clearContentKeepExcerptAndImage(focusNote) {
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let comment
+    focusNote.noteTitle = ""
+    // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+    for (let i = focusNoteCommentLength-1; i >= 0; i--) {
+      comment = focusNoteComments[i]
+      if (
+        (comment.type == "TextNote")
+        ||
+        (comment.type == "HtmlNote")
+      ) {
+        focusNote.removeCommentByIndex(i)
+      }
+    }
+  }
+
+  static addTopLayerTemplate(focusNote){
+
+  }
+  static addFiveLayerTemplate(focusNote){
+    // 先确保选中的卡片标题为“模板”，如果是“模版”则改为“模板”
+    // 根据选中的 focusNote 的父节点标题确定卡片为‘“xxx”相关yy’ 格式，并根据 yy 的内容确定
+    // 最后把新增加的模板放在最上层
+  }
+
+  static copyTemplate(focusNote, layerNum = 4){
+    // 最后定位到复制后的卡片
+  }
+
+  // 把卡片中的 HtmlNote 的内容转化为 Markdown 语法
+  static convetHtmlToMarkdown(focusNote){
+    let focusNoteComments = focusNote.note.comments
+    focusNoteComments.forEach((comment, index) => {
+      if (comment.type == "HtmlNote") {
+        let content = comment.text
+        let markdownContent = '<span style="font-weight: bold; color: white; background-color: #0096ff; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px">' + content + '</span>'
+        focusNote.removeCommentByIndex(index)
+        focusNote.appendMarkdownComment(markdownContent, index)
+      }
+    })
+  }
+
+  static changeLevelsInTemplateNoteComments(focusNotes) {
+    const levelMap = {
+        "两层": "一层",
+        "三层": "两层",
+        "四层": "三层",
+        "五层": "四层",
+        // 如果有更多层级需要替换，可以在这里继续扩展映射关系
+    };
+
+    focusNotes.forEach(focusNote => {
+        focusNote.note.comments.forEach((comment, index) => {
+            if (comment.text && comment.text.includes("- ")) {
+                for (const [currentLevel, nextLevel] of Object.entries(levelMap)) {
+                    if (comment.text.includes(currentLevel)) {
+                        const newCommentText = comment.text.replace(currentLevel, nextLevel);
+                        focusNote.removeCommentByIndex(index);
+                        focusNote.appendMarkdownComment(newCommentText, index);
+                    }
+                }
+            }
+        });
+    });
+  }
 }
 
 class toolbarConfig {
@@ -944,10 +1324,7 @@ class toolbarConfig {
   static isFirst = true
   static mainPath
   static action = []
-  static showEditorOnNoteEdit = false
-  // static defaultConfig = {showEditorWhenEditingNote:false}
   static init(){
-    // this.config = this.getByDefault("MNToolbar_config",this.defaultConfig)
     this.dynamic = this.getByDefault("MNToolbar_dynamic",false)
     this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})
     this.windowState = this.getByDefault("MNToolbar_windowState",{})
@@ -958,16 +1335,6 @@ class toolbarConfig {
       toolbarUtils.app.defaultTextColor,
       0.8
     );
-    try {
-      let editorConfig = this.getDescriptionByName("edit")
-      if ("showOnNoteEdit" in editorConfig) {
-        this.showEditorOnNoteEdit = editorConfig.showOnNoteEdit
-      }
-      
-    } catch (error) {
-      toolbarUtils.addErrorLog(error, "init")
-    }
-
   }
   /**
    * 
@@ -1009,160 +1376,147 @@ class toolbarConfig {
   //   return true
   // }
   }
-static template(action) {
-  let config = {action:action}
-  switch (action) {
-    case "cloneAndMerge":
-      config.target = toolbarUtils.version.version+"app://note/xxxx"
-      break
-    case "link":
-      config.target = toolbarUtils.version.version+"app://note/xxxx"
-      config.type = "Both"
-      break
-    case "clearContent":
-      config.target = "title"
-      break
-    case "setContent":
-      config.target = "title"//excerptText,comment
-      config.content = "test"
-      break
-    case "addComment":
-      config.content = "test"
-      break
-    case "removeComment":
-      config.index = 1//0表示全部，设一个特别大的值表示最后一个
-      break
-    case "copy":
-      config.target = "title"
-      break
-    case "showInFloatWindow":
-      config.target = toolbarUtils.version+"app://note/xxxx"
-      break
-    case "addChildNote":
-      config.title = "title"
-      config.content = "{{clipboardText}}"
-      break;
-    default:
-      break;
-  }
-  return JSON.stringify(config,null,2)
-}
-static getAction(actionName){
-  if (actionName in this.actions) {
-    return this.actions[actionName]
-  }
-  return this.getActions()[actionName]
-}
-static getActions() {
-  return {
-    "copy":{name:"Copy",image:"copyExcerptPic",description:"Copy"},
-    "searchInEudic":{name:"Search in Eudic",image:"searchInEudic",description:"Search in Eudic"},
-    "switchTitleorExcerpt":{name:"Switch title",image:"switchTitleorExcerpt",description:"Switch title"},
-    "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
-    "search":{name:"Search",image:"search",description:"Search"},
-    "bigbang":{name:"Bigbang",image:"bigbang",description:"Bigbang"},
-    "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
-    "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"},
-    "setting":{name:"Setting",image:"setting",description:"Setting"},
-    "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
-    "clearFormat":{name:"Clear Format",image:"clearFormat",description:"Clear Format"},
-    "color0":{name:"Set Color 1",image:"color0",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color1":{name:"Set Color 2",image:"color1",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color2":{name:"Set Color 3",image:"color2",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color3":{name:"Set Color 4",image:"color3",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color4":{name:"Set Color 5",image:"color4",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color5":{name:"Set Color 6",image:"color5",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color6":{name:"Set Color 7",image:"color6",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color7":{name:"Set Color 8",image:"color7",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color8":{name:"Set Color 9",image:"color8",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color9":{name:"Set Color 10",image:"color9",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color10":{name:"Set Color 11",image:"color10",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color11":{name:"Set Color 12",image:"color11",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color12":{name:"Set Color 13",image:"color12",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color13":{name:"Set Color 14",image:"color13",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color14":{name:"Set Color 15",image:"color14",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color15":{name:"Set Color 16",image:"color15",description:JSON.stringify({fillPattern:-1},null,2)},
-    "custom1":{name:"Custom 1",image:"custom1",description: this.template("cloneAndMerge")},
-    "custom2":{name:"Custom 2",image:"custom2",description: this.template("link")},
-    "custom3":{name:"Custom 3",image:"custom3",description: this.template("clearContent")},
-    "custom4":{name:"Custom 4",image:"custom4",description: this.template("copy")},
-    "custom5":{name:"Custom 5",image:"custom5",description: this.template("addChildNote")},
-    "custom6":{name:"Custom 6",image:"custom6",description: this.template("showInFloatWindow")},
-    "custom7":{name:"Custom 7",image:"custom7",description: this.template("setContent")},
-    "custom8":{name:"Custom 8",image:"custom8",description: this.template("addComment")},
-    "custom9":{name:"Custom 9",image:"custom9",description: this.template("removeComment")},
-    "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
-    "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})}
-  }
-}
-static getDefaultActionKeys() {
-  let actions = this.getActions()
-  return Object.keys(actions)
-}
-static save(key,value = undefined) {
-  if (value) {
-    NSUserDefaults.standardUserDefaults().setObjectForKey(value,key)
-  }else{
-    // showHUD(key)
-    switch (key) {
-      case "MNToolbar_windowState":
-        NSUserDefaults.standardUserDefaults().setObjectForKey(this.windowState,key)
-        break;
-      case "MNToolbar_dynamic":
-        NSUserDefaults.standardUserDefaults().setObjectForKey(this.dynamic,key)
-        break;
-      case "MNToolbar_action":
-        NSUserDefaults.standardUserDefaults().setObjectForKey(this.action,key)
-        break;
-      case "MNToolbar_actionConfig":
-        NSUserDefaults.standardUserDefaults().setObjectForKey(this.actions,key)
-        break;
-      case "MNToolbar_addonLogos":
-        NSUserDefaults.standardUserDefaults().setObjectForKey(this.addonLogos,key)
+  static template(action) {
+    let config = {action:action}
+    switch (action) {
+      case "cloneAndMerge":
+        config.target = toolbarUtils.version.version+"app://note/xxxx"
+        break
+      case "link":
+        config.target = toolbarUtils.version.version+"app://note/xxxx"
+        config.type = "Both"
+        break
+      case "clearContent":
+        config.target = "title"
+        break
+      case "setContent":
+        config.target = "title"//excerptText,comment
+        config.content = "test"
+        break
+      case "addComment":
+        config.content = "test"
+        break
+      case "removeComment":
+        config.index = 1//0表示全部，设一个特别大的值表示最后一个
+        break
+      case "copy":
+        config.target = "title"
+        break
+      case "showInFloatWindow":
+        config.target = toolbarUtils.version+"app://note/xxxx"
+        break
+      case "addChildNote":
+        config.title = "title"
+        config.content = "{{clipboardText}}"
         break;
       default:
-        toolbarUtils.showHUD("Not supported")
         break;
     }
+    return JSON.stringify(config,null,2)
   }
-  NSUserDefaults.standardUserDefaults().synchronize()
-}
+  static getActions() {
+    return {
+      "copy":{name:"Copy",image:"copyExcerptPic",description:"Copy"},
+      "searchInEudic":{name:"Search in Eudic",image:"searchInEudic",description:"Search in Eudic"},
+      "switchTitleorExcerpt":{name:"Switch title",image:"switchTitleorExcerpt",description:"Switch title"},
+      "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
+      "search":{name:"Search",image:"search",description:"Search"},
+      "bigbang":{name:"Bigbang",image:"bigbang",description:"Bigbang"},
+      "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
+      "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"},
+      "setting":{name:"Setting",image:"setting",description:"Setting"},
+      "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
+      "clearFormat":{name:"Clear Format",image:"clearFormat",description:"Clear Format"},
+      "color0":{name:"Set Color 1",image:"color0",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color1":{name:"Set Color 2",image:"color1",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color2":{name:"Set Color 3",image:"color2",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color3":{name:"Set Color 4",image:"color3",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color4":{name:"Set Color 5",image:"color4",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color5":{name:"Set Color 6",image:"color5",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color6":{name:"Set Color 7",image:"color6",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color7":{name:"Set Color 8",image:"color7",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color8":{name:"Set Color 9",image:"color8",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color9":{name:"Set Color 10",image:"color9",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color10":{name:"Set Color 11",image:"color10",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color11":{name:"Set Color 12",image:"color11",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color12":{name:"Set Color 13",image:"color12",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color13":{name:"Set Color 14",image:"color13",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color14":{name:"Set Color 15",image:"color14",description:JSON.stringify({fillPattern:-1},null,2)},
+      "color15":{name:"Set Color 16",image:"color15",description:JSON.stringify({fillPattern:-1},null,2)},
+      "custom1":{name:"Custom 1",image:"custom1",description: this.template("cloneAndMerge")},
+      "custom2":{name:"Custom 2",image:"custom2",description: this.template("link")},
+      "custom3":{name:"Custom 3",image:"custom3",description: this.template("clearContent")},
+      "custom4":{name:"Custom 4",image:"custom4",description: this.template("copy")},
+      "custom5":{name:"Custom 5",image:"custom5",description: this.template("addChildNote")},
+      "custom6":{name:"Custom 6",image:"custom6",description: this.template("showInFloatWindow")},
+      "custom7":{name:"Custom 7",image:"custom7",description: this.template("setContent")},
+      "custom8":{name:"Custom 8",image:"custom8",description: this.template("addComment")},
+      "custom9":{name:"Custom 9",image:"custom9",description: this.template("removeComment")},
+      "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
+      "edit":{name:"edit",image:"edit",description:"MN Editor"}
+    }
+  }
+  static getDefaultActionKeys() {
+    let actions = this.getActions()
+    return Object.keys(actions)
+  }
+  static save(key,value = undefined) {
+    if (value) {
+      NSUserDefaults.standardUserDefaults().setObjectForKey(value,key)
+    }else{
+      // showHUD(key)
+      switch (key) {
+        case "MNToolbar_windowState":
+          NSUserDefaults.standardUserDefaults().setObjectForKey(this.windowState,key)
+          break;
+        case "MNToolbar_dynamic":
+          NSUserDefaults.standardUserDefaults().setObjectForKey(this.dynamic,key)
+          break;
+        case "MNToolbar_action":
+          NSUserDefaults.standardUserDefaults().setObjectForKey(this.action,key)
+          break;
+        case "MNToolbar_actionConfig":
+          NSUserDefaults.standardUserDefaults().setObjectForKey(this.actions,key)
+          break;
+        case "MNToolbar_addonLogos":
+          NSUserDefaults.standardUserDefaults().setObjectForKey(this.addonLogos,key)
+          break;
+        default:
+          toolbarUtils.showHUD("Not supported")
+          break;
+      }
+    }
+    NSUserDefaults.standardUserDefaults().synchronize()
+  }
 
-static get(key) {
-  return NSUserDefaults.standardUserDefaults().objectForKey(key)
-}
+  static get(key) {
+    return NSUserDefaults.standardUserDefaults().objectForKey(key)
+  }
 
-static getByDefault(key,defaultValue) {
-  let value = NSUserDefaults.standardUserDefaults().objectForKey(key)
-  if (value === undefined) {
-    NSUserDefaults.standardUserDefaults().setObjectForKey(defaultValue,key)
-    return defaultValue
+  static getByDefault(key,defaultValue) {
+    let value = NSUserDefaults.standardUserDefaults().objectForKey(key)
+    if (value === undefined) {
+      NSUserDefaults.standardUserDefaults().setObjectForKey(defaultValue,key)
+      return defaultValue
+    }
+    return value
   }
-  return value
-}
 
-static remove(key) {
-  NSUserDefaults.standardUserDefaults().removeObjectForKey(key)
-}
-static reset(){
-  this.action = this.getDefaultActionKeys()
-  this.actions = this.getActions()
-  this.save("MNToolbar_action")
-  this.save("MNToolbar_actionConfig")
-}
-static getDescriptionByIndex(index){
-  let actionName = toolbarConfig.action[index]
-  if (actionName in toolbarConfig.actions) {
-    return JSON.parse(toolbarConfig.actions[actionName].description)
-  }else{
-    return JSON.parse(toolbarConfig.getActions()[actionName].description)
+  static remove(key) {
+    NSUserDefaults.standardUserDefaults().removeObjectForKey(key)
   }
-}
-static getDescriptionByName(actionName){
-  if (actionName in toolbarConfig.actions) {
-    return JSON.parse(toolbarConfig.actions[actionName].description)
-  }else{
-    return JSON.parse(toolbarConfig.getActions()[actionName].description)
+  static reset(){
+    this.action = this.getDefaultActionKeys()
+    this.actions = this.getActions()
+    this.save("MNToolbar_action")
+    this.save("MNToolbar_actionConfig")
   }
-}
+  static getDescription(index){
+    let actionName = toolbarConfig.action[index]
+    if (actionName in toolbarConfig.actions) {
+      return JSON.parse(toolbarConfig.actions[actionName].description)
+    }else{
+      return JSON.parse(toolbarConfig.getActions()[actionName].description)
+    }
+  }
 }
