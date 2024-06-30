@@ -867,10 +867,27 @@ toolbarController.prototype.customAction = async function (actionName) {
     }
     let des = JSON.parse(toolbarConfig.actions[actionName].description)
     let focusNote = MNNote.getFocusNote()
+    let focusNotes = MNNote.getFocusNotes()
     // MNUtil.showHUD("message"+(focusNote instanceof MNNote))
     let notebookid = focusNote ? focusNote.notebookId : undefined
     let title,content,color,config
-    let targetNoteId
+    let targetNoteId,parentNoteId,parentNoteUrl
+    let templateNoteId
+    let parentNote,focusNoteTitle
+    let parentNoteTitle = ""
+    let focusNoteType
+    let newTitle
+    let parentNoteIdIndex
+    let foundMatchingParentNote = false;
+    let focusNoteColorIndex = focusNote.note.colorIndex
+    let focusNoteComments,focusNoteCommentLength
+    let nonLinkNoteCommentsIndex
+    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：",true)
+    let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+    let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
+    let keywordsHtmlCommentIndex = focusNote.getCommentIndex("关键词： ", true)
+    let testIndex
+    let ifParentNoteColorLightYellow
     switch (des.action) {
       case "cloneAndMerge":
       try {
@@ -897,6 +914,10 @@ toolbarController.prototype.customAction = async function (actionName) {
             toolbarUtils.cloneAsChildNote(focusNote, targetNoteId)
           })
         })
+        break;
+
+      // 增加模板的层级，一般用于之前做好的知识库里，可能只有三层模板
+      case "addTopLayerTemplate":
         break;
       case "addChildNote":
         MNUtil.showHUD("addChildNote")
@@ -1266,7 +1287,229 @@ toolbarController.prototype.customAction = async function (actionName) {
         break;
       case "focus":
         toolbarUtils.focus(focusNote, des)
-        break 
+        break;
+        case "cloneAndMergeDifferentForSpecialColor":
+          try {
+            // MNUtil.showHUD("cloneAndMergeDifferentForSpecialColor")
+            let commonColorTargetNoteId = MNUtil.getNoteIdByURL(des.commonColorTarget)
+            let specialColorTargetNoteId = MNUtil.getNoteIdByURL(des.specialColorTarget)
+            let colorIndex = des.colorIndex
+            MNUtil.undoGrouping(()=>{
+              try {
+                MNNote.getFocusNotes().forEach(focusNote=>{
+                  toolbarUtils.cloneAndMergeDifferentForSpecialColor(focusNote, colorIndex, commonColorTargetNoteId, specialColorTargetNoteId)
+                })
+              } catch (error) {
+                MNUtil.showHUD(error)
+              }
+            })
+          } catch (error) {
+            MNUtil.showHUD(error)
+          }
+          break;
+      // 夏大鱼羊定制函数
+      case "convertNoteToNonexcerptVersion":
+        MNUtil.showHUD("卡片转化为非摘录版本")
+        try {
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(focusNote=>{
+              if (focusNote.excerptText) {
+                toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+              }
+            })
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "ifExceptVersion":
+        if (focusNote.excerptText) {
+          MNUtil.showHUD("摘录版本")
+        } else {
+          MNUtil.showHUD("非摘录版本")
+        }
+        break;
+      case "showColorIndex":
+        MNUtil.showHUD("ColorIndex: " + focusNote.note.colorIndex)
+        break;
+      case "showCommentType":
+        let focusNoteComments = focusNote.comments
+        let chosenComment = focusNoteComments[des.index-1]
+        MNUtil.showHUD("CommentType: " + chosenComment.type)
+        break;
+      case "changeLevelsInTemplateNoteComments": // 将模板卡片的“层级”降级
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.changeLevelsInTemplateNoteComments(focusNotes)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "convetHtmlToMarkdown":
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.convetHtmlToMarkdown(focusNote)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "addThoughts":
+        MNUtil.undoGrouping(()=>{
+          try {
+            /* 确定卡片类型 */
+            switch (focusNoteColorIndex) {
+              case 2: // 淡蓝色：定义类
+                focusNoteType = "definition"
+                break;
+              case 3: // 淡粉色：反例
+                focusNoteType = "antiexample"
+                break;
+              case 9: // 深绿色：思想方法
+                focusNoteType = "method"
+                break;
+              case 10: // 深蓝色：定理命题
+                focusNoteType = "theorem"
+                break;
+              case 15: // 淡紫色：例子
+                focusNoteType = "example"
+                break;
+            }
+
+            toolbarUtils.addThoughts(focusNote, focusNoteType)
+          } catch (error) {
+            MNUtil.showHUD(error)
+          }
+        })
+        break;
+      case "clearContentKeepText":
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.clearContentKeepText(focusNote)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "clearContentKeepExcerptAndImage":
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.clearContentKeepExcerptAndImage(focusNote)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "makeCards":
+        try {
+          // MNUtil.showHUD("制卡")
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(focusNote=>{
+              /* 初始化 */
+              let parentNoteType
+              let ifParentNoteColorLightYellow = false
+
+              /* 确定卡片类型 */
+              switch (focusNoteColorIndex) {
+                case 2: // 淡蓝色：定义类
+                  focusNoteType = "definition"
+                  break;
+                case 3: // 淡粉色：反例
+                  focusNoteType = "antiexample"
+                  break;
+                case 9: // 深绿色：思想方法
+                  focusNoteType = "method"
+                  break;
+                case 10: // 深蓝色：定理命题
+                  focusNoteType = "theorem"
+                  break;
+                case 15: // 淡紫色：例子
+                  focusNoteType = "example"
+                  break;
+              }
+
+              /* 预处理 */
+              /* 只对淡蓝色、淡粉色、深绿色、深蓝色、淡紫色的卡片进行制卡 */
+              if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
+                /* 先将卡变成非摘录版本 */
+                // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
+                if (focusNote.excerptText) {
+                  toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+                  // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就失焦了（因为被合并到其它卡片了）
+                  // 所以下面的代码不会执行，这就产生了一个效果：
+                  // 点击第一次：将摘录版本变成非摘录版本
+                  // 点击第二次：开始制卡
+                  // 误打误撞产生最佳效果了属于是
+                }
+
+                /* 检测父卡片的存在和颜色 */
+                parentNote = focusNote.parentNote
+                if (parentNote) {
+                  // 有父节点
+                  // 检测父卡片是否是淡黄色的，不是的话获取父卡片的父卡片，直到是淡黄色为止，获取第一次出现的淡黄色的父卡片作为 parentNote
+                  while (parentNote) {
+                    if (parentNote.colorIndex == 0) {
+                      ifParentNoteColorLightYellow = true
+                      break
+                    }
+                    parentNote = parentNote.parentNote
+                  }
+                  parentNoteTitle = parentNote.noteTitle
+                  // 获取父卡片的 URL，用来判断是否与卡片进行链接
+                  parentNoteId = parentNote.noteId
+                  parentNoteUrl = "marginnote4app://note/" + parentNoteId
+
+                  if (ifParentNoteColorLightYellow == false) {
+                    // 有父卡片，但所有父卡片都不是淡黄色
+                    parentNoteType = "notLightYellow"
+                    // MNUtil.showHUD(parentNoteType)
+                  } else {
+                    // 有淡黄色的父卡片
+                    parentNoteType = "lightYellow"
+                    // MNUtil.showHUD(parentNoteType)
+                  }
+                } else {
+                  // 没有父卡片
+                  parentNoteType = "none"
+                  // MNUtil.showHUD(parentNoteType)
+                }
+              } 
+              // else {
+              //   MNUtil.showHUD("不支持对此颜色的卡片进行制卡！")
+              //   return // 使用 return 来提前结束函数, 避免了在内部函数中使用 break 导致的语法错误。
+              // }
+
+              /* 开始制卡 */
+              /* 合并第一层模板 */
+              toolbarUtils.makeCardsAuxFirstLayerTemplate(focusNote, focusNoteType)
+              /* 与父卡片的链接 */
+              toolbarUtils.makeCardsAuxLinkToParentNote(focusNote, parentNote, parentNoteTitle, parentNoteId)
+              /* 修改卡片前缀 */
+              toolbarUtils.makeCardsAuxChangefocusNotePrefix(focusNote, parentNoteTitle, focusNoteColorIndex)
+              /* 合并第二层模板 */
+              toolbarUtils.makeCardsAuxSecondLayerTemplate(focusNote, focusNoteType,focusNoteColorIndex)
+
+              // bug：先应用再证明时，无反应
+              /* 移动“应用：”和链接部分到最下方 */
+              toolbarUtils.makeCardsAuxMoveDownApplicationsComments(focusNote)
+              /* 
+                移动“证明：”到最上方
+                但要注意
+                - 反例类型的是“反例及证明：”
+                - 思想方法类型的是“原理：”
+              */
+              try {
+                toolbarUtils.makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType)
+              } catch (error) {
+                MNUtil.showHUD(error)
+              }
+            })
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
       default:
         MNUtil.showHUD("Not supported yet...")
         break;
