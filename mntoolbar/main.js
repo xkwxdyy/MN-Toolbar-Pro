@@ -20,8 +20,7 @@ JSB.newAddon = function (mainPath) {
         let self = getMNToolbarClass()
         // MNUtil.showHUD("mntoolbar")
         self.appInstance = Application.sharedInstance();
-        self.addonController = toolbarController.new();
-        self.addonController.mainPath = mainPath;
+        // self.popUpNote
         self.isNewWindow = false;
         self.watchMode = false;
         self.textSelected = ""
@@ -46,6 +45,7 @@ JSB.newAddon = function (mainPath) {
         MNUtil.addObserver(self, 'onToggleDynamic:', 'toggleDynamic')
         MNUtil.addObserver(self, 'onClosePopupMenuOnNote:', 'ClosePopupMenuOnNote')
         MNUtil.addObserver(self, 'onRemoveMNToolbar:', 'removeMNToolbar')
+        MNUtil.addObserver(self, 'onTextDidBeginEditing:', 'UITextViewTextDidBeginEditingNotification')
       },
 
       sceneDidDisconnect: function () { // Window disconnect 在插件页面关闭插件（不是删除）
@@ -62,12 +62,18 @@ JSB.newAddon = function (mainPath) {
       sceneDidBecomeActive: function () { // Window become active
       },
 
-      notebookWillOpen: function (notebookid) {
+      notebookWillOpen: async function (notebookid) {
         if (typeof MNUtil === 'undefined') return
-        let studyView = MNUtil.app.studyController(self.window).view
+        let studyView = MNUtil.studyView
         if (MNUtil.studyMode < 3) {
-          MNUtil.refreshAddonCommands();
+          await MNUtil.delay(0.5)
+          // toolbarUtils.refreshSubscriptionStatus()
+          if (!self.addonController) {
+            self.addonController = toolbarController.new();
+            self.addonController.mainPath = mainPath;
+          }
           studyView.addSubview(self.addonController.view);
+          MNUtil.refreshAddonCommands();
           self.addonController.view.hidden = true;
           self.addonController.dynamic = toolbarConfig.dynamic
           self.addonController.notebookid = notebookid
@@ -92,6 +98,22 @@ JSB.newAddon = function (mainPath) {
           NSTimer.scheduledTimerWithTimeInterval(0.2, false, function () {
             MNUtil.studyController.becomeFirstResponder(); //For dismiss keyboard on iOS
           });
+          // if (toolbarConfig.dynamic && !self.testController) {
+          //   self.testController = toolbarController.new();
+          //   self.testController.mainPath = mainPath;
+          //   self.testController.dynamic = toolbarConfig.dynamic
+          //   self.testController.view.hidden = true
+          //   self.testController.dynamicWindow = true
+          //   self.testController.addonController = self.addonController
+          //   // self.testController.action = self.addonController.action
+          //   // showHUD(self.testController.action)
+          //   self.addonController.dynamicToolbar = self.testController
+          //   MNUtil.studyView.addSubview(self.testController.view);
+          //   let lastFrame = self.addonController.view.frame
+          //   let buttomNumber = toolbarConfig.windowState.dynamicButton??9
+          //   lastFrame.height = toolbarUtils.checkHeight(lastFrame.height,buttomNumber)
+          //   self.addonController.view.frame = lastFrame
+          // }
           
       },
 
@@ -152,6 +174,8 @@ JSB.newAddon = function (mainPath) {
           self.addonController.dynamicToolbar = self.testController
           MNUtil.studyView.addSubview(self.testController.view);
           lastFrame = self.addonController.view.frame
+          let buttomNumber = toolbarConfig.windowState.dynamicButton??9
+          lastFrame.height = toolbarUtils.checkHeight(lastFrame.height,buttomNumber)
         }else{
           self.testController.refreshHeight()
           lastFrame = self.testController.view.frame
@@ -175,8 +199,8 @@ JSB.newAddon = function (mainPath) {
         }
         lastFrame.width = 40
         let testController = self.testController
-        let delay = testController.view.hidden?0.5:0
-        await MNUtil.delay(delay)
+        // let delay = testController.view.hidden?0.5:0
+        // await MNUtil.delay(delay)
         if (self.notShow) {
           return
         }
@@ -189,7 +213,7 @@ JSB.newAddon = function (mainPath) {
           MNUtil.animate(()=>{
             testController.view.layer.opacity = preOpacity
           }).then(()=>{
-            testController.moveButton.hidden = false
+            // testController.moveButton.hidden = false
             testController.screenButton.hidden = false
             let preFrame = testController.view.frame
             let yBottom = preFrame.height    
@@ -203,7 +227,7 @@ JSB.newAddon = function (mainPath) {
             testController.view.frame = lastFrame
             testController.currentFrame = lastFrame
             testController.view.hidden = false
-            testController.moveButton.hidden = false
+            // testController.moveButton.hidden = false
             testController.screenButton.hidden = false
           })
         }
@@ -249,7 +273,7 @@ JSB.newAddon = function (mainPath) {
         };
           // MNUtil.showHUD("accept")
         if (!self.addonController.view.hidden) {
-          if (self.addonController.onAnimate) {
+          if (self.addonController.onAnimate || self.addonController.onResize) {
             // showHUD("reject")
             return
           }
@@ -264,7 +288,7 @@ JSB.newAddon = function (mainPath) {
           if (currentFrame.y >= studyFrame.height) {
             currentFrame.y = studyFrame.height-20              
           }
-          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height)
+          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,self.addonController.buttonNumber)
           if (self.addonController.splitMode) {
             if (splitLine) {
               currentFrame.x = splitLine-20
@@ -297,8 +321,13 @@ JSB.newAddon = function (mainPath) {
           self.addonController.currentFrame = currentFrame
         }
         if (self.testController) {
+          if (self.testController.onAnimate || self.testController.onResize) {
+            // showHUD("reject")
+            return
+          }
           let currentFrame = self.testController.currentFrame
-          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height)
+          let buttomNumber = toolbarConfig.windowState.dynamicButton??9
+          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,buttomNumber)
           self.testController.view.frame = currentFrame
           self.testController.currentFrame = currentFrame
         }
@@ -311,8 +340,10 @@ JSB.newAddon = function (mainPath) {
       },
 
       queryAddonCommandStatus: function () {
+        // MNUtil.showHUD("queryAddonCommandStatus")
         if (typeof MNUtil === 'undefined') return null
         if (MNUtil.studyMode < 3) {
+          // toolbarUtils.refreshSubscriptionStatus()
           return {
             image: 'logo.png',
             object: self,
@@ -339,6 +370,66 @@ JSB.newAddon = function (mainPath) {
       onRemoveMNToolbar:function (params) {
         self.addonController.view.removeFromSuperview()
         toolbarConfig.addonLogos = {}
+      },
+      /**
+       * 
+       * @param {{object:UITextView}} param 
+       */
+      onTextDidBeginEditing:function (param) {
+try {
+        
+        if (MNUtil.studyController.docMapSplitMode === 2) {
+          return
+        }
+        if (MNUtil.notebookController.outlineView && !MNUtil.notebookController.outlineView.hidden) {
+          return
+        }
+        // let noteView = MNUtil.notebookController.mindmapView.mindmapNodes[0].frame
+        if (toolbarConfig.showEditorOnNoteEdit) {
+          let foucsNote = MNNote.getFocusNote()
+          if (!foucsNote.noteTitle && !foucsNote.excerptText && !foucsNote.comments.length) {
+            foucsNote.noteTitle = "Title"
+          }
+          if (foucsNote) {
+            let noteId = foucsNote.noteId
+            let studyFrame = MNUtil.studyView.bounds
+            let beginFrame
+            // MNUtil.copyJSON(beginFrame)
+            if (self.testController) {
+              beginFrame = self.testController.view.frame
+            }else{
+              beginFrame = self.addonController.view.frame
+            }
+            beginFrame.y = beginFrame.y-10
+            if (beginFrame.x+490 > studyFrame.width) {
+              let endFrame = MNUtil.genFrame(beginFrame.x-450, beginFrame.y-10, 450, 500)
+              if (beginFrame.y+490 > studyFrame.height) {
+                endFrame.y = studyFrame.height-500
+              }
+              MNUtil.postNotification("openInEditor",{noteId:noteId,beginFrame:beginFrame,endFrame:endFrame})
+            }else{
+              let endFrame = MNUtil.genFrame(beginFrame.x+40, beginFrame.y-10, 450, 500)
+              if (beginFrame.y+490 > studyFrame.height) {
+                endFrame.y = studyFrame.height-500
+              }
+              MNUtil.postNotification("openInEditor",{noteId:noteId,beginFrame:beginFrame,endFrame:endFrame})
+            }
+          }
+        }
+        // MNUtil.showHUD(param.object.text)
+        // MNUtil.copyJSON(params.userInfo)
+        if (self.testController && !self.testController.view.hidden) {
+          let preOpacity = self.testController.view.layer.opacity
+          UIView.animateWithDurationAnimationsCompletion(0.1,()=>{
+            self.testController.view.layer.opacity = 0
+          },()=>{
+            self.testController.view.layer.opacity = preOpacity
+            self.testController.view.hidden = true
+          })
+        }
+} catch (error) {
+  toolbarUtils.addErrorLog(error, "onTextDidBeginEditing")
+}
       },
       toggleAddon:function (sender) {
         if (typeof MNUtil === 'undefined') return

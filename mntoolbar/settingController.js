@@ -118,10 +118,10 @@ viewWillLayoutSubviews: function() {
     toolbarConfig.save("MNToolbar_action")
 
   },
-  resetConfig: function (button) {
+  resetConfig: async function (button) {
   try {
-    let clickDate = Date.now()
-    if (button.clickDate && clickDate-button.clickDate<300) {
+    let confirm = await MNUtil.confirm("Clear all config?", "清除所有配置？")
+    if (confirm) {
     
       let self = getSettingController()
       toolbarConfig.reset()
@@ -129,9 +129,6 @@ viewWillLayoutSubviews: function() {
       // self.toolbarController.actions = actions
       self.setButtonText(toolbarConfig.action,toolbarConfig.action[0])
       self.setTextview(toolbarConfig.action[0])
-    }else{
-      button.clickDate = clickDate
-      MNUtil.showHUD("Double click to reset actions!")
     }
   } catch (error) {
     MNUtil.showHUD("Error in resetConfig: "+error)
@@ -257,15 +254,17 @@ viewWillLayoutSubviews: function() {
   },
   configSaveTapped: async function (params) {
     // MNUtil.copy(self.selectedItem)
-    if (!self.selectedItem.includes("custom") && !self.selectedItem.includes("color") && self.selectedItem !== "ocr") {
+    if (!self.selectedItem.includes("custom") && !self.selectedItem.includes("color") && self.selectedItem !== "ocr" && self.selectedItem !== "edit") {
       MNUtil.showHUD("Only available for Custom Action!")
       return
     }
     try {
     let selected = self.selectedItem
     let input = await self.getWebviewContent()
-    // toolbarUtils.copy(selected)
     if (MNUtil.isValidJSON(input)) {
+      if (!toolbarConfig.actions[selected]) {
+        toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
+      }
       toolbarConfig.actions[selected].description = input
       toolbarConfig.actions[selected].name = self.titleInput.text
       self.toolbarController.actions = toolbarConfig.actions
@@ -273,12 +272,22 @@ viewWillLayoutSubviews: function() {
         self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
       }
       toolbarConfig.save("MNToolbar_actionConfig")
-      MNUtil.showHUD("Save Custom Action: "+self.titleInput.text)
+      if (!self.selectedItem.includes("custom")) {
+        MNUtil.showHUD("Save Action: "+self.titleInput.text)
+      }else{
+        MNUtil.showHUD("Save Custom Action: "+self.titleInput.text)
+      }
+      if (self.selectedItem === "edit") {
+        let config = JSON.parse(input)
+        if ("showOnNoteEdit" in config) {
+          toolbarConfig.showEditorOnNoteEdit = config.showOnNoteEdit
+        }
+      }
     }else{
       MNUtil.showHUD("Invalid JSON format!")
     }
     } catch (error) {
-      MNUtil.showHUD(error)
+      toolbarUtils.addErrorLog(error, "configSaveTapped", info)
     }
   },
   configRunTapped: async function (params) {
@@ -288,6 +297,9 @@ viewWillLayoutSubviews: function() {
       let input = await self.getWebviewContent()
       // toolbarUtils.copy(selected)
       if (MNUtil.isValidJSON(input)) {
+        if (!toolbarConfig.actions[selected]) {
+          toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
+        }
         toolbarConfig.actions[selected].description = input
         toolbarConfig.actions[selected].name = self.titleInput.text
         self.toolbarController.actions = toolbarConfig.actions
@@ -295,7 +307,6 @@ viewWillLayoutSubviews: function() {
           self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
         }
         toolbarConfig.save("MNToolbar_actionConfig")
-        MNUtil.showHUD("Save & Run Custom Action: "+self.titleInput.text)
       }else{
         MNUtil.showHUD("Invalid JSON format!")
         return
@@ -310,9 +321,14 @@ viewWillLayoutSubviews: function() {
       toolbarUtils.setColor(colorIndex)
       return
     }
+    if (selected === "ocr") {
+      toolbarUtils.ocr()
+      return
+    }
     MNUtil.showHUD("Not supported")
   } catch (error) {
-    MNUtil.showHUD(error)
+    toolbarUtils.addErrorLog(error, "configRunTapped", info)
+
   }
   },
   toggleSelected:function (sender) {
@@ -404,10 +420,10 @@ settingController.prototype.settingViewLayout = function (){
     this.runButton.frame = {x:width-155,y:height-100,width:70,height:30}
     this.scrollview.frame = {x:10,y:15,width:width-20,height:150}
     this.scrollview.contentSize = {width:width-20,height:height};
-    this.configReset.frame = {x:width-75,y:130,width:60,height:30}
-    this.moveTopButton.frame = {x:width-210,y:130,width:40,height:30}
-    this.moveUpButton.frame = {x:width-165,y:130,width:40,height:30}
-    this.moveDownButton.frame = {x:width-120,y:130,width:40,height:30}
+    this.configReset.frame = {x:width-45,y:130,width:30,height:30}
+    this.moveTopButton.frame = {x:width-45,y:25,width:30,height:30}
+    this.moveUpButton.frame = {x:width-45,y:60,width:30,height:30}
+    this.moveDownButton.frame = {x:width-45,y:95,width:30,height:30}
 
 
     let settingFrame = this.settingView.bounds
@@ -521,7 +537,7 @@ try {
   this.titleInput.textContainerInset = {top: 0,left: 0,bottom: 0,right: 0}
   this.createButton("configReset","resetConfig:","configView")
   this.configReset.layer.opacity = 1.0
-  this.configReset.setTitleForState("Reset",0)
+  this.configReset.setTitleForState("🔄",0)
 
   this.createButton("moveUpButton","moveForwardTapped:","configView")
   this.moveUpButton.layer.opacity = 1.0
