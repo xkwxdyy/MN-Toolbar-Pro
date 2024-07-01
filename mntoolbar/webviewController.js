@@ -1288,25 +1288,6 @@ toolbarController.prototype.customAction = async function (actionName) {
       case "focus":
         toolbarUtils.focus(focusNote, des)
         break;
-        case "cloneAndMergeDifferentForSpecialColor":
-          try {
-            // MNUtil.showHUD("cloneAndMergeDifferentForSpecialColor")
-            let commonColorTargetNoteId = MNUtil.getNoteIdByURL(des.commonColorTarget)
-            let specialColorTargetNoteId = MNUtil.getNoteIdByURL(des.specialColorTarget)
-            let colorIndex = des.colorIndex
-            MNUtil.undoGrouping(()=>{
-              try {
-                MNNote.getFocusNotes().forEach(focusNote=>{
-                  toolbarUtils.cloneAndMergeDifferentForSpecialColor(focusNote, colorIndex, commonColorTargetNoteId, specialColorTargetNoteId)
-                })
-              } catch (error) {
-                MNUtil.showHUD(error)
-              }
-            })
-          } catch (error) {
-            MNUtil.showHUD(error)
-          }
-          break;
       // 夏大鱼羊定制函数
       case "convertNoteToNonexcerptVersion":
         MNUtil.showHUD("卡片转化为非摘录版本")

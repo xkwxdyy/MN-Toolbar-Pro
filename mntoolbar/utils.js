@@ -935,23 +935,6 @@ try {
   }
   // 夏大鱼羊自定义函数
 
-  // 根据卡片的颜色合并特殊的卡片
-  /**
-   * 
-   * @param {MbBookNote|MNNote} currentNote 
-   * @param {string} commonColorTargetNoteId
-   * @param {string} specialColorTargetNoteId 
-   */
-  static cloneAndMergeDifferentForSpecialColor(currentNote, colorIndex, commonColorTargetNoteId,specialColorTargetNoteId) {
-    let commonColorTargetNote = MNNote.clone(commonColorTargetNoteId)
-    let specialColorTargetNote = MNNote.clone(specialColorTargetNoteId)
-    if (currentNote.colorIndex === colorIndex) {
-      currentNote.merge(specialColorTargetNote.note)
-    } else {
-      currentNote.merge(commonColorTargetNote.note)
-    }
-  }
-
   // 将卡片变成非摘录版本
   // 需求：https://github.com/xkwxdyy/mnTextHandler/discussions/3
   /**
@@ -1389,6 +1372,7 @@ try {
     })
   }
 
+  
   static changeLevelsInTemplateNoteComments(focusNotes) {
     const levelMap = {
         "两层": "一层",
@@ -1399,17 +1383,21 @@ try {
     };
 
     focusNotes.forEach(focusNote => {
-        focusNote.note.comments.forEach((comment, index) => {
-            if (comment.text && comment.text.includes("- ")) {
-                for (const [currentLevel, nextLevel] of Object.entries(levelMap)) {
-                    if (comment.text.includes(currentLevel)) {
-                        const newCommentText = comment.text.replace(currentLevel, nextLevel);
-                        focusNote.removeCommentByIndex(index);
-                        focusNote.appendMarkdownComment(newCommentText, index);
-                    }
-                }
+      let replaceFlag = true;  // 标记是否需要进行替换
+      focusNote.note.comments.forEach((comment, index) => {
+        if (comment.text && comment.text.includes("- ") && replaceFlag) {
+          for (const [currentLevel, nextLevel] of Object.entries(levelMap)) {
+            if (comment.text.includes(currentLevel)) {
+              if (currentLevel === "一层") {
+                replaceFlag = false;  // 如果出现 "- 一层"，设置标记为 false，不再替换
+              }
+              const newCommentText = comment.text.replace(currentLevel, nextLevel);
+              focusNote.removeCommentByIndex(index);
+              focusNote.appendMarkdownComment(newCommentText, index);
             }
-        });
+          }
+        }
+      });
     });
   }
 }
