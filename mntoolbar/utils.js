@@ -26,6 +26,474 @@ class toolbarUtils {
   static sourceToRemove = []
   static commentToRemove = {}
 
+  // 夏大鱼羊自定义函数
+
+  // 将卡片变成非摘录版本
+  // 需求：https://github.com/xkwxdyy/mnTextHandler/discussions/3
+  /**
+    * 1. 复制卡片标题到剪切板
+    * 2. 去掉卡片标题
+    * 3. 生成卡片的兄弟卡片，标题为复制的内容
+    * 4. 将旧卡片合并到新的兄弟卡片中
+    */
+  /**
+    *
+    * @param {MbBookNote} parent
+    * @param {String} title
+    * @param {Number} colorIndex
+    */
+  static convertNoteToNonexcerptVersion(note) {
+    let config = {}
+    let newNote
+    let parent
+    // let newNoteList = []
+    MNUtil.undoGrouping(()=>{
+      // focusNotes.forEach(
+        // note=>{
+          config.title = note.noteTitle
+          config.content = ""
+          config.markdown = true
+          config.color = note.colorIndex
+          // 获取旧卡片的父卡片
+          parent = note.parentNote
+          // 创建新兄弟卡片，标题为旧卡片的标题
+          newNote = parent.createChildNote(config)
+          // parent.addChild(newnote)
+          // 清除旧卡片的标题
+          note.noteTitle = ""
+          // 将旧卡片合并到新卡片中
+          newNote.merge(note)
+          // newNoteList.push(newNote)
+        // }
+      // )
+    })
+    // return newNoteList
+  }
+
+  /* makeCards 的 aux 函数 */
+  // 合并第一层模板
+  static makeCardsAuxFirstLayerTemplate(focusNote, focusNoteType) {
+    let templateNoteId
+    let testIndex = focusNote.getCommentIndex("相关链接：", true)
+    // MNUtil.showHUD(testIndex)
+    if (testIndex == -1) { // 每种模板卡里都有“相关链接：”
+      switch (focusNoteType) {
+        case "definition":
+          // 71AAED0A-5972-4F72-8282-B558879EFD96
+          // templateNoteId= getNoteIdByURL("71AAED0A-5972-4F72-8282-B558879EFD96")
+          templateNoteId = "71AAED0A-5972-4F72-8282-B558879EFD96"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "theorem":
+          // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
+          // templateNoteId = getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
+          templateNoteId = "F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "example":
+          // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
+          // templateNoteId = getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
+          templateNoteId = "F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "antiexample":
+          // DCD8A253-C991-4798-9546-4B36D19CD260
+          // templateNoteId = getNoteIdByURL("DCD8A253-C991-4798-9546-4B36D19CD260")
+          templateNoteId = "DCD8A253-C991-4798-9546-4B36D19CD260"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "method":
+          // F3F263B4-B7C8-4514-922A-35180D4F60CF
+          // templateNoteId = getNoteIdByURL("F3F263B4-B7C8-4514-922A-35180D4F60CF")
+          templateNoteId = "F3F263B4-B7C8-4514-922A-35180D4F60CF"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+      }
+    }
+  }
+  static makeCardsAuxSecondLayerTemplate(focusNote, focusNoteType,focusNoteColorIndex) {
+    let templateNoteId
+    let testIndexI = focusNote.getCommentIndex("相关概念：", true)
+    let testIndexII = focusNote.getCommentIndex("应用：", true)
+    let testIndex = Math.max(testIndexI, testIndexII)
+    if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
+      if (testIndex == -1){
+        if (focusNoteType === "definition") {
+          templateNoteId = "E7854116-C137-4E17-B194-78052C984D2A"
+          cloneAndMerge(focusNote, templateNoteId)
+        } else {
+          templateNoteId = "0B488930-0447-4DD0-8236-C27621BEA8F2"
+          cloneAndMerge(focusNote, templateNoteId)
+        }
+      }
+    }
+  }
+  // 修改卡片前缀
+  static makeCardsAuxChangefocusNotePrefix(focusNote, parentNoteTitle, focusNoteColorIndex) {
+    let newTitle
+    // 有淡黄色的父卡片时，parentNoteTitle 非空（只考虑父卡片都有标题的情况）
+    if (parentNoteTitle) {
+      // MNUtil.showHUD(parentNoteTitle)
+      let focusNoteTitle = focusNote.noteTitle
+      let matchContentFromParentNoteTitle = parentNoteTitle.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
+      // let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.+)”：“(.+)”\s*相关(.+)/g)
+      // if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
+      //   MNUtil.showHUD("匹配成功");
+      // } else {
+      //   MNUtil.showHUD("匹配失败");
+      // }
+
+      // MNUtil.showHUD(matchContentFromParentNoteTitle)
+      // 检查【xxx】格式，并捕获xxx内容
+      let matchResult = focusNoteTitle.match(/^【([^】]*)/);
+      // MNUtil.showHUD(matchResult)
+      if (matchResult) { // 如果有匹配结果
+        // MNUtil.showHUD("匹配！")
+        let capturedText = matchResult[1];
+        // 检查是否包含 capturedText 并且是否需要补上】
+        if (capturedText.includes(matchContentFromParentNoteTitle) && !focusNoteTitle.includes("】")) {
+          focusNote.noteTitle = focusNoteTitle + "】";
+        } else if (!capturedText.includes(matchContentFromParentNoteTitle)) {
+          // 如果不包含 capturedText，替换原有【】内容
+          if (focusNoteColorIndex == 2) {
+            // 淡蓝色（定义类）的要在【】后加 “; ”
+            newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】; ");
+          } else {
+            newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】");
+          }
+          focusNote.noteTitle = newTitle;
+        }
+      } else { // 如果标题不是以【xxx开头
+        // MNUtil.showHUD("不匹配！")
+        if (focusNoteColorIndex == 2) {
+          // 淡蓝色（定义类）的要在【】后加 “; ”
+          newTitle = "【" + matchContentFromParentNoteTitle + "】; " + focusNoteTitle;
+        } else {
+          newTitle = "【" + matchContentFromParentNoteTitle + "】" + focusNoteTitle;
+        }
+        focusNote.noteTitle = newTitle;
+      }
+    }
+  }
+  static makeCardsAuxLinkToParentNote(focusNote, parentNote, parentNoteTitle, parentNoteId) {
+    /*
+      归类型的淡黄色卡片：双向链接
+      非归类型的淡黄色卡片：单向链接
+      其它卡片：不链接
+
+      要注意防止第二次链接
+    */
+    let parentNoteOldLinkIndex
+    let parentNoteNewLinkIndex
+    let linkHtmlCommentIndex
+    if (!focusNote.excerptText) { // 非摘录版本才开始链接
+      if (parentNoteTitle) { // 有 parentNoteTitle 说明是淡黄色卡片
+        let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.+)”：“(.+)”\s*相关(.+)/g)
+        if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
+          // 归类型的淡黄色卡片
+          let parentNoteOldUrl = "marginnote3app://note/" + parentNoteId
+          let parentNoteNewUrl = "marginnote4app://note/" + parentNoteId
+          parentNoteOldLinkIndex = focusNote.getCommentIndex(parentNoteOldUrl)
+          parentNoteNewLinkIndex = focusNote.getCommentIndex(parentNoteNewUrl)
+          linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：",true)
+          if ((parentNoteOldLinkIndex == -1) && (parentNoteNewLinkIndex == -1)) { // 防止第二次链接
+            parentNote.appendNoteLink(focusNote, "Both")
+            focusNote.moveComment(focusNote.note.comments.length-1, linkHtmlCommentIndex+1)  // 放在“相关链接：”下面
+          }
+        } else {
+          // 非归类型的淡黄色卡片
+          parentNoteOldLinkIndex = parentNote.getCommentIndex("marginnote3app://note/" + focusNote.noteId)
+          parentNoteNewLinkIndex = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+          if ((parentNoteOldLinkIndex == -1) && (parentNoteNewLinkIndex == -1)) { // 防止第二次链接
+            parentNote.appendNoteLink(focusNote, "To")
+          }
+        }
+      }
+    }
+  }
+
+  static makeCardsAuxMoveDownApplicationsComments(focusNote) {
+    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：",true)
+    let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+    let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
+    if (applicationHtmlCommentIndex !== -1) { // 存在“应用：”时进行处理
+      let focusNoteComments = focusNote.note.comments
+      let focusNoteCommentLength = focusNote.note.comments.length
+      let applicationsContentsIndex = []
+      applicationsContentsIndex.push(applicationHtmlCommentIndex)
+      let continuousLink = true
+      if (applicationHtmlCommentIndex !== focusNoteComments.length-1) { // “应用：”不是最后一个评论时进行处理
+        focusNoteComments.forEach((comment, index) => {
+          if (index > applicationHtmlCommentIndex) {
+            if (continuousLink) {
+              if (comment.type == "PaintNote") {  //  PaintNote 的 text 是 undefined，必须加判断，否则报错
+                continuousLink = false
+              } else {
+                if (comment.text.includes("marginnote4app") || comment.text.includes("marginnote3app")) {
+                  // MNUtil.showHUD("有链接！")
+                  applicationsContentsIndex.push(index)
+                } else {
+                  // MNUtil.showHUD("没有链接！")
+                  continuousLink = false
+                }
+              }
+            }
+          }
+        })
+      }
+      // MNUtil.showHUD(applicationsContentsIndex)
+      // if (focusNoteComments[proofHtmlCommentIndex+1].type !== "HtmlNote" || (applicationHtmlCommentIndex < proofHtmlCommentIndex)) {  // 有证明内容，或者是“应用：”在“证明：”前面的，才移动“应用：”
+      if ((applicationHtmlCommentIndex < proofHtmlCommentIndex) || (applicationHtmlCommentIndex < linkHtmlCommentIndex)) {  // “应用：”在“证明：”前面或在 “相关链接：”前面，才移动“应用：”
+        applicationsContentsIndex.forEach(
+          index => {
+            // 注意！用一次 moveComment 之后，原来的 index 就会减一
+            // 所以不能写成 focusNote.moveComment(index, focusNoteCommentLength-1)
+            focusNote.moveComment(applicationHtmlCommentIndex, focusNoteCommentLength-1)
+          }
+        )
+      }
+    }
+  }
+
+  // 问题所在：应用部分先往下移动了
+  static makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType) {
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let nonLinkNoteCommentsIndex = []
+    let proofHtmlCommentIndex
+    // let afterApplicationHtmlContinuousLink = true
+    switch (focusNoteType) {
+      case "method":
+        proofHtmlCommentIndex= focusNote.getCommentIndex("原理：", true)
+        break;
+      case "antiexample":
+        proofHtmlCommentIndex= focusNote.getCommentIndex("反例及证明：", true)
+        break;
+      default:
+        proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+        break;
+    }
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
+    // let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
+    // if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") { // 若“证明：”下面是 HtmlNote，则说明没有证明内容，就需要移动“证明：”
+      // 证明内容要么在最上方，要么在最下方，判断标准为“应用：”及链接后面有没有内容
+      // 要注意的是链接的判断要和证明内容的链接判断区分开，不能被证明内容的链接判断干扰
+      focusNoteComments.forEach((comment, index) => {
+        // if (comment.type == "PaintNote") {
+        //   MNUtil.showHUD("手写！")
+        // } else {
+        //   MNUtil.showHUD("不是手写！")
+        // }
+        if (index > applicationHtmlCommentIndex) {
+          // MNUtil.showHUD(index + ">" + applicationHtmlCommentIndex)
+          // if (comment.text.includes("marginnote4app")) {
+          //   afterApplicationHtmlContinuousLink = false
+          //   nonLinkNoteCommentsIndex.push(index)
+          // }
+
+          // [fixed] 无法移动手写的问题出在 PaintNote 的 text 是 undefined
+          if (comment.type == "PaintNote") {
+            nonLinkNoteCommentsIndex.push(index)
+          } else {
+            if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
+              nonLinkNoteCommentsIndex.push(index)
+            }
+          }
+        }
+      })
+      // MNUtil.showHUD(nonLinkNoteCommentsIndex)
+      if (nonLinkNoteCommentsIndex.length == 0) { // 说明“应用：”和链接下面没有证明内容，那就去最上方找，即先证明再制卡
+        focusNoteComments.forEach((comment, index) => {
+          if (comment.type !== "LinkNote") {
+            nonLinkNoteCommentsIndex.push(index)
+          }
+        })
+        focusNote.moveComment(proofHtmlCommentIndex, nonLinkNoteCommentsIndex[0])
+      } else {
+        // MNUtil.showHUD("在下方")
+        if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") {
+          // 此时没证明内容，将上面的内容移动下去
+          for (let i = proofHtmlCommentIndex+1; i < nonLinkNoteCommentsIndex[0]; i++) {
+            focusNote.moveComment(proofHtmlCommentIndex+1, focusNoteCommentLength-1);
+          }
+        } else {
+          // 证明在最下方，此时不移动“证明：”，而是把证明的内容移动上去
+          // bug：手写无法移动
+          for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, thoughtHtmlCommentIndex++) {
+            focusNote.moveComment(i, thoughtHtmlCommentIndex);
+          }
+        }
+      }
+    // }
+  }
+
+  // 增加思考
+  static addThoughts(focusNote, focusNoteType) {
+    let keywordsIHtmlCommentIndex = focusNote.getCommentIndex("关键词： ", true)
+    let keywordsIIHtmlCommentIndex = focusNote.getCommentIndex("关键词：", true)
+    let keywordsHtmlCommentIndex = Math.max(keywordsIHtmlCommentIndex, keywordsIIHtmlCommentIndex)  // 兼容两种“关键词：”
+    let definitionHtmlCommentIndex = focusNote.getCommentIndex("相关概念：", true)
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
+    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let nonLinkNoteCommentsIndex = []
+    let proofHtmlCommentIndex
+    // let afterApplicationHtmlContinuousLink = true
+    // switch (focusNoteType) {
+    //   case "method":
+    //     proofHtmlCommentIndex= focusNote.getCommentIndex("原理：", true)
+    //     break;
+    //   case "antiexample":
+    //     proofHtmlCommentIndex= focusNote.getCommentIndex("反例及证明：", true)
+    //     break;
+    //   default:
+    //     proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+    //     break;
+    // }
+    // if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") { // 若“证明：”下面是 HtmlNote，则说明没有证明内容，就需要移动“证明：”
+      // 证明内容要么在最上方，要么在最下方，判断标准为“应用：”及链接后面有没有内容
+      // 要注意的是链接的判断要和证明内容的链接判断区分开，不能被证明内容的链接判断干扰
+    if (focusNoteType == "definition") {
+      // 最后为“相关概念：”
+      // focusNoteComments.forEach((comment, index) => {
+      //   if (index > definitionHtmlCommentIndex) {
+      //     if (comment.type == "PaintNote") {
+      //       nonLinkNoteCommentsIndex.push(index)
+      //     } else {
+      //       if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
+      //         nonLinkNoteCommentsIndex.push(index)
+      //       }
+      //     }
+      //   }
+      // })
+
+      // 由于定义类卡片的“相关概念：”下方不是只有链接，所以不能用链接判断，否则会把相关概念的部分也移动上去，所以就改成了直接增加
+      focusNote.appendMarkdownComment("- ", linkHtmlCommentIndex)
+    } else {
+      // 最后为“应用：”
+      focusNoteComments.forEach((comment, index) => {
+        if (index > applicationHtmlCommentIndex) {
+          if (comment.type == "PaintNote") {
+            nonLinkNoteCommentsIndex.push(index)
+          } else {
+            if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
+              nonLinkNoteCommentsIndex.push(index)
+            }
+          }
+        }
+      })
+
+      if (nonLinkNoteCommentsIndex.length !== 0) {
+        for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, keywordsHtmlCommentIndex++) {
+          focusNote.moveComment(i, keywordsHtmlCommentIndex);
+        }
+      } else {
+        focusNote.appendMarkdownComment("- ", keywordsHtmlCommentIndex)
+      }
+    }
+  }
+
+  // 消除卡片内容，保留文字评论
+  static clearContentKeepText(focusNote) {
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let comment
+    focusNote.noteTitle = ""
+    // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+    for (let i = focusNoteCommentLength-1; i >= 0; i--) {
+      comment = focusNoteComments[i]
+      if (
+        (comment.type !== "TextNote") || 
+        (
+          (comment.type !== "PaintNote") && 
+          (
+            (comment.text.includes("marginnote4app")) 
+            || 
+            (comment.text.includes("marginnote3app"))
+          )
+        ) 
+      ) {
+        focusNote.removeCommentByIndex(i)
+      }
+    }
+  }
+
+  static clearContentKeepExcerptAndImage(focusNote) {
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let comment
+    focusNote.noteTitle = ""
+    // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+    for (let i = focusNoteCommentLength-1; i >= 0; i--) {
+      comment = focusNoteComments[i]
+      if (
+        (comment.type == "TextNote")
+        ||
+        (comment.type == "HtmlNote")
+      ) {
+        focusNote.removeCommentByIndex(i)
+      }
+    }
+  }
+
+  static addTopLayerTemplate(focusNote){
+
+  }
+  static addFiveLayerTemplate(focusNote){
+    // 先确保选中的卡片标题为“模板”，如果是“模版”则改为“模板”
+    // 根据选中的 focusNote 的父节点标题确定卡片为‘“xxx”相关yy’ 格式，并根据 yy 的内容确定
+    // 最后把新增加的模板放在最上层
+  }
+
+  static copyTemplate(focusNote, layerNum = 4){
+    // 最后定位到复制后的卡片
+  }
+
+  // 把卡片中的 HtmlNote 的内容转化为 Markdown 语法
+  static convetHtmlToMarkdown(focusNote){
+    let focusNoteComments = focusNote.note.comments
+    focusNoteComments.forEach((comment, index) => {
+      if (comment.type == "HtmlNote") {
+        let content = comment.text
+        let markdownContent = '<span style="font-weight: bold; color: white; background-color: #0096ff; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px">' + content + '</span>'
+        focusNote.removeCommentByIndex(index)
+        focusNote.appendMarkdownComment(markdownContent, index)
+      }
+    })
+  }
+
+  
+  static changeLevelsInTemplateNoteComments(focusNotes) {
+    const levelMap = {
+        "两层": "一层",
+        "三层": "两层",
+        "四层": "三层",
+        "五层": "四层",
+        // 如果有更多层级需要替换，可以在这里继续扩展映射关系
+    };
+
+    focusNotes.forEach(focusNote => {
+      let replaceFlag = true;  // 标记是否需要进行替换
+      focusNote.note.comments.forEach((comment, index) => {
+        if (comment.text && comment.text.includes("- ") && replaceFlag) {
+          for (const [currentLevel, nextLevel] of Object.entries(levelMap)) {
+            if (comment.text.includes(currentLevel)) {
+              if (currentLevel === "一层") {
+                replaceFlag = false;  // 如果出现 "- 一层"，设置标记为 false，不再替换
+              }
+              const newCommentText = comment.text.replace(currentLevel, nextLevel);
+              focusNote.removeCommentByIndex(index);
+              focusNote.appendMarkdownComment(newCommentText, index);
+            }
+          }
+        }
+      });
+    });
+  }
+
   static init(){
     this.app = Application.sharedInstance()
     this.data = Database.sharedInstance()
@@ -943,472 +1411,30 @@ try {
       })
     })
   }
-  // 夏大鱼羊自定义函数
 
-  // 将卡片变成非摘录版本
-  // 需求：https://github.com/xkwxdyy/mnTextHandler/discussions/3
   /**
-    * 1. 复制卡片标题到剪切板
-    * 2. 去掉卡片标题
-    * 3. 生成卡片的兄弟卡片，标题为复制的内容
-    * 4. 将旧卡片合并到新的兄弟卡片中
-    */
-  /**
-    *
-    * @param {MbBookNote} parent
-    * @param {String} title
-    * @param {Number} colorIndex
-    */
-  static convertNoteToNonexcerptVersion(note) {
-    let config = {}
-    let newNote
-    let parent
-    // let newNoteList = []
-    MNUtil.undoGrouping(()=>{
-      // focusNotes.forEach(
-        // note=>{
-          config.title = note.noteTitle
-          config.content = ""
-          config.markdown = true
-          config.color = note.colorIndex
-          // 获取旧卡片的父卡片
-          parent = note.parentNote
-          // 创建新兄弟卡片，标题为旧卡片的标题
-          newNote = parent.createChildNote(config)
-          // parent.addChild(newnote)
-          // 清除旧卡片的标题
-          note.noteTitle = ""
-          // 将旧卡片合并到新卡片中
-          newNote.merge(note)
-          // newNoteList.push(newNote)
-        // }
-      // )
-    })
-    // return newNoteList
-  }
-
-  /* makeCards 的 aux 函数 */
-  // 合并第一层模板
-  static makeCardsAuxFirstLayerTemplate(focusNote, focusNoteType) {
-    let templateNoteId
-    let testIndex = focusNote.getCommentIndex("相关链接：", true)
-    // MNUtil.showHUD(testIndex)
-    if (testIndex == -1) { // 每种模板卡里都有“相关链接：”
-      switch (focusNoteType) {
-        case "definition":
-          // 71AAED0A-5972-4F72-8282-B558879EFD96
-          // templateNoteId= getNoteIdByURL("71AAED0A-5972-4F72-8282-B558879EFD96")
-          templateNoteId = "71AAED0A-5972-4F72-8282-B558879EFD96"
-          cloneAndMerge(focusNote, templateNoteId)
-          break;
-        case "theorem":
-          // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
-          // templateNoteId = getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
-          templateNoteId = "F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D"
-          cloneAndMerge(focusNote, templateNoteId)
-          break;
-        case "example":
-          // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
-          // templateNoteId = getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
-          templateNoteId = "F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D"
-          cloneAndMerge(focusNote, templateNoteId)
-          break;
-        case "antiexample":
-          // DCD8A253-C991-4798-9546-4B36D19CD260
-          // templateNoteId = getNoteIdByURL("DCD8A253-C991-4798-9546-4B36D19CD260")
-          templateNoteId = "DCD8A253-C991-4798-9546-4B36D19CD260"
-          cloneAndMerge(focusNote, templateNoteId)
-          break;
-        case "method":
-          // F3F263B4-B7C8-4514-922A-35180D4F60CF
-          // templateNoteId = getNoteIdByURL("F3F263B4-B7C8-4514-922A-35180D4F60CF")
-          templateNoteId = "F3F263B4-B7C8-4514-922A-35180D4F60CF"
-          cloneAndMerge(focusNote, templateNoteId)
-          break;
+   * 
+   * @param {UITextView} textView 
+   */
+  static getMindmapview(textView){
+    let mindmapView
+    if (textView.isDescendantOfView(MNUtil.mindmapView)) {
+      mindmapView = MNUtil.mindmapView
+      return mindmapView
+    }else{
+      try {
+        let targetMindview = textView.superview.superview.superview.superview.superview
+        let targetStudyview = targetMindview.superview.superview.superview
+        if (targetStudyview === MNUtil.studyView) {
+          mindmapView = targetMindview
+          MNUtil.floatMindMapView = mindmapView
+          return mindmapView
+        }
+        return undefined
+      } catch (error) {
+        return undefined
       }
     }
-  }
-  static makeCardsAuxSecondLayerTemplate(focusNote, focusNoteType,focusNoteColorIndex) {
-    let templateNoteId
-    let testIndexI = focusNote.getCommentIndex("相关概念：", true)
-    let testIndexII = focusNote.getCommentIndex("应用：", true)
-    let testIndex = Math.max(testIndexI, testIndexII)
-    if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
-      if (testIndex == -1){
-        if (focusNoteType === "definition") {
-          templateNoteId = "E7854116-C137-4E17-B194-78052C984D2A"
-          cloneAndMerge(focusNote, templateNoteId)
-        } else {
-          templateNoteId = "0B488930-0447-4DD0-8236-C27621BEA8F2"
-          cloneAndMerge(focusNote, templateNoteId)
-        }
-      }
-    }
-  }
-  // 修改卡片前缀
-  static makeCardsAuxChangefocusNotePrefix(focusNote, parentNoteTitle, focusNoteColorIndex) {
-    let newTitle
-    // 有淡黄色的父卡片时，parentNoteTitle 非空（只考虑父卡片都有标题的情况）
-    if (parentNoteTitle) {
-      // MNUtil.showHUD(parentNoteTitle)
-      let focusNoteTitle = focusNote.noteTitle
-      let matchContentFromParentNoteTitle = parentNoteTitle.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
-      // let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.+)”：“(.+)”\s*相关(.+)/g)
-      // if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
-      //   MNUtil.showHUD("匹配成功");
-      // } else {
-      //   MNUtil.showHUD("匹配失败");
-      // }
-
-      // MNUtil.showHUD(matchContentFromParentNoteTitle)
-      // 检查【xxx】格式，并捕获xxx内容
-      let matchResult = focusNoteTitle.match(/^【([^】]*)/);
-      // MNUtil.showHUD(matchResult)
-      if (matchResult) { // 如果有匹配结果
-        // MNUtil.showHUD("匹配！")
-        let capturedText = matchResult[1];
-        // 检查是否包含 capturedText 并且是否需要补上】
-        if (capturedText.includes(matchContentFromParentNoteTitle) && !focusNoteTitle.includes("】")) {
-          focusNote.noteTitle = focusNoteTitle + "】";
-        } else if (!capturedText.includes(matchContentFromParentNoteTitle)) {
-          // 如果不包含 capturedText，替换原有【】内容
-          if (focusNoteColorIndex == 2) {
-            // 淡蓝色（定义类）的要在【】后加 “; ”
-            newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】; ");
-          } else {
-            newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】");
-          }
-          focusNote.noteTitle = newTitle;
-        }
-      } else { // 如果标题不是以【xxx开头
-        // MNUtil.showHUD("不匹配！")
-        if (focusNoteColorIndex == 2) {
-          // 淡蓝色（定义类）的要在【】后加 “; ”
-          newTitle = "【" + matchContentFromParentNoteTitle + "】; " + focusNoteTitle;
-        } else {
-          newTitle = "【" + matchContentFromParentNoteTitle + "】" + focusNoteTitle;
-        }
-        focusNote.noteTitle = newTitle;
-      }
-    }
-  }
-  static makeCardsAuxLinkToParentNote(focusNote, parentNote, parentNoteTitle, parentNoteId) {
-    /*
-      归类型的淡黄色卡片：双向链接
-      非归类型的淡黄色卡片：单向链接
-      其它卡片：不链接
-
-      要注意防止第二次链接
-    */
-    let parentNoteOldLinkIndex
-    let parentNoteNewLinkIndex
-    let linkHtmlCommentIndex
-    if (!focusNote.excerptText) { // 非摘录版本才开始链接
-      if (parentNoteTitle) { // 有 parentNoteTitle 说明是淡黄色卡片
-        let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.+)”：“(.+)”\s*相关(.+)/g)
-        if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
-          // 归类型的淡黄色卡片
-          let parentNoteOldUrl = "marginnote3app://note/" + parentNoteId
-          let parentNoteNewUrl = "marginnote4app://note/" + parentNoteId
-          parentNoteOldLinkIndex = focusNote.getCommentIndex(parentNoteOldUrl)
-          parentNoteNewLinkIndex = focusNote.getCommentIndex(parentNoteNewUrl)
-          linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：",true)
-          if ((parentNoteOldLinkIndex == -1) && (parentNoteNewLinkIndex == -1)) { // 防止第二次链接
-            parentNote.appendNoteLink(focusNote, "Both")
-            focusNote.moveComment(focusNote.note.comments.length-1, linkHtmlCommentIndex+1)  // 放在“相关链接：”下面
-          }
-        } else {
-          // 非归类型的淡黄色卡片
-          parentNoteOldLinkIndex = parentNote.getCommentIndex("marginnote3app://note/" + focusNote.noteId)
-          parentNoteNewLinkIndex = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
-          if ((parentNoteOldLinkIndex == -1) && (parentNoteNewLinkIndex == -1)) { // 防止第二次链接
-            parentNote.appendNoteLink(focusNote, "To")
-          }
-        }
-      }
-    }
-  }
-
-  static makeCardsAuxMoveDownApplicationsComments(focusNote) {
-    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：",true)
-    let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
-    let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
-    if (applicationHtmlCommentIndex !== -1) { // 存在“应用：”时进行处理
-      let focusNoteComments = focusNote.note.comments
-      let focusNoteCommentLength = focusNote.note.comments.length
-      let applicationsContentsIndex = []
-      applicationsContentsIndex.push(applicationHtmlCommentIndex)
-      let continuousLink = true
-      if (applicationHtmlCommentIndex !== focusNoteComments.length-1) { // “应用：”不是最后一个评论时进行处理
-        focusNoteComments.forEach((comment, index) => {
-          if (index > applicationHtmlCommentIndex) {
-            if (continuousLink) {
-              if (comment.type == "PaintNote") {  //  PaintNote 的 text 是 undefined，必须加判断，否则报错
-                continuousLink = false
-              } else {
-                if (comment.text.includes("marginnote4app") || comment.text.includes("marginnote3app")) {
-                  // MNUtil.showHUD("有链接！")
-                  applicationsContentsIndex.push(index)
-                } else {
-                  // MNUtil.showHUD("没有链接！")
-                  continuousLink = false
-                }
-              }
-            }
-          }
-        })
-      }
-      // MNUtil.showHUD(applicationsContentsIndex)
-      // if (focusNoteComments[proofHtmlCommentIndex+1].type !== "HtmlNote" || (applicationHtmlCommentIndex < proofHtmlCommentIndex)) {  // 有证明内容，或者是“应用：”在“证明：”前面的，才移动“应用：”
-      if ((applicationHtmlCommentIndex < proofHtmlCommentIndex) || (applicationHtmlCommentIndex < linkHtmlCommentIndex)) {  // “应用：”在“证明：”前面或在 “相关链接：”前面，才移动“应用：”
-        applicationsContentsIndex.forEach(
-          index => {
-            // 注意！用一次 moveComment 之后，原来的 index 就会减一
-            // 所以不能写成 focusNote.moveComment(index, focusNoteCommentLength-1)
-            focusNote.moveComment(applicationHtmlCommentIndex, focusNoteCommentLength-1)
-          }
-        )
-      }
-    }
-  }
-
-  // 问题所在：应用部分先往下移动了
-  static makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType) {
-    let focusNoteComments = focusNote.note.comments
-    let focusNoteCommentLength = focusNoteComments.length
-    let nonLinkNoteCommentsIndex = []
-    let proofHtmlCommentIndex
-    // let afterApplicationHtmlContinuousLink = true
-    switch (focusNoteType) {
-      case "method":
-        proofHtmlCommentIndex= focusNote.getCommentIndex("原理：", true)
-        break;
-      case "antiexample":
-        proofHtmlCommentIndex= focusNote.getCommentIndex("反例及证明：", true)
-        break;
-      default:
-        proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
-        break;
-    }
-    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
-    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
-    // let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
-    // if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") { // 若“证明：”下面是 HtmlNote，则说明没有证明内容，就需要移动“证明：”
-      // 证明内容要么在最上方，要么在最下方，判断标准为“应用：”及链接后面有没有内容
-      // 要注意的是链接的判断要和证明内容的链接判断区分开，不能被证明内容的链接判断干扰
-      focusNoteComments.forEach((comment, index) => {
-        // if (comment.type == "PaintNote") {
-        //   MNUtil.showHUD("手写！")
-        // } else {
-        //   MNUtil.showHUD("不是手写！")
-        // }
-        if (index > applicationHtmlCommentIndex) {
-          // MNUtil.showHUD(index + ">" + applicationHtmlCommentIndex)
-          // if (comment.text.includes("marginnote4app")) {
-          //   afterApplicationHtmlContinuousLink = false
-          //   nonLinkNoteCommentsIndex.push(index)
-          // }
-
-          // [fixed] 无法移动手写的问题出在 PaintNote 的 text 是 undefined
-          if (comment.type == "PaintNote") {
-            nonLinkNoteCommentsIndex.push(index)
-          } else {
-            if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
-              nonLinkNoteCommentsIndex.push(index)
-            }
-          }
-        }
-      })
-      // MNUtil.showHUD(nonLinkNoteCommentsIndex)
-      if (nonLinkNoteCommentsIndex.length == 0) { // 说明“应用：”和链接下面没有证明内容，那就去最上方找，即先证明再制卡
-        focusNoteComments.forEach((comment, index) => {
-          if (comment.type !== "LinkNote") {
-            nonLinkNoteCommentsIndex.push(index)
-          }
-        })
-        focusNote.moveComment(proofHtmlCommentIndex, nonLinkNoteCommentsIndex[0])
-      } else {
-        // MNUtil.showHUD("在下方")
-        if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") {
-          // 此时没证明内容，将上面的内容移动下去
-          for (let i = proofHtmlCommentIndex+1; i < nonLinkNoteCommentsIndex[0]; i++) {
-            focusNote.moveComment(proofHtmlCommentIndex+1, focusNoteCommentLength-1);
-          }
-        } else {
-          // 证明在最下方，此时不移动“证明：”，而是把证明的内容移动上去
-          // bug：手写无法移动
-          for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, thoughtHtmlCommentIndex++) {
-            focusNote.moveComment(i, thoughtHtmlCommentIndex);
-          }
-        }
-      }
-    // }
-  }
-
-  // 增加思考
-  static addThoughts(focusNote, focusNoteType) {
-    let keywordsIHtmlCommentIndex = focusNote.getCommentIndex("关键词： ", true)
-    let keywordsIIHtmlCommentIndex = focusNote.getCommentIndex("关键词：", true)
-    let keywordsHtmlCommentIndex = Math.max(keywordsIHtmlCommentIndex, keywordsIIHtmlCommentIndex)  // 兼容两种“关键词：”
-    let definitionHtmlCommentIndex = focusNote.getCommentIndex("相关概念：", true)
-    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
-    let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
-    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
-    let focusNoteComments = focusNote.note.comments
-    let focusNoteCommentLength = focusNoteComments.length
-    let nonLinkNoteCommentsIndex = []
-    let proofHtmlCommentIndex
-    // let afterApplicationHtmlContinuousLink = true
-    // switch (focusNoteType) {
-    //   case "method":
-    //     proofHtmlCommentIndex= focusNote.getCommentIndex("原理：", true)
-    //     break;
-    //   case "antiexample":
-    //     proofHtmlCommentIndex= focusNote.getCommentIndex("反例及证明：", true)
-    //     break;
-    //   default:
-    //     proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
-    //     break;
-    // }
-    // if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") { // 若“证明：”下面是 HtmlNote，则说明没有证明内容，就需要移动“证明：”
-      // 证明内容要么在最上方，要么在最下方，判断标准为“应用：”及链接后面有没有内容
-      // 要注意的是链接的判断要和证明内容的链接判断区分开，不能被证明内容的链接判断干扰
-    if (focusNoteType == "definition") {
-      // 最后为“相关概念：”
-      // focusNoteComments.forEach((comment, index) => {
-      //   if (index > definitionHtmlCommentIndex) {
-      //     if (comment.type == "PaintNote") {
-      //       nonLinkNoteCommentsIndex.push(index)
-      //     } else {
-      //       if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
-      //         nonLinkNoteCommentsIndex.push(index)
-      //       }
-      //     }
-      //   }
-      // })
-
-      // 由于定义类卡片的“相关概念：”下方不是只有链接，所以不能用链接判断，否则会把相关概念的部分也移动上去，所以就改成了直接增加
-      focusNote.appendMarkdownComment("- ", linkHtmlCommentIndex)
-    } else {
-      // 最后为“应用：”
-      focusNoteComments.forEach((comment, index) => {
-        if (index > applicationHtmlCommentIndex) {
-          if (comment.type == "PaintNote") {
-            nonLinkNoteCommentsIndex.push(index)
-          } else {
-            if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
-              nonLinkNoteCommentsIndex.push(index)
-            }
-          }
-        }
-      })
-
-      if (nonLinkNoteCommentsIndex.length !== 0) {
-        for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, keywordsHtmlCommentIndex++) {
-          focusNote.moveComment(i, keywordsHtmlCommentIndex);
-        }
-      } else {
-        focusNote.appendMarkdownComment("- ", keywordsHtmlCommentIndex)
-      }
-    }
-  }
-
-  // 消除卡片内容，保留文字评论
-  static clearContentKeepText(focusNote) {
-    let focusNoteComments = focusNote.note.comments
-    let focusNoteCommentLength = focusNoteComments.length
-    let comment
-    focusNote.noteTitle = ""
-    // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-    for (let i = focusNoteCommentLength-1; i >= 0; i--) {
-      comment = focusNoteComments[i]
-      if (
-        (comment.type !== "TextNote") || 
-        (
-          (comment.type !== "PaintNote") && 
-          (
-            (comment.text.includes("marginnote4app")) 
-            || 
-            (comment.text.includes("marginnote3app"))
-          )
-        ) 
-      ) {
-        focusNote.removeCommentByIndex(i)
-      }
-    }
-  }
-
-  static clearContentKeepExcerptAndImage(focusNote) {
-    let focusNoteComments = focusNote.note.comments
-    let focusNoteCommentLength = focusNoteComments.length
-    let comment
-    focusNote.noteTitle = ""
-    // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-    for (let i = focusNoteCommentLength-1; i >= 0; i--) {
-      comment = focusNoteComments[i]
-      if (
-        (comment.type == "TextNote")
-        ||
-        (comment.type == "HtmlNote")
-      ) {
-        focusNote.removeCommentByIndex(i)
-      }
-    }
-  }
-
-  static addTopLayerTemplate(focusNote){
-
-  }
-  static addFiveLayerTemplate(focusNote){
-    // 先确保选中的卡片标题为“模板”，如果是“模版”则改为“模板”
-    // 根据选中的 focusNote 的父节点标题确定卡片为‘“xxx”相关yy’ 格式，并根据 yy 的内容确定
-    // 最后把新增加的模板放在最上层
-  }
-
-  static copyTemplate(focusNote, layerNum = 4){
-    // 最后定位到复制后的卡片
-  }
-
-  // 把卡片中的 HtmlNote 的内容转化为 Markdown 语法
-  static convetHtmlToMarkdown(focusNote){
-    let focusNoteComments = focusNote.note.comments
-    focusNoteComments.forEach((comment, index) => {
-      if (comment.type == "HtmlNote") {
-        let content = comment.text
-        let markdownContent = '<span style="font-weight: bold; color: white; background-color: #0096ff; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px">' + content + '</span>'
-        focusNote.removeCommentByIndex(index)
-        focusNote.appendMarkdownComment(markdownContent, index)
-      }
-    })
-  }
-
-  
-  static changeLevelsInTemplateNoteComments(focusNotes) {
-    const levelMap = {
-        "两层": "一层",
-        "三层": "两层",
-        "四层": "三层",
-        "五层": "四层",
-        // 如果有更多层级需要替换，可以在这里继续扩展映射关系
-    };
-
-    focusNotes.forEach(focusNote => {
-      let replaceFlag = true;  // 标记是否需要进行替换
-      focusNote.note.comments.forEach((comment, index) => {
-        if (comment.text && comment.text.includes("- ") && replaceFlag) {
-          for (const [currentLevel, nextLevel] of Object.entries(levelMap)) {
-            if (comment.text.includes(currentLevel)) {
-              if (currentLevel === "一层") {
-                replaceFlag = false;  // 如果出现 "- 一层"，设置标记为 false，不再替换
-              }
-              const newCommentText = comment.text.replace(currentLevel, nextLevel);
-              focusNote.removeCommentByIndex(index);
-              focusNote.appendMarkdownComment(newCommentText, index);
-            }
-          }
-        }
-      });
-    });
   }
 }
 
