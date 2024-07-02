@@ -983,6 +983,33 @@ toolbarController.prototype.customAction = async function (actionName) {
           MNUtil.showHUD(error)
         }
         break;
+      case "addTopic":
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.addTopic(focusNote)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
+      case "addTemplate":
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.addTemplate(focusNote,focusNoteColorIndex)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
+      case "renewCards":
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.renewCards(focusNotes)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
       case "makeCards":
         try {
           // MNUtil.showHUD("制卡")

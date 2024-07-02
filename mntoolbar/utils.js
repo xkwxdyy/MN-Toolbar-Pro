@@ -494,6 +494,167 @@ class toolbarUtils {
     });
   }
 
+  static addTopic(focusNote) {
+    UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+      "新的专题",
+      "输入标题",
+      2,
+      "取消",
+      ["确定"],
+      (alert, buttonIndex) => {
+        let userInputTitle = alert.textFieldAtIndex(0).text;
+        if (buttonIndex === 1) {
+          let topicParentNote = MNNote.clone("35256174-9EDD-416F-9699-B6D5C1E1F0E6")
+          topicParentNote.note.noteTitle = userInputTitle
+          MNUtil.undoGrouping(()=>{
+            focusNote.addChild(topicParentNote.note)
+            // MNUtil.showHUD(topicParentNote.childNotes.length);
+            topicParentNote.descendantNodes.descendant.forEach(
+              // 把每个子卡片标题中的 “标题” 替换为 userInputTitle
+              childNote => {
+                childNote.noteTitle = childNote.noteTitle.replace(/标题/g, userInputTitle)
+              }
+            )
+            topicParentNote.childNotes[0].focusInMindMap()
+          })
+        }
+      }
+    )
+  }
+
+  static addTemplateAuxGetNoteIdByType(type) {
+    switch (type) {
+      case "定义":
+        return "A9607770-48A3-4722-A399-A33E2BD55CCB"
+      case "命题":
+        return "35A16F68-E35F-42DB-BC83-BFCF10C4ED6D"
+      case "例子":
+        return "CC353F22-B9A6-457A-8EBD-E25786609D48"
+      case "反例":
+        return "97C53969-F206-4FD1-A041-1B37A16516B8"
+      case "问题":
+        return "1DA52F05-6742-471E-A665-0DAC2E72AAE2"
+      case "应用":
+        return "368F2283-FA0C-46AC-816B-1B7BA99B2455"
+      case "思想方法":
+        return "D1B864F5-DD3A-435E-8D15-49DA219D3895"
+    }
+  }
+  static addTemplate(focusNote,focusNoteColorIndex) {
+    let parentNote, templateNote
+    let type
+    UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+      "增加模板",
+      "请输入标题并选择类型",
+      2,
+      "取消",
+      ["往下增加模板", "最顶层（淡绿色）", "专题"],
+      (alert, buttonIndex) => {
+        let userInputTitle = alert.textFieldAtIndex(0).text;
+        switch (buttonIndex) {
+          case 3:
+            let topicParentNote = MNNote.clone("35256174-9EDD-416F-9699-B6D5C1E1F0E6")
+            topicParentNote.note.noteTitle = userInputTitle
+            MNUtil.undoGrouping(()=>{
+              focusNote.addChild(topicParentNote.note)
+              // MNUtil.showHUD(topicParentNote.childNotes.length);
+              topicParentNote.descendantNodes.descendant.forEach(
+                // 把每个子卡片标题中的 “标题” 替换为 userInputTitle
+                childNote => {
+                  childNote.noteTitle = childNote.noteTitle.replace(/标题/g, userInputTitle)
+                }
+              )
+              topicParentNote.childNotes[0].focusInMindMap()
+            })
+            break;
+          case 2:
+            /* 增加最顶层的模板 */
+            // 先选到第一个白色的父卡片
+            if (focusNoteColorIndex == 12) {
+              // 如果选中的就是白色的（比如刚建立专题的时候）
+              parentNote = focusNote
+            } else {
+              parentNote = focusNote.parentNote
+              while (parentNote.colorIndex !== 12) {
+                parentNote = parentNote.parentNote
+              }
+            }
+            
+            if (parentNote) {
+              const typeRegex = /^(.*)（/; // 匹配以字母或数字开头的字符直到左括号 '('
+
+              const match = parentNote.noteTitle.match(typeRegex);
+              if (match) {
+                type = match[1]; // 提取第一个捕获组的内容
+                // MNUtil.showHUD(type);
+                templateNote = MNNote.clone("121387A2-740E-4BC6-A184-E4115AFA90C3")
+                templateNote.note.colorIndex = 1  // 颜色为淡绿色
+                templateNote.note.noteTitle = "“" + userInputTitle + "”相关" + type
+                MNUtil.undoGrouping(()=>{
+                  parentNote.addChild(templateNote.note)
+                  parentNote.parentNote.appendNoteLink(templateNote, "Both")
+                  templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                })
+                // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
+                MNUtil.delay(0.5).then(()=>{
+                  templateNote.focusInMindMap()
+                })
+              } else {
+                MNUtil.showHUD("匹配失败，匹配到的标题为" +  parentNote.noteTitle);
+              }
+            } else {
+              MNUtil.showHUD("无父卡片");
+            }
+            
+            break;
+          case 1:
+            /* 往下增加模板 */
+            // 需要看选中的卡片的颜色
+            if (focusNoteColorIndex == 1) {
+              /* 淡绿色 */
+              type = focusNote.noteTitle.match(/“.+”相关(.*)/)[1]
+              // MNUtil.showHUD(type);
+              templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
+              templateNote.note.colorIndex = 4  // 颜色为黄色
+              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" + userInputTitle + "”相关" + type
+              MNUtil.undoGrouping(()=>{
+                focusNote.addChild(templateNote.note)
+                focusNote.appendNoteLink(templateNote, "Both")
+                templateNote.moveComment(templateNote.note.comments.length-1, 1)
+              })
+              // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
+              MNUtil.delay(0.5).then(()=>{
+                templateNote.focusInMindMap()
+              })
+            } else {
+              /* 淡黄色、黄色甚至其它颜色 */
+              type = focusNote.noteTitle.match(/“.+”相关(.*)/)[1]
+              // MNUtil.showHUD(type);
+              templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
+              templateNote.note.colorIndex = 0  // 颜色为淡黄色
+              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + userInputTitle + "”相关" + type
+              MNUtil.undoGrouping(()=>{
+                focusNote.addChild(templateNote.note)
+                focusNote.appendNoteLink(templateNote, "Both")
+                templateNote.moveComment(templateNote.note.comments.length-1, 1)
+              })
+              // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
+              MNUtil.delay(0.5).then(()=>{
+                templateNote.focusInMindMap()
+              })
+            }
+            break;
+        }
+      }
+    )
+  }
+
+  static renewCards(focusNotes) {
+    focusNotes.forEach(focusNote => {
+      
+    })
+  }
+
   static init(){
     this.app = Application.sharedInstance()
     this.data = Database.sharedInstance()
