@@ -439,19 +439,6 @@ class toolbarUtils {
     }
   }
 
-  static addTopLayerTemplate(focusNote){
-
-  }
-  static addFiveLayerTemplate(focusNote){
-    // 先确保选中的卡片标题为“模板”，如果是“模版”则改为“模板”
-    // 根据选中的 focusNote 的父节点标题确定卡片为‘“xxx”相关yy’ 格式，并根据 yy 的内容确定
-    // 最后把新增加的模板放在最上层
-  }
-
-  static copyTemplate(focusNote, layerNum = 4){
-    // 最后定位到复制后的卡片
-  }
-
   // 把卡片中的 HtmlNote 的内容转化为 Markdown 语法
   static convetHtmlToMarkdown(focusNote){
     let focusNoteComments = focusNote.note.comments
@@ -466,33 +453,33 @@ class toolbarUtils {
   }
 
   
-  static changeLevelsInTemplateNoteComments(focusNotes) {
-    const levelMap = {
-        "两层": "一层",
-        "三层": "两层",
-        "四层": "三层",
-        "五层": "四层",
-        // 如果有更多层级需要替换，可以在这里继续扩展映射关系
-    };
+  // static changeLevelsInTemplateNoteComments(focusNotes) {
+  //   const levelMap = {
+  //       "两层": "一层",
+  //       "三层": "两层",
+  //       "四层": "三层",
+  //       "五层": "四层",
+  //       // 如果有更多层级需要替换，可以在这里继续扩展映射关系
+  //   };
 
-    focusNotes.forEach(focusNote => {
-      let replaceFlag = true;  // 标记是否需要进行替换
-      focusNote.note.comments.forEach((comment, index) => {
-        if (comment.text && comment.text.includes("- ") && replaceFlag) {
-          for (const [currentLevel, nextLevel] of Object.entries(levelMap)) {
-            if (comment.text.includes(currentLevel)) {
-              if (currentLevel === "一层") {
-                replaceFlag = false;  // 如果出现 "- 一层"，设置标记为 false，不再替换
-              }
-              const newCommentText = comment.text.replace(currentLevel, nextLevel);
-              focusNote.removeCommentByIndex(index);
-              focusNote.appendMarkdownComment(newCommentText, index);
-            }
-          }
-        }
-      });
-    });
-  }
+  //   focusNotes.forEach(focusNote => {
+  //     let replaceFlag = true;  // 标记是否需要进行替换
+  //     focusNote.note.comments.forEach((comment, index) => {
+  //       if (comment.text && comment.text.includes("- ") && replaceFlag) {
+  //         for (const [currentLevel, nextLevel] of Object.entries(levelMap)) {
+  //           if (comment.text.includes(currentLevel)) {
+  //             if (currentLevel === "一层") {
+  //               replaceFlag = false;  // 如果出现 "- 一层"，设置标记为 false，不再替换
+  //             }
+  //             const newCommentText = comment.text.replace(currentLevel, nextLevel);
+  //             focusNote.removeCommentByIndex(index);
+  //             focusNote.appendMarkdownComment(newCommentText, index);
+  //           }
+  //         }
+  //       }
+  //     });
+  //   });
+  // }
 
   static addTopic(focusNote) {
     UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
@@ -553,22 +540,35 @@ class toolbarUtils {
         let userInputTitle = alert.textFieldAtIndex(0).text;
         switch (buttonIndex) {
           case 3:
-            let topicParentNote = MNNote.clone("35256174-9EDD-416F-9699-B6D5C1E1F0E6")
-            topicParentNote.note.noteTitle = userInputTitle
-            MNUtil.undoGrouping(()=>{
-              focusNote.addChild(topicParentNote.note)
-              // MNUtil.showHUD(topicParentNote.childNotes.length);
-              topicParentNote.descendantNodes.descendant.forEach(
-                // 把每个子卡片标题中的 “标题” 替换为 userInputTitle
-                childNote => {
-                  childNote.noteTitle = childNote.noteTitle.replace(/标题/g, userInputTitle)
+            /* 专题 */
+            // 因为专题模板卡片比较多，所以增加一个确认界面
+            UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+              "请确认",
+              "确定标题是：「" + userInputTitle + "」吗？",
+              0,
+              "写错了",
+              ["确定"],
+              (alert, buttonIndex) => {
+                if (buttonIndex == 1) {
+                  let topicParentNote = MNNote.clone("35256174-9EDD-416F-9699-B6D5C1E1F0E6")
+                  topicParentNote.note.noteTitle = userInputTitle
+                  MNUtil.undoGrouping(()=>{
+                    focusNote.addChild(topicParentNote.note)
+                    // MNUtil.showHUD(topicParentNote.childNotes.length);
+                    topicParentNote.descendantNodes.descendant.forEach(
+                      // 把每个子卡片标题中的 “标题” 替换为 userInputTitle
+                      childNote => {
+                        childNote.noteTitle = childNote.noteTitle.replace(/标题/g, userInputTitle)
+                      }
+                    )
+                    topicParentNote.childNotes[0].focusInMindMap()
+                  })
                 }
-              )
-              topicParentNote.childNotes[0].focusInMindMap()
-            })
+              }
+            )
             break;
           case 2:
-            /* 增加最顶层的模板 */
+            /* 增加最顶层的淡绿色模板 */
             // 先选到第一个白色的父卡片
             if (focusNoteColorIndex == 12) {
               // 如果选中的就是白色的（比如刚建立专题的时候）
@@ -616,7 +616,7 @@ class toolbarUtils {
               // MNUtil.showHUD(type);
               templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
               templateNote.note.colorIndex = 4  // 颜色为黄色
-              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" + userInputTitle + "”相关" + type
+              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + userInputTitle + "”相关" + type
               MNUtil.undoGrouping(()=>{
                 focusNote.addChild(templateNote.note)
                 focusNote.appendNoteLink(templateNote, "Both")
@@ -632,7 +632,7 @@ class toolbarUtils {
               // MNUtil.showHUD(type);
               templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
               templateNote.note.colorIndex = 0  // 颜色为淡黄色
-              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + userInputTitle + "”相关" + type
+              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] +  userInputTitle + "”相关" + type
               MNUtil.undoGrouping(()=>{
                 focusNote.addChild(templateNote.note)
                 focusNote.appendNoteLink(templateNote, "Both")
@@ -649,9 +649,49 @@ class toolbarUtils {
     )
   }
 
-  static renewCards(focusNotes) {
+  /* 
+    处理旧卡片 
+    1. 去掉“模板：”或者“模版：”及下面的内容
+    2. 去掉“两层”到“五层”
+  */
+  
+  static renewCards(focusNotes, focusNoteColorIndex) {
     focusNotes.forEach(focusNote => {
+      let focusNoteComments = focusNote.note.comments
+      let focusNoteCommentLength = focusNoteComments.length
+      let comment
+      let htmlCommentsIndexArr = []
       
+      focusNoteComments.forEach((comment, index) => {
+        if (comment.type == "HtmlNote") {
+          htmlCommentsIndexArr.push(index)
+        }
+      })
+
+      // MNUtil.showHUD(htmlCommentsIndex);
+
+      let templateHtmlCommentStartIndexI = focusNote.getCommentIndex("模版：", true)
+      let templateHtmlCommentStartIndexII = focusNote.getCommentIndex("模板：", true)
+      let templateHtmlCommentStartIndex = Math.max(templateHtmlCommentStartIndexI, templateHtmlCommentStartIndexII)
+      let templateHtmlCommentIndex = htmlCommentsIndexArr.indexOf(templateHtmlCommentStartIndex)
+      let templateHtmlCommentEndIndex = htmlCommentsIndexArr[templateHtmlCommentIndex+1]
+      // MNUtil.showHUD(templateHtmlCommentStartIndex + " " + templateHtmlCommentEndIndex);
+      if (templateHtmlCommentStartIndex !== -1) {
+        for (let i = templateHtmlCommentEndIndex-1; i >= templateHtmlCommentStartIndex; i--) {
+          focusNote.removeCommentByIndex(i)
+        }
+      }
+
+      if (focusNoteColorIndex == 1) {
+        // 淡绿色卡片
+        // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+        for (let i = focusNoteCommentLength-1; i >= htmlCommentsIndexArr[htmlCommentsIndexArr.length - 1]; i--) {
+          comment = focusNoteComments[i]
+          if (comment.text && (comment.text.includes("两层") || comment.text.includes("三层") || comment.text.includes("四层") || comment.text.includes("五层"))) {
+            focusNote.removeCommentByIndex(i)
+          }
+        }
+      }
     })
   }
 

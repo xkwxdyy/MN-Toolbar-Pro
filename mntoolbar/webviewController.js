@@ -919,15 +919,6 @@ toolbarController.prototype.customAction = async function (actionName) {
         let chosenComment = focusNoteComments[des.index-1]
         MNUtil.showHUD("CommentType: " + chosenComment.type)
         break;
-      case "changeLevelsInTemplateNoteComments": // 将模板卡片的“层级”降级
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.changeLevelsInTemplateNoteComments(focusNotes)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
       case "convetHtmlToMarkdown":
         try {
           MNUtil.undoGrouping(()=>{
@@ -1004,7 +995,7 @@ toolbarController.prototype.customAction = async function (actionName) {
       case "renewCards":
         try {
           MNUtil.undoGrouping(()=>{
-            toolbarUtils.renewCards(focusNotes)
+            toolbarUtils.renewCards(focusNotes, focusNoteColorIndex)
           })
         } catch (error) {
           MNUtil.showHUD(error);
