@@ -140,7 +140,6 @@ JSB.newAddon = function (mainPath) {
         if (self.window !== MNUtil.currentWindow || !toolbarConfig.dynamic) {
           return
         }
-
         // if (!self.appInstance.checkNotifySenderInWindow(sender, self.window) || !toolbarConfig.dynamic) return; // Don't process message from other window
         self.onPopupMenuOnNoteTime = Date.now()
         self.noteid = sender.userInfo.note.noteId
@@ -377,47 +376,12 @@ JSB.newAddon = function (mainPath) {
        */
       onTextDidBeginEditing:function (param) {
 try {
-        
-        if (MNUtil.studyController.docMapSplitMode === 2) {
+        if (self.window !== MNUtil.currentWindow) {
           return
         }
-        if (MNUtil.notebookController.outlineView && !MNUtil.notebookController.outlineView.hidden) {
+        if (MNUtil.studyMode === 3) {
           return
         }
-        // let noteView = MNUtil.notebookController.mindmapView.mindmapNodes[0].frame
-        if (toolbarConfig.showEditorOnNoteEdit) {
-          let foucsNote = MNNote.getFocusNote()
-          if (!foucsNote.noteTitle && !foucsNote.excerptText && !foucsNote.comments.length) {
-            foucsNote.noteTitle = "Title"
-          }
-          if (foucsNote) {
-            let noteId = foucsNote.noteId
-            let studyFrame = MNUtil.studyView.bounds
-            let beginFrame
-            // MNUtil.copyJSON(beginFrame)
-            if (self.testController) {
-              beginFrame = self.testController.view.frame
-            }else{
-              beginFrame = self.addonController.view.frame
-            }
-            beginFrame.y = beginFrame.y-10
-            if (beginFrame.x+490 > studyFrame.width) {
-              let endFrame = MNUtil.genFrame(beginFrame.x-450, beginFrame.y-10, 450, 500)
-              if (beginFrame.y+490 > studyFrame.height) {
-                endFrame.y = studyFrame.height-500
-              }
-              MNUtil.postNotification("openInEditor",{noteId:noteId,beginFrame:beginFrame,endFrame:endFrame})
-            }else{
-              let endFrame = MNUtil.genFrame(beginFrame.x+40, beginFrame.y-10, 450, 500)
-              if (beginFrame.y+490 > studyFrame.height) {
-                endFrame.y = studyFrame.height-500
-              }
-              MNUtil.postNotification("openInEditor",{noteId:noteId,beginFrame:beginFrame,endFrame:endFrame})
-            }
-          }
-        }
-        // MNUtil.showHUD(param.object.text)
-        // MNUtil.copyJSON(params.userInfo)
         if (self.testController && !self.testController.view.hidden) {
           let preOpacity = self.testController.view.layer.opacity
           UIView.animateWithDurationAnimationsCompletion(0.1,()=>{
@@ -427,6 +391,100 @@ try {
             self.testController.view.hidden = true
           })
         }
+        if (!toolbarConfig.showEditorOnNoteEdit) {
+          return
+        }
+        // if (MNUtil.studyController.docMapSplitMode === 2) {
+        //   return
+        // }
+        // if (MNUtil.notebookController.outlineView && !MNUtil.notebookController.outlineView.hidden) {
+        //   return
+        // }
+        // //0:未知
+        // //1：未知
+        // //8:studyView
+        // //9:侧边栏
+        // MNUtil.showHUD("message"+MNUtil.studyController.view.superview.subviews.length)
+        // MNUtil.studyController.view.superview.subviews[7].hidden = true
+        // // param.object.superview.superview.superview.hidden = true
+        // return
+        // let noteView = MNUtil.notebookController.mindmapView.mindmapNodes[0].frame
+        let textView = param.object
+        // let check = []
+        // check.push(textView.superview === MNUtil.studyView)
+        // check.push(textView.superview.superview === MNUtil.studyView)
+        // check.push(textView.superview.superview.superview === MNUtil.studyView)
+        // check.push(textView.superview.superview.superview.superview === MNUtil.studyView)
+        // check.push(textView.superview.superview.superview.superview.superview === MNUtil.studyView)
+        // check.push(textView.superview.superview.superview.superview.superview.superview === MNUtil.studyView)
+        // check.push(textView.superview.superview.superview.superview.superview.superview.superview === MNUtil.studyView)
+        // check.push(textView.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.studyView)
+        // check.push(textView.superview.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.studyView)
+        // MNUtil.copyJSON(check)
+        // if (textView.superview.superview.superview.superview.superview !== MNUtil.mindmapView) {
+        //   return
+        // }
+        // MNUtil.notebookController.view
+        // let check = []
+        // check.push(textView.isDescendantOfView(MNUtil.studyController.view))
+        // check.push(textView.isDescendantOfView(MNUtil.notebookController.view))
+        // check.push(textView.isDescendantOfView(MNUtil.readerController.view))
+        // check.push(textView.isDescendantOfView(MNUtil.mindmapView))
+        // check.push(textView.isDescendantOfView(MNUtil.notebookController.outlineView))
+        // // check.push(textView.isDescendantOfView(MNUtil.readerController.currentDocumentController.view))
+        // // check.push(textView.isDescendantOfView(MNUtil.notebookController.view))
+        // // check.push(textView.isDescendantOfView(MNUtil.notebookController.view))
+        // // check.push(textView.isDescendantOfView(MNUtil.notebookController.view))
+        // MNUtil.copyJSON(check)
+        // MNUtil.showHUD("message"+textView.isDescendantOfView(MNUtil.notebookController.view))
+        // MNUtil.copyJSON(beginFrame)
+        let mindmapView = toolbarUtils.getMindmapview(textView)
+
+        // if (!(textView.isDescendantOfView(MNUtil.mindmapView) || textView.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.studyView)) {
+        //   return
+        // }
+        // let mindmapView
+        // if (textView.isDescendantOfView(MNUtil.mindmapView)) {
+        //   mindmapView = MNUtil.mindmapView
+        // }else{
+        //   mindmapView = textView.superview.superview.superview.superview.superview
+        //   MNUtil.floatMindMapView = mindmapView
+        // }
+        if (!mindmapView) {
+          return
+        }
+        let noteView = mindmapView.selViewLst[0].view
+        // let foucsNote = MNNote.getFocusNote()
+        let foucsNote = MNNote.new(mindmapView.selViewLst[0].note.note)
+        let beginFrame = noteView.convertRectToView(noteView.bounds, MNUtil.studyView)
+        if (!foucsNote.noteTitle && !foucsNote.excerptText && !foucsNote.comments.length) {
+          // MNUtil.copyJSON(param.object)
+          param.object.text = "placeholder"
+          // foucsNote.noteTitle = "Title"
+          // foucsNote.excerptText = "Excerpt"
+        }
+        // MNUtil.beginTime = Date.now()
+        // return
+        if (foucsNote) {
+          let noteId = foucsNote.noteId
+          let studyFrame = MNUtil.studyView.bounds
+          if (beginFrame.x+450 > studyFrame.width) {
+            let endFrame = MNUtil.genFrame(studyFrame.width-450, beginFrame.y-10, 450, 500)
+            if (beginFrame.y+490 > studyFrame.height) {
+              endFrame.y = studyFrame.height-500
+            }
+            MNUtil.postNotification("openInEditor",{noteId:noteId,beginFrame:beginFrame,endFrame:endFrame})
+          }else{
+            let endFrame = MNUtil.genFrame(beginFrame.x, beginFrame.y-10, 450, 500)
+            if (beginFrame.y+490 > studyFrame.height) {
+              endFrame.y = studyFrame.height-500
+            }
+            MNUtil.postNotification("openInEditor",{noteId:noteId,beginFrame:beginFrame,endFrame:endFrame})
+          }
+        }
+        // MNUtil.showHUD(param.object.text)
+        // MNUtil.copyJSON(params.userInfo)
+
 } catch (error) {
   toolbarUtils.addErrorLog(error, "onTextDidBeginEditing")
 }

@@ -183,7 +183,7 @@ viewWillLayoutSubviews: function() {
       let buttonFrame = self.moveButton.frame
       let newY = locationToButton.y-translation.y 
       let newX = locationToButton.x-translation.x
-      if (gesture.state !== 3 && (newY<buttonFrame.height+5 && newY>-5 && newX<buttonFrame.width+5 && newX>-5 && Math.abs(translation.y)<20 && Math.abs(translation.x)<20)) {
+      if (gesture.state === 1) {
         self.locationToBrowser = {x:locationToBrowser.x-translation.x,y:locationToBrowser.y-translation.y}
         self.locationToButton = {x:newX,y:newY}
       }

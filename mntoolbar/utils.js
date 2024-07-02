@@ -1,3 +1,13 @@
+// 获取UITextView实例的所有属性
+function getAllProperties(obj) {
+    var props = [];
+    var proto = obj;
+    while (proto) {
+        props = props.concat(Object.getOwnPropertyNames(proto));
+        proto = Object.getPrototypeOf(proto);
+    }
+    return props;
+}
 // 定义一个类
 class toolbarUtils {
   // 构造器方法，用于初始化新创建的对象
