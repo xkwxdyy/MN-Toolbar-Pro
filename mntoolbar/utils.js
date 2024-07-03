@@ -695,15 +695,22 @@ class toolbarUtils {
       })
       // todo: focusNote 的链接，因为被链接的标题改变了，所以变成了空白，而且无法自己刷新
       // 目前的暂时解决办法是添加评论再删除
-      focusNote.appendMarkdownComment("")
-      focusNote.removeCommentByIndex(focusNote.note.comments.length-1)
+      // focusNote.appendMarkdownComment("")
+      // focusNote.removeCommentByIndex(focusNote.note.comments.length-1)
+      // focusNote.descendantNodes.descendant.forEach(descendantNote => {
+      //   descendantNote.appendMarkdownComment("")
+      //   descendantNote.removeCommentByIndex(descendantNote.note.comments.length-1)
+      // })
+      // focusNote.ancestorNodes.forEach(ancestorNote => {
+      //   ancestorNote.appendMarkdownComment("")
+      //   ancestorNote.removeCommentByIndex(ancestorNote.note.comments.length-1)
+      // })
+      focusNote.refresh()
       focusNote.descendantNodes.descendant.forEach(descendantNote => {
-        descendantNote.appendMarkdownComment("")
-        descendantNote.removeCommentByIndex(descendantNote.note.comments.length-1)
+        descendantNote.refresh()
       })
       focusNote.ancestorNodes.forEach(ancestorNote => {
-        ancestorNote.appendMarkdownComment("")
-        ancestorNote.removeCommentByIndex(ancestorNote.note.comments.length-1)
+        ancestorNote.refresh()
       })
     } else {
       if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
@@ -721,15 +728,22 @@ class toolbarUtils {
             }
           }
         })
-        focusNote.appendMarkdownComment("")
-        focusNote.removeCommentByIndex(focusNote.note.comments.length-1)
+        // focusNote.appendMarkdownComment("")
+        // focusNote.removeCommentByIndex(focusNote.note.comments.length-1)
+        // focusNote.descendantNodes.descendant.forEach(descendantNote => {
+        //   descendantNote.appendMarkdownComment("")
+        //   descendantNote.removeCommentByIndex(descendantNote.note.comments.length-1)
+        // })
+        // focusNote.ancestorNodes.forEach(ancestorNote => {
+        //   ancestorNote.appendMarkdownComment("")
+        //   ancestorNote.removeCommentByIndex(ancestorNote.note.comments.length-1)
+        // })
+        focusNote.refresh()
         focusNote.descendantNodes.descendant.forEach(descendantNote => {
-          descendantNote.appendMarkdownComment("")
-          descendantNote.removeCommentByIndex(descendantNote.note.comments.length-1)
+          descendantNote.refresh()
         })
         focusNote.ancestorNodes.forEach(ancestorNote => {
-          ancestorNote.appendMarkdownComment("")
-          ancestorNote.removeCommentByIndex(ancestorNote.note.comments.length-1)
+          ancestorNote.refresh()
         })
       }
     }
