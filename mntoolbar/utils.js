@@ -391,42 +391,68 @@ class toolbarUtils {
     let focusNoteComments = focusNote.note.comments
     let focusNoteCommentLength = focusNoteComments.length
     let comment
-    focusNote.noteTitle = ""
-    // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-    for (let i = focusNoteCommentLength-1; i >= 0; i--) {
-      comment = focusNoteComments[i]
-      if (
-        (comment.type !== "TextNote") || 
-        (
-          (comment.type !== "PaintNote") && 
-          (
-            (comment.text.includes("marginnote4app")) 
-            || 
-            (comment.text.includes("marginnote3app"))
-          )
-        ) 
-      ) {
-        focusNote.removeCommentByIndex(i)
+    UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+      "请确认",
+      "只保留 Markdown 文字吗？\n注意 Html 评论也会被清除",
+      0,
+      "点错了",
+      ["确定"],
+      (alert, buttonIndex) => {
+        if (buttonIndex == 1) {
+          MNUtil.undoGrouping(()=>{
+            focusNote.noteTitle = ""
+            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+            for (let i = focusNoteCommentLength-1; i >= 0; i--) {
+              comment = focusNoteComments[i]
+              if (
+                (comment.type !== "TextNote") || 
+                (
+                  (comment.type !== "PaintNote") && 
+                  (
+                    (comment.text.includes("marginnote4app")) 
+                    || 
+                    (comment.text.includes("marginnote3app"))
+                  )
+                ) 
+              ) {
+                focusNote.removeCommentByIndex(i)
+              }
+            }
+          })
+        }
       }
-    }
+    )
   }
 
   static clearContentKeepExcerptAndImage(focusNote) {
     let focusNoteComments = focusNote.note.comments
     let focusNoteCommentLength = focusNoteComments.length
     let comment
-    focusNote.noteTitle = ""
-    // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-    for (let i = focusNoteCommentLength-1; i >= 0; i--) {
-      comment = focusNoteComments[i]
-      if (
-        (comment.type == "TextNote")
-        ||
-        (comment.type == "HtmlNote")
-      ) {
-        focusNote.removeCommentByIndex(i)
+    UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+      "请确认",
+      "只保留摘录、手写和图片吗？",
+      0,
+      "点错了",
+      ["确定"],
+      (alert, buttonIndex) => {
+        if (buttonIndex == 1) {
+          MNUtil.undoGrouping(()=>{
+            focusNote.noteTitle = ""
+            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+            for (let i = focusNoteCommentLength-1; i >= 0; i--) {
+              comment = focusNoteComments[i]
+              if (
+                (comment.type == "TextNote")
+                ||
+                (comment.type == "HtmlNote")
+              ) {
+                focusNote.removeCommentByIndex(i)
+              }
+            }
+          })
+        }
       }
-    }
+    )
   }
 
   // 把卡片中的 HtmlNote 的内容转化为 Markdown 语法
@@ -651,6 +677,46 @@ class toolbarUtils {
       let focusNoteCommentLength = focusNoteComments.length
       let comment
       let htmlCommentsIndexArr = []
+
+      try {
+        MNUtil.undoGrouping(()=>{
+          this.makeCardsAuxMoveDownApplicationsComments(focusNote)
+        })
+      } catch (error) {
+        MNUtil.showHUD(error);
+      }
+
+      let layerStartIndex, layerEndIndex
+      // layerEndIndex = focusNoteCommentLength - 1 - (templateHtmlCommentEndIndex - templateHtmlCommentStartIndex)
+      // layerStartIndex = htmlCommentsIndexArr[htmlCommentsIndexArr.length - 1]
+      layerStartIndex = 0
+      layerEndIndex = focusNoteCommentLength - 1
+      if (focusNoteColorIndex == 0 || focusNoteColorIndex == 1 || focusNoteColorIndex == 4) {
+        // 淡绿色卡片
+        // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+        for (let i = layerEndIndex; i >= layerStartIndex; i--) {
+          comment = focusNoteComments[i]
+          if (
+            comment.text && 
+            (
+              comment.text.includes("零层") || 
+              comment.text.includes("一层") || 
+              comment.text.includes("两层") || 
+              comment.text.includes("三层") || 
+              comment.text.includes("四层") || 
+              comment.text.includes("五层")
+            )
+          ) {
+            try {
+              MNUtil.undoGrouping(()=>{
+                focusNote.removeCommentByIndex(i)
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        }
+      }
       
       focusNoteComments.forEach((comment, index) => {
         if (comment.type == "HtmlNote") {
@@ -660,11 +726,31 @@ class toolbarUtils {
 
       // MNUtil.showHUD(htmlCommentsIndex);
 
+      // 重新更新 focusNoteComments 和 focusNoteCommentLength
+      focusNoteComments = focusNote.note.comments
+      focusNoteCommentLength = focusNoteComments.length
+
       let templateHtmlCommentStartIndexI = focusNote.getCommentIndex("模版：", true)
       let templateHtmlCommentStartIndexII = focusNote.getCommentIndex("模板：", true)
       let templateHtmlCommentStartIndex = Math.max(templateHtmlCommentStartIndexI, templateHtmlCommentStartIndexII)
-      let templateHtmlCommentIndex = htmlCommentsIndexArr.indexOf(templateHtmlCommentStartIndex)
-      let templateHtmlCommentEndIndex = htmlCommentsIndexArr[templateHtmlCommentIndex+1]
+      // let templateHtmlCommentIndex = htmlCommentsIndexArr.indexOf(templateHtmlCommentStartIndex)
+      let templateHtmlCommentEndIndex
+      // let templateHtmlCommentEndIndex = htmlCommentsIndexArr[templateHtmlCommentIndex+1]
+      let templateHtmlCommentEndIndexI = focusNote.getCommentIndex("包含：", true)
+      let templateHtmlCommentEndIndexII = Math.max(
+        focusNote.getCommentIndex("相关概念：", true),
+        focusNote.getCommentIndex("相关命题：", true),
+        focusNote.getCommentIndex("相关反例：", true),
+        focusNote.getCommentIndex("相关例子：", true),
+        focusNote.getCommentIndex("相关应用：", true),
+        focusNote.getCommentIndex("相关问题：", true),
+        focusNote.getCommentIndex("相关思想方法：", true)
+      )
+      if (templateHtmlCommentEndIndexII !== -1) {
+        templateHtmlCommentEndIndex = templateHtmlCommentEndIndexII
+      } else {
+        templateHtmlCommentEndIndex = templateHtmlCommentEndIndexI
+      }
       // MNUtil.showHUD(templateHtmlCommentStartIndex + " " + templateHtmlCommentEndIndex);
       if (templateHtmlCommentStartIndex !== -1) {
         for (let i = templateHtmlCommentEndIndex-1; i >= templateHtmlCommentStartIndex; i--) {
@@ -672,16 +758,6 @@ class toolbarUtils {
         }
       }
 
-      if (focusNoteColorIndex == 1) {
-        // 淡绿色卡片
-        // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-        for (let i = focusNoteCommentLength-1; i >= htmlCommentsIndexArr[htmlCommentsIndexArr.length - 1]; i--) {
-          comment = focusNoteComments[i]
-          if (comment.text && (comment.text.includes("两层") || comment.text.includes("三层") || comment.text.includes("四层") || comment.text.includes("五层"))) {
-            focusNote.removeCommentByIndex(i)
-          }
-        }
-      }
     })
   }
 
