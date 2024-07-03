@@ -701,6 +701,10 @@ class toolbarUtils {
         descendantNote.appendMarkdownComment("")
         descendantNote.removeCommentByIndex(descendantNote.note.comments.length-1)
       })
+      focusNote.ancestorNodes.forEach(ancestorNote => {
+        ancestorNote.appendMarkdownComment("")
+        ancestorNote.removeCommentByIndex(ancestorNote.note.comments.length-1)
+      })
     } else {
       if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
         // 淡黄色或黄色
@@ -722,6 +726,10 @@ class toolbarUtils {
         focusNote.descendantNodes.descendant.forEach(descendantNote => {
           descendantNote.appendMarkdownComment("")
           descendantNote.removeCommentByIndex(descendantNote.note.comments.length-1)
+        })
+        focusNote.ancestorNodes.forEach(ancestorNote => {
+          ancestorNote.appendMarkdownComment("")
+          ancestorNote.removeCommentByIndex(ancestorNote.note.comments.length-1)
         })
       }
     }
