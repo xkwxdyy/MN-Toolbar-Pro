@@ -985,7 +985,7 @@ class toolbarUtils {
       case "descendants":
         let descendantNotes = []
         MNNote.getFocusNotes().map(note=>{
-          descendantNotes = descendantNotes.concat(note.descendantNotes.descendant)
+          descendantNotes = descendantNotes.concat(note.descendantNodes.descendant)
         })
         return descendantNotes
       default:
@@ -1654,19 +1654,55 @@ try {
       if ("fillPattern" in des) {
         fillIndex = des.fillPattern
       }
+      if ("followAutoStyle" in des && des.followAutoStyle && (typeof autoUtils !== 'undefined')) {
+        MNUtil.showHUD("followAutoStyle")
+        let focusNotes = MNNote.getFocusNotes()
+        MNUtil.undoGrouping(()=>{
+          focusNotes.map(note=>{
+            let fillIndex
+            if (note.excerptPic) {
+              fillIndex = autoUtils.getConfig("image")[colorIndex]
+            }else{
+              fillIndex = autoUtils.getConfig("text")[colorIndex]
+            }
+            this.setNoteColor(note,colorIndex,fillIndex)
+          })
+        })
+        return
+      }
     }
     // MNUtil.copy(description+fillIndex)
     let focusNotes = MNNote.getFocusNotes()
     MNUtil.undoGrouping(()=>{
       focusNotes.map(note=>{
-        note.colorIndex = colorIndex
-        if (fillIndex !== -1) {
-          note.fillIndex = fillIndex
-        }
+        this.setNoteColor(note,colorIndex,fillIndex)
       })
     })
   }
-
+  /**
+   * 
+   * @param {MNNote} note 
+   * @param {number} colorIndex 
+   * @param {number} fillIndex 
+   */
+  static setNoteColor(note,colorIndex,fillIndex){
+    if (note.note.groupNoteId) {
+      let originNote = MNNote.new(note.note.groupNoteId)
+      originNote.notes.forEach(n=>{
+        n.colorIndex = colorIndex
+        if (fillIndex !== -1) {
+          n.fillIndex = fillIndex
+        }
+      })
+    }else{
+      note.notes.forEach(n=>{
+        n.colorIndex = colorIndex
+        if (fillIndex !== -1) {
+          n.fillIndex = fillIndex
+        }
+      })
+    }
+  }
   /**
    * 
    * @param {UITextView} textView 
@@ -1723,7 +1759,7 @@ class toolbarConfig {
       }
       
     } catch (error) {
-      toolbarUtils.addErrorLog(error, "init")
+      // toolbarUtils.addErrorLog(error, "init")
     }
 
   }

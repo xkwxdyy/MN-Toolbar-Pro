@@ -53,6 +53,8 @@ JSB.newAddon = function (mainPath) {
         MNUtil.removeObserver(self,'PopupMenuOnNote')
         MNUtil.removeObserver(self,'toggleDynamic')
         MNUtil.removeObserver(self,'ClosePopupMenuOnNote')
+        MNUtil.removeObserver(self,'removeMNToolbar')
+        MNUtil.removeObserver(self,'UITextViewTextDidBeginEditingNotification')
         // MNUtil.showHUD("remove")
       },
 

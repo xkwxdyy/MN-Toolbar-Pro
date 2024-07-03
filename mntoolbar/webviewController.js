@@ -174,7 +174,9 @@ try {
    */
   setColor: function (button) {
     let color = button.color
-    toolbarUtils.setColor(color)
+    MNUtil.delay(0.3).then(()=>{
+      toolbarUtils.setColor(color)
+    })
     if (self.dynamicWindow) {
       self.hideAfterDelay()
     }
@@ -1147,10 +1149,6 @@ toolbarController.prototype.customAction = async function (actionName) {
           })
         })
         break;
-
-      // 增加模板的层级，一般用于之前做好的知识库里，可能只有三层模板
-      case "addTopLayerTemplate":
-        break;
       case "addChildNote":
         MNUtil.showHUD("addChildNote")
         config = {}
@@ -1519,7 +1517,7 @@ toolbarController.prototype.customAction = async function (actionName) {
         break;
       case "focus":
         toolbarUtils.focus(focusNote, des)
-        break;
+        break 
       default:
         MNUtil.showHUD("Not supported yet...")
         break;
