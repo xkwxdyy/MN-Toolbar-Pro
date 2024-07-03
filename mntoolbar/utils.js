@@ -79,33 +79,23 @@ class toolbarUtils {
     if (testIndex == -1) { // 每种模板卡里都有“相关链接：”
       switch (focusNoteType) {
         case "definition":
-          // 71AAED0A-5972-4F72-8282-B558879EFD96
-          // templateNoteId= getNoteIdByURL("71AAED0A-5972-4F72-8282-B558879EFD96")
-          templateNoteId = "71AAED0A-5972-4F72-8282-B558879EFD96"
+          templateNoteId = "C1052FDA-3343-45C6-93F6-61DCECF31A6D"
           cloneAndMerge(focusNote, templateNoteId)
           break;
         case "theorem":
-          // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
-          // templateNoteId = getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
-          templateNoteId = "F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D"
+          templateNoteId = "C4B464CD-B8C6-42DE-B459-55B48EB31AD8"
           cloneAndMerge(focusNote, templateNoteId)
           break;
         case "example":
-          // F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D
-          // templateNoteId = getNoteIdByURL("F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D")
-          templateNoteId = "F1D2CE78-0E9C-4791-9CFA-2F21A5A7900D"
+          templateNoteId = "C1052FDA-3343-45C6-93F6-61DCECF31A6D"
           cloneAndMerge(focusNote, templateNoteId)
           break;
         case "antiexample":
-          // DCD8A253-C991-4798-9546-4B36D19CD260
-          // templateNoteId = getNoteIdByURL("DCD8A253-C991-4798-9546-4B36D19CD260")
-          templateNoteId = "DCD8A253-C991-4798-9546-4B36D19CD260"
+          templateNoteId = "E64BDC36-DD8D-416D-88F5-0B3FCBE5D151"
           cloneAndMerge(focusNote, templateNoteId)
           break;
         case "method":
-          // F3F263B4-B7C8-4514-922A-35180D4F60CF
-          // templateNoteId = getNoteIdByURL("F3F263B4-B7C8-4514-922A-35180D4F60CF")
-          templateNoteId = "F3F263B4-B7C8-4514-922A-35180D4F60CF"
+          templateNoteId = "EC68EDFE-580E-4E53-BA1B-875F3BEEFE62"
           cloneAndMerge(focusNote, templateNoteId)
           break;
       }
@@ -119,10 +109,10 @@ class toolbarUtils {
     if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
       if (testIndex == -1){
         if (focusNoteType === "definition") {
-          templateNoteId = "E7854116-C137-4E17-B194-78052C984D2A"
+          templateNoteId = "9129B736-DBA1-441B-A111-EC0655B6120D"
           cloneAndMerge(focusNote, templateNoteId)
         } else {
-          templateNoteId = "0B488930-0447-4DD0-8236-C27621BEA8F2"
+          templateNoteId = "3D07C54E-9DF3-4EC9-9122-871760709EB9"
           cloneAndMerge(focusNote, templateNoteId)
         }
       }
@@ -329,7 +319,7 @@ class toolbarUtils {
   }
 
   // 增加思考
-  static addThoughts(focusNote, focusNoteType) {
+  static addThought(focusNote, focusNoteType) {
     let keywordsIHtmlCommentIndex = focusNote.getCommentIndex("关键词： ", true)
     let keywordsIIHtmlCommentIndex = focusNote.getCommentIndex("关键词：", true)
     let keywordsHtmlCommentIndex = Math.max(keywordsIHtmlCommentIndex, keywordsIIHtmlCommentIndex)  // 兼容两种“关键词：”
@@ -532,10 +522,10 @@ class toolbarUtils {
     let type
     UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
       "增加模板",
-      "请输入标题并选择类型",
+      "请输入标题并选择类型\n注意：“向下层添加模板”的标题是「增量」输入",
       2,
       "取消",
-      ["往下增加模板", "最顶层（淡绿色）", "专题"],
+      ["向下层增加模板", "最顶层（淡绿色）", "专题"],
       (alert, buttonIndex) => {
         let userInputTitle = alert.textFieldAtIndex(0).text;
         switch (buttonIndex) {
@@ -693,6 +683,48 @@ class toolbarUtils {
         }
       }
     })
+  }
+
+  static changePrefix(focusNote, focusNoteColorIndex) {
+    let prefix, postfix
+    if (focusNoteColorIndex == 1) {
+      // 淡绿色卡片
+      prefix = focusNote.noteTitle.match(/“(.+)”相关.*/)[1]
+      focusNote.childNotes.forEach(childNote => {
+        childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
+      })
+      // todo: focusNote 的链接，因为被链接的标题改变了，所以变成了空白，而且无法自己刷新
+      // 目前的暂时解决办法是添加评论再删除
+      focusNote.appendMarkdownComment("")
+      focusNote.removeCommentByIndex(focusNote.note.comments.length-1)
+      focusNote.descendantNodes.descendant.forEach(descendantNote => {
+        descendantNote.appendMarkdownComment("")
+        descendantNote.removeCommentByIndex(descendantNote.note.comments.length-1)
+      })
+    } else {
+      if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
+        // 淡黄色或黄色
+        prefix = focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]
+        focusNote.childNotes.forEach(childNote => {
+          if (childNote.colorIndex == 0 || childNote.colorIndex == 4) {
+            childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
+          } else {
+            const regex = /【(.*?)：(.*?)(：.+)?】(.*)/;  // 注意前面的两个要加 ? 变成非贪婪模式
+            try {
+              childNote.noteTitle = childNote.noteTitle.replace(regex, `【$1：${prefix}$3】$4`);
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        })
+        focusNote.appendMarkdownComment("")
+        focusNote.removeCommentByIndex(focusNote.note.comments.length-1)
+        focusNote.descendantNodes.descendant.forEach(descendantNote => {
+          descendantNote.appendMarkdownComment("")
+          descendantNote.removeCommentByIndex(descendantNote.note.comments.length-1)
+        })
+      }
+    }
   }
 
   static init(){
@@ -931,7 +963,7 @@ class toolbarUtils {
       case "descendants":
         let descendantNotes = []
         MNNote.getFocusNotes().map(note=>{
-          descendantNotes = descendantNotes.concat(note.descendantNodes.descendant)
+          descendantNotes = descendantNotes.concat(note.descendantNotes.descendant)
         })
         return descendantNotes
       default:

@@ -928,7 +928,7 @@ toolbarController.prototype.customAction = async function (actionName) {
           MNUtil.showHUD(error)
         }
         break;
-      case "addThoughts":
+      case "addThought":
         MNUtil.undoGrouping(()=>{
           try {
             /* 确定卡片类型 */
@@ -950,7 +950,7 @@ toolbarController.prototype.customAction = async function (actionName) {
                 break;
             }
 
-            toolbarUtils.addThoughts(focusNote, focusNoteType)
+            toolbarUtils.addThought(focusNote, focusNoteType)
           } catch (error) {
             MNUtil.showHUD(error)
           }
@@ -996,6 +996,15 @@ toolbarController.prototype.customAction = async function (actionName) {
         try {
           MNUtil.undoGrouping(()=>{
             toolbarUtils.renewCards(focusNotes, focusNoteColorIndex)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
+      case "changePrefix":
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.changePrefix(focusNote, focusNoteColorIndex)
           })
         } catch (error) {
           MNUtil.showHUD(error);
@@ -1047,9 +1056,9 @@ toolbarController.prototype.customAction = async function (actionName) {
                 parentNote = focusNote.parentNote
                 if (parentNote) {
                   // 有父节点
-                  // 检测父卡片是否是淡黄色的，不是的话获取父卡片的父卡片，直到是淡黄色为止，获取第一次出现的淡黄色的父卡片作为 parentNote
+                  // 检测父卡片是否是淡黄色 or 黄色的，不是的话获取父卡片的父卡片，直到是淡黄色为止，获取第一次出现的淡黄色的父卡片作为 parentNote
                   while (parentNote) {
-                    if (parentNote.colorIndex == 0) {
+                    if (parentNote.colorIndex == 0 || parentNote.colorIndex == 4) {
                       ifParentNoteColorLightYellow = true
                       break
                     }
