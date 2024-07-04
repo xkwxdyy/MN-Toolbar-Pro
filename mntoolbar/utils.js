@@ -563,11 +563,11 @@ class toolbarUtils {
       "请输入标题并选择类型\n注意：“向下层添加模板”的标题是「增量」输入",
       2,
       "取消",
-      ["向下层增加模板", "最顶层（淡绿色）", "专题"],
+      ["向下层增加模板", "向上层增加模板","最顶层（淡绿色）", "专题"],
       (alert, buttonIndex) => {
         let userInputTitle = alert.textFieldAtIndex(0).text;
         switch (buttonIndex) {
-          case 3:
+          case 4:
             /* 专题 */
             // 因为专题模板卡片比较多，所以增加一个确认界面
             UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
@@ -595,7 +595,7 @@ class toolbarUtils {
               }
             )
             break;
-          case 2:
+          case 3:
             /* 增加最顶层的淡绿色模板 */
             // 先选到第一个白色的父卡片
             if (focusNoteColorIndex == 12) {
@@ -634,6 +634,74 @@ class toolbarUtils {
               MNUtil.showHUD("无父卡片");
             }
             
+            break;
+          case 2:
+            /* 向上增加模板 */
+            parentNote = focusNote.parentNote
+            let parentNoteColorIndex = parentNote.note.colorIndex
+            if (parentNoteColorIndex == 1) {
+              // 淡绿色
+              MNUtil.undoGrouping(()=>{
+                // 把选中的变成淡黄色
+                focusNote.note.colorIndex = 0
+                // parentNote 向下增加一个层级
+                type = parentNote.noteTitle.match(/“.+”相关(.*)/)[1]
+                // MNUtil.showHUD(type);
+                templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
+                templateNote.note.colorIndex = 4  // 颜色为黄色
+                templateNote.note.noteTitle = "“" + parentNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" + parentNote.noteTitle.match(/“(.*)”相关.*/)[1] + userInputTitle + "”相关" + type
+                parentNote.addChild(templateNote.note)
+                parentNote.appendNoteLink(templateNote, "Both")
+                templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                // 将选中的卡片剪切过去
+                templateNote.addChild(focusNote.note)
+                // 删除原来的链接
+                focusNote.removeCommentByIndex(1)
+                let focusNoteIdIndexInParentNote = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                parentNote.removeCommentByIndex(focusNoteIdIndexInParentNote)
+                // 增加新的链接
+                templateNote.appendNoteLink(focusNote, "Both")
+                focusNote.moveComment(focusNote.note.comments.length-1, 1)
+                // 修改标题
+                focusNote.note.noteTitle = "“" + templateNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”相关" + type
+                // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
+                MNUtil.delay(0.5).then(()=>{
+                  templateNote.focusInMindMap()
+                })
+              })
+            } else {
+              if (parentNoteColorIndex == 0 || parentNoteColorIndex == 4) {
+                // 淡黄色
+                MNUtil.undoGrouping(()=>{
+                  // 把选中的变成淡黄色
+                  focusNote.note.colorIndex = 0
+                  // parentNote 向下增加一个层级
+                  type = parentNote.noteTitle.match(/“(.*)”：“(.*)”相关(.*)/)[3]
+                  // MNUtil.showHUD(type);
+                  templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
+                  templateNote.note.colorIndex = 0  // 颜色为淡黄色
+                  templateNote.note.noteTitle = "“" + parentNote.noteTitle.match(/“(.*)”：“(.*)”相关(.*)/)[2] + "”：“" + parentNote.noteTitle.match(/“(.*)”：“(.*)”相关(.*)/)[2] + userInputTitle + "”相关" + type
+                  parentNote.addChild(templateNote.note)
+                  parentNote.appendNoteLink(templateNote, "Both")
+                  templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                  // 将选中的卡片剪切过去
+                  templateNote.addChild(focusNote.note)
+                  // 删除原来的链接
+                  focusNote.removeCommentByIndex(1)
+                  let focusNoteIdIndexInParentNote = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                  parentNote.removeCommentByIndex(focusNoteIdIndexInParentNote)
+                  // 增加新的链接
+                  templateNote.appendNoteLink(focusNote, "Both")
+                  focusNote.moveComment(focusNote.note.comments.length-1, 1)
+                  // 修改标题
+                  focusNote.note.noteTitle = "“" + templateNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”相关" + type
+                  // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
+                  MNUtil.delay(0.5).then(()=>{
+                    templateNote.focusInMindMap()
+                  })
+                })
+              }
+            }
             break;
           case 1:
             /* 往下增加模板 */
@@ -676,6 +744,7 @@ class toolbarUtils {
       }
     )
   }
+
 
   /* 
     处理旧卡片 
@@ -841,6 +910,11 @@ class toolbarUtils {
         })
       }
     }
+  }
+
+  static cut(focusNote) {
+    let template = focusNote.parentNote.parentNote.childNotes[1]
+    focusNote.addChild(template.note)
   }
 
   static init(){
