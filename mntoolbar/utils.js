@@ -560,7 +560,7 @@ class toolbarUtils {
     let type
     UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
       "增加模板",
-      "请输入标题并选择类型\n注意：“向下层添加模板”的标题是「增量」输入",
+      "请输入标题并选择类型\n注意向上下层添加模板时\n标题是「增量」输入",
       2,
       "取消",
       ["向下层增加模板", "向上层增加模板","最顶层（淡绿色）", "专题"],
@@ -899,7 +899,7 @@ class toolbarUtils {
             if (focusNoteIdIndexInChildNote == -1) {
               childNote.removeCommentByIndex(1)
               childNote.appendNoteLink(focusNote, "To")
-              childNote.moveComment(childNote.note.comments.length-1, 1)
+              childNote.moveComment(childNote.comments.length-1, 1)
             }
           } else {
             // 其余颜色的内容卡片
@@ -909,9 +909,11 @@ class toolbarUtils {
               let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
               if (focusNoteIdIndexInChildNote == -1) {
                 let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
-                childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+                if (childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
+                  childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+                }
                 childNote.appendNoteLink(focusNote, "To")
-                childNote.moveComment(childNote.note.comments.length-1, linkHtmlCommentIndex+1)
+                childNote.moveComment(childNote.comments.length-1, linkHtmlCommentIndex+1)
               }
               let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
               if (childNoteIdIndexInFocusNote == -1) {
@@ -921,13 +923,18 @@ class toolbarUtils {
 
               childNote.descendantNodes.descendant.forEach(descendantNote => {
                 descendantNote.noteTitle = descendantNote.noteTitle.replace(regex, `【$1：${prefix}$3】$4`);
+                let focusNoteIdIndexInDescendantNote = descendantNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                if (focusNoteIdIndexInDescendantNote == -1) {
+                  let linkHtmlCommentIndex = descendantNote.getCommentIndex("相关链接：", true)
+                  if (descendantNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
+                    descendantNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+                  }
+                  descendantNote.appendNoteLink(focusNote, "To")
+                  descendantNote.moveComment(descendantNote.comments.length-1, linkHtmlCommentIndex+1)
+                }
                 let descendantNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + descendantNote.noteId)
                 if (descendantNoteIdIndexInFocusNote == -1) {
                   focusNote.appendNoteLink(descendantNote, "To")
-                  let linkHtmlCommentIndex = descendantNote.getCommentIndex("相关链接：", true)
-                  descendantNote.removeCommentByIndex(linkHtmlCommentIndex+1)
-                  descendantNote.appendNoteLink(focusNote, "To")
-                  descendantNote.moveComment(descendantNote.note.comments.length-1, linkHtmlCommentIndex+1)
                 }
               })
             } catch (error) {
