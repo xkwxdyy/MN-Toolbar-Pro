@@ -558,9 +558,19 @@ class toolbarUtils {
   static addTemplate(focusNote,focusNoteColorIndex) {
     let parentNote, templateNote
     let type
+    let contentInTitle
+    if (focusNoteColorIndex == 1) {
+      contentInTitle = focusNote.noteTitle.match(/“(.+)”相关(.+)/)[1]
+    } else {
+      if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
+        contentInTitle = focusNote.noteTitle.match(/“(.+)”：“(.+)”相关(.+)/)[2]
+      }
+    }
+    MNUtil.copy(contentInTitle)
     UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
       "增加模板",
-      "请输入标题并选择类型\n注意向上下层添加模板时\n标题是「增量」输入",
+      // "请输入标题并选择类型\n注意向上下层添加模板时\n标题是「增量」输入",
+      "请输入标题并选择类型",
       2,
       "取消",
       ["向下层增加模板", "向上层增加模板","最顶层（淡绿色）", "专题"],
@@ -649,7 +659,8 @@ class toolbarUtils {
                 // MNUtil.showHUD(type);
                 templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
                 templateNote.note.colorIndex = 4  // 颜色为黄色
-                templateNote.note.noteTitle = "“" + parentNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" + parentNote.noteTitle.match(/“(.*)”相关.*/)[1] + userInputTitle + "”相关" + type
+                // templateNote.note.noteTitle = "“" + parentNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" + parentNote.noteTitle.match(/“(.*)”相关.*/)[1] + userInputTitle + "”相关" + type
+                templateNote.note.noteTitle = "“" + parentNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" +  userInputTitle + "”相关" + type
                 parentNote.addChild(templateNote.note)
                 parentNote.appendNoteLink(templateNote, "Both")
                 templateNote.moveComment(templateNote.note.comments.length-1, 1)
@@ -680,7 +691,8 @@ class toolbarUtils {
                   // MNUtil.showHUD(type);
                   templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
                   templateNote.note.colorIndex = 0  // 颜色为淡黄色
-                  templateNote.note.noteTitle = "“" + parentNote.noteTitle.match(/“(.*)”：“(.*)”相关(.*)/)[2] + "”：“" + parentNote.noteTitle.match(/“(.*)”：“(.*)”相关(.*)/)[2] + userInputTitle + "”相关" + type
+                  // templateNote.note.noteTitle = "“" + parentNote.noteTitle.match(/“(.*)”：“(.*)”相关(.*)/)[2] + "”：“" + parentNote.noteTitle.match(/“(.*)”：“(.*)”相关(.*)/)[2] + userInputTitle + "”相关" + type
+                  templateNote.note.noteTitle = "“" + parentNote.noteTitle.match(/“(.*)”：“(.*)”相关(.*)/)[2] + "”：“"  + userInputTitle + "”相关" + type
                   parentNote.addChild(templateNote.note)
                   parentNote.appendNoteLink(templateNote, "Both")
                   templateNote.moveComment(templateNote.note.comments.length-1, 1)
@@ -712,7 +724,8 @@ class toolbarUtils {
               // MNUtil.showHUD(type);
               templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
               templateNote.note.colorIndex = 4  // 颜色为黄色
-              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + userInputTitle + "”相关" + type
+              // templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + userInputTitle + "”相关" + type
+              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" +  userInputTitle + "”相关" + type
               MNUtil.undoGrouping(()=>{
                 focusNote.addChild(templateNote.note)
                 focusNote.appendNoteLink(templateNote, "Both")
@@ -728,7 +741,8 @@ class toolbarUtils {
               // MNUtil.showHUD(type);
               templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
               templateNote.note.colorIndex = 0  // 颜色为淡黄色
-              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] +  userInputTitle + "”相关" + type
+              // templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] +  userInputTitle + "”相关" + type
+              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" +  userInputTitle + "”相关" + type
               MNUtil.undoGrouping(()=>{
                 focusNote.addChild(templateNote.note)
                 focusNote.appendNoteLink(templateNote, "Both")
@@ -961,11 +975,6 @@ class toolbarUtils {
         })
       }
     }
-  }
-
-  static cut(focusNote) {
-    let template = focusNote.parentNote.parentNote.childNotes[1]
-    focusNote.addChild(template.note)
   }
 
   static init(){
