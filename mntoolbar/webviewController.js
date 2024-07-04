@@ -1072,20 +1072,6 @@ toolbarController.prototype.customAction = async function (actionName) {
                   // 获取父卡片的 URL，用来判断是否与卡片进行链接
                   parentNoteId = parentNote.noteId
                   parentNoteUrl = "marginnote4app://note/" + parentNoteId
-
-                  if (ifParentNoteColorLightYellow == false) {
-                    // 有父卡片，但所有父卡片都不是淡黄色
-                    parentNoteType = "notLightYellow"
-                    // MNUtil.showHUD(parentNoteType)
-                  } else {
-                    // 有淡黄色的父卡片
-                    parentNoteType = "lightYellow"
-                    // MNUtil.showHUD(parentNoteType)
-                  }
-                } else {
-                  // 没有父卡片
-                  parentNoteType = "none"
-                  // MNUtil.showHUD(parentNoteType)
                 }
               } 
               // else {
