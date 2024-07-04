@@ -851,6 +851,18 @@ class toolbarUtils {
       prefix = focusNote.noteTitle.match(/“(.+)”相关.*/)[1]
       focusNote.childNotes.forEach(childNote => {
         childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
+
+        // 确保有双向链接了
+        let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
+        if (childNoteIdIndexInFocusNote == -1) {
+          focusNote.appendNoteLink(childNote, "To")
+        }
+        let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+        if (focusNoteIdIndexInChildNote == -1) {
+          childNote.removeCommentByIndex(1)
+          childNote.appendNoteLink(focusNote, "To")
+          childNote.moveComment(childNote.note.comments.length-1, 1)
+        }
       })
       // todo: focusNote 的链接，因为被链接的标题改变了，所以变成了空白，而且无法自己刷新
       // 目前的暂时解决办法是添加评论再删除
@@ -878,13 +890,45 @@ class toolbarUtils {
         focusNote.childNotes.forEach(childNote => {
           if (childNote.colorIndex == 0 || childNote.colorIndex == 4) {
             childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
+            // 确保有双向链接了
+            let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
+            if (childNoteIdIndexInFocusNote == -1) {
+              focusNote.appendNoteLink(childNote, "To")
+            }
+            let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+            if (focusNoteIdIndexInChildNote == -1) {
+              childNote.removeCommentByIndex(1)
+              childNote.appendNoteLink(focusNote, "To")
+              childNote.moveComment(childNote.note.comments.length-1, 1)
+            }
           } else {
             // 其余颜色的内容卡片
             const regex = /【(.*?)：(.*?)(：.+)?】(.*)/;  // 注意前面的两个要加 ? 变成非贪婪模式
             try {
               childNote.noteTitle = childNote.noteTitle.replace(regex, `【$1：${prefix}$3】$4`);
+              let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+              if (focusNoteIdIndexInChildNote == -1) {
+                let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
+                childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+                childNote.appendNoteLink(focusNote, "To")
+                childNote.moveComment(childNote.note.comments.length-1, linkHtmlCommentIndex+1)
+              }
+              let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
+              if (childNoteIdIndexInFocusNote == -1) {
+                focusNote.appendNoteLink(childNote, "To")
+              }
+
+
               childNote.descendantNodes.descendant.forEach(descendantNote => {
                 descendantNote.noteTitle = descendantNote.noteTitle.replace(regex, `【$1：${prefix}$3】$4`);
+                let descendantNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + descendantNote.noteId)
+                if (descendantNoteIdIndexInFocusNote == -1) {
+                  focusNote.appendNoteLink(descendantNote, "To")
+                  let linkHtmlCommentIndex = descendantNote.getCommentIndex("相关链接：", true)
+                  descendantNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+                  descendantNote.appendNoteLink(focusNote, "To")
+                  descendantNote.moveComment(descendantNote.note.comments.length-1, linkHtmlCommentIndex+1)
+                }
               })
             } catch (error) {
               MNUtil.showHUD(error);
