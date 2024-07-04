@@ -354,8 +354,24 @@ viewWillLayoutSubviews: function() {
       let addonName = button.addon
       toolbarConfig.addonLogos[addonName] = !toolbarConfig.checkLogoStatus(addonName)
       button.setTitleForState(addonName+": "+(toolbarConfig.checkLogoStatus(addonName)?"✅":"❌"),0)
+      MNButton.setColor(button, toolbarConfig.checkLogoStatus(addonName)?"#457bd3":"#9bb2d6",0.8)
+
       toolbarConfig.save("MNToolbar_addonLogos")
       MNUtil.refreshAddonCommands()
+    }
+  },
+  saveButtonColor:function (button) {
+    if (!toolbarUtils.checkSubscribe(true)) {
+      return
+    }
+    let color = self.hexInput.text
+    if (toolbarUtils.isHexColor(color)) {
+      toolbarConfig.buttonConfig.color = color
+      toolbarConfig.save("MNToolbar_buttonConfig")
+      self.toolbarController.setToolbarButton(toolbarConfig.action)
+      MNUtil.showHUD("Save color: "+color)
+    }else{
+      MNUtil.showHUD("Invalid hex color")
     }
   }
   
@@ -441,12 +457,15 @@ settingController.prototype.settingViewLayout = function (){
     settingFrame.x = 100
     settingFrame.width = 90
     this.advancedButton.frame = settingFrame
-    this.editorButton.frame = MNUtil.genFrame(10, 10, width-20, 35)
-    this.chatAIButton.frame = MNUtil.genFrame(10, 50, width-20, 35)
-    this.snipasteButton.frame = MNUtil.genFrame(10, 90, width-20, 35)
-    this.autoStyleButton.frame = MNUtil.genFrame(10, 130, width-20, 35)
-    this.browserButton.frame = MNUtil.genFrame(10, 170, width-20, 35)
-    this.OCRButton.frame = MNUtil.genFrame(10, 210, width-20, 35)
+
+    this.editorButton.frame = MNUtil.genFrame(10, 15, (width-25)/2, 35)
+    this.chatAIButton.frame = MNUtil.genFrame(15+(width-25)/2, 15, (width-25)/2, 35)
+    this.snipasteButton.frame = MNUtil.genFrame(10, 55, (width-25)/2, 35)
+    this.autoStyleButton.frame = MNUtil.genFrame(15+(width-25)/2, 55, (width-25)/2, 35)
+    this.browserButton.frame = MNUtil.genFrame(10, 95, (width-25)/2, 35)
+    this.OCRButton.frame = MNUtil.genFrame(15+(width-25)/2, 95, (width-25)/2, 35)
+    this.hexInput.frame = MNUtil.genFrame(10, 150, width-135, 35)
+    this.hexButton.frame = MNUtil.genFrame(width-120, 150, 110, 35)
 }
 
 
@@ -484,36 +503,52 @@ try {
   this.editorButton.addon = "MNEditor"
   this.editorButton.setTitleForState("MNEditor: "+(toolbarConfig.checkLogoStatus("MNEditor")?"✅":"❌"),0)
   this.editorButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+  MNButton.setColor(this.editorButton, toolbarConfig.checkLogoStatus("MNEditor")?"#457bd3":"#9bb2d6",0.8)
 
   this.createButton("chatAIButton","toggleAddonLogo:","advanceView")
   this.chatAIButton.layer.opacity = 1.0
   this.chatAIButton.addon = "MNChatAI"
   this.chatAIButton.setTitleForState("MNChatAI: "+(toolbarConfig.checkLogoStatus("MNChatAI")?"✅":"❌"),0)
   this.chatAIButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+  MNButton.setColor(this.chatAIButton, toolbarConfig.checkLogoStatus("MNChatAI")?"#457bd3":"#9bb2d6",0.8)
 
   this.createButton("snipasteButton","toggleAddonLogo:","advanceView")
   this.snipasteButton.layer.opacity = 1.0
   this.snipasteButton.addon = "MNSnipaste"
   this.snipasteButton.setTitleForState("MNSnipaste: "+(toolbarConfig.checkLogoStatus("MNSnipaste")?"✅":"❌"),0)
   this.snipasteButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+  MNButton.setColor(this.snipasteButton, toolbarConfig.checkLogoStatus("MNSnipaste")?"#457bd3":"#9bb2d6",0.8)
 
   this.createButton("autoStyleButton","toggleAddonLogo:","advanceView")
   this.autoStyleButton.layer.opacity = 1.0
   this.autoStyleButton.addon = "MNAutoStyle"
   this.autoStyleButton.setTitleForState("MNAutoStyle: "+(toolbarConfig.checkLogoStatus("MNAutoStyle")?"✅":"❌"),0)
   this.autoStyleButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+  MNButton.setColor(this.autoStyleButton, toolbarConfig.checkLogoStatus("MNAutoStyle")?"#457bd3":"#9bb2d6",0.8)
   
   this.createButton("browserButton","toggleAddonLogo:","advanceView")
   this.browserButton.layer.opacity = 1.0
   this.browserButton.addon = "MNBrowser"
   this.browserButton.setTitleForState("MNBrowser: "+(toolbarConfig.checkLogoStatus("MNBrowser")?"✅":"❌"),0)
   this.browserButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+  MNButton.setColor(this.browserButton, toolbarConfig.checkLogoStatus("MNBrowser")?"#457bd3":"#9bb2d6",0.8)
 
   this.createButton("OCRButton","toggleAddonLogo:","advanceView")
   this.OCRButton.layer.opacity = 1.0
   this.OCRButton.addon = "MNOCR"
   this.OCRButton.setTitleForState("MNOCR: "+(toolbarConfig.checkLogoStatus("MNOCR")?"✅":"❌"),0)
   this.OCRButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+  MNButton.setColor(this.OCRButton, toolbarConfig.checkLogoStatus("MNOCR")?"#457bd3":"#9bb2d6",0.8)
+
+  this.creatTextView("hexInput","advanceView","#9bb2d6")
+  this.createButton("hexButton","saveButtonColor:","advanceView")
+  this.hexButton.layer.opacity = 1.0
+  this.hexButton.addon = "MNOCR"
+  this.hexButton.setTitleForState("Save Color",0)
+  this.hexButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+  this.hexInput.text = toolbarConfig.buttonConfig.color
+  MNButton.setColor(this.hexButton, toolbarConfig.checkLogoStatus("MNOCR")?"#457bd3":"#9bb2d6",0.8)
+
 
   this.scrollview = UIScrollView.new()
   this.configView.addSubview(this.scrollview)

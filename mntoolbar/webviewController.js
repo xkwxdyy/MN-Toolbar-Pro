@@ -26,7 +26,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.view.layer.shadowOffset = {width: 0, height: 0};
     self.view.layer.shadowRadius = 15;
     self.view.layer.shadowOpacity = 0.5;
-    self.view.layer.shadowColor = UIColor.colorWithWhiteAlpha(0.5, 1);
+    self.view.layer.shadowColor = MNUtil.hexColorAlpha(toolbarConfig.buttonConfig.color, toolbarConfig.buttonConfig.alpha)
     self.view.layer.opacity = 1.0
     self.view.layer.cornerRadius = 5
     self.view.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
@@ -560,10 +560,10 @@ try {
     }else{
       self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(frame.height,self.buttonNumber)}
       self.currentFrame  = self.view.frame
-
     }
     if (gesture.state === 3) {
       // self.resi
+      MNUtil.studyView.bringSubviewToFront(self.view)
       toolbarConfig.save("MNToolbar_windowState",{open:true,frame:self.view.frame})
       self.setToolbarLayout()
     }
@@ -626,7 +626,7 @@ toolbarController.prototype.setColorButtonLayout = function (button,targetAction
     button.autoresizingMask = (1 << 0 | 1 << 3);
     button.setTitleColorForState(UIColor.blackColor(),0);
     button.setTitleColorForState(toolbarConfig.highlightColor, 1);
-    button.backgroundColor = UIColor.colorWithHexString(color).colorWithAlphaComponent(0.9);
+    button.backgroundColor = color
     button.layer.cornerRadius = 10;
     button.layer.masksToBounds = true;
     if (targetAction) {
@@ -777,6 +777,8 @@ toolbarController.prototype.hideAfterDelay = function (frame) {
  */
 toolbarController.prototype.setToolbarButton = function (actionNames,newActions=undefined) {
 try {
+  let buttonColor = MNUtil.hexColorAlpha(toolbarConfig.buttonConfig.color, toolbarConfig.buttonConfig.alpha)
+  this.view.layer.shadowColor = buttonColor
   
   let actions
   if (newActions) {
@@ -804,11 +806,11 @@ try {
     this["ColorButton"+index].index = index
     if (actionName.includes("color")) {
       this["ColorButton"+index].color = parseInt(actionName.slice(5))
-      this.setColorButtonLayout(this["ColorButton"+index],"setColor:","#ffffff")
+      this.setColorButtonLayout(this["ColorButton"+index],"setColor:",buttonColor)
     }else if(actionName.includes("custom")){
-      this.setColorButtonLayout(this["ColorButton"+index],"customAction:","#ffffff")
+      this.setColorButtonLayout(this["ColorButton"+index],"customAction:",buttonColor)
     }else{
-      this.setColorButtonLayout(this["ColorButton"+index],actionName+":","#ffffff")
+      this.setColorButtonLayout(this["ColorButton"+index],actionName+":",buttonColor)
     }
     let image = (actionName in actions)?actions[actionName].image+".png":defaultActions[actionName].image+".png"
     this["ColorButton"+index].setImageForState(MNUtil.getImage(toolbarConfig.mainPath + `/`+image),0)

@@ -1939,6 +1939,11 @@ try {
       }
     }
   }
+  static isHexColor(str) {
+    // 正则表达式匹配 3 位或 6 位的十六进制颜色代码
+    const hexColorPattern = /^#([A-Fa-f0-9]{6})$/;
+    return hexColorPattern.test(str);
+  }
 }
 
 class toolbarConfig {
@@ -1951,6 +1956,7 @@ class toolbarConfig {
   static mainPath
   static action = []
   static showEditorOnNoteEdit = false
+  static defalutButtonConfig = {color:"#ffffff",alpha:0.85}
   // static defaultConfig = {showEditorWhenEditingNote:false}
   static init(){
     // this.config = this.getByDefault("MNToolbar_config",this.defaultConfig)
@@ -1959,6 +1965,7 @@ class toolbarConfig {
     this.windowState = this.getByDefault("MNToolbar_windowState",{})
     this.action = this.getByDefault("MNToolbar_action", this.getDefaultActionKeys())
     this.actions = this.getByDefault("MNToolbar_actionConfig", this.getActions())
+    this.buttonConfig = this.getByDefault("MNToolbar_buttonConfig", this.defalutButtonConfig)
     this.highlightColor = UIColor.blendedColor(
       UIColor.colorWithHexString("#2c4d81").colorWithAlphaComponent(0.8),
       toolbarUtils.app.defaultTextColor,
@@ -2125,6 +2132,9 @@ static save(key,value = undefined) {
         break;
       case "MNToolbar_addonLogos":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.addonLogos,key)
+        break;
+      case "MNToolbar_buttonConfig":
+        NSUserDefaults.standardUserDefaults().setObjectForKey(this.buttonConfig,key)
         break;
       default:
         toolbarUtils.showHUD("Not supported")
