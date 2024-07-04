@@ -1,5 +1,6 @@
 // JSB.require('utils');
 // JSB.require('base64')
+require('es6-promise').polyfill();  // 解决“找不到全局值“Promise”
 /** @return {settingController} */
 const getSettingController = ()=>self
 var settingController = JSB.defineClass('settingController : UIViewController <NSURLConnectionDelegate>', {
