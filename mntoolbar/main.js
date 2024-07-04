@@ -456,19 +456,19 @@ try {
           return
         }
         let noteView = mindmapView.selViewLst[0].view
-        // let foucsNote = MNNote.getFocusNote()
-        let foucsNote = MNNote.new(mindmapView.selViewLst[0].note.note)
+        // let focusNote = MNNote.getFocusNote()
+        let focusNote = MNNote.new(mindmapView.selViewLst[0].note.note)
         let beginFrame = noteView.convertRectToView(noteView.bounds, MNUtil.studyView)
-        if (!foucsNote.noteTitle && !foucsNote.excerptText && !foucsNote.comments.length) {
+        if (!focusNote.noteTitle && !focusNote.excerptText && !focusNote.comments.length) {
           // MNUtil.copyJSON(param.object)
           param.object.text = "placeholder"
-          // foucsNote.noteTitle = "Title"
-          // foucsNote.excerptText = "Excerpt"
+          // focusNote.noteTitle = "Title"
+          // focusNote.excerptText = "Excerpt"
         }
         // MNUtil.beginTime = Date.now()
         // return
-        if (foucsNote) {
-          let noteId = foucsNote.noteId
+        if (focusNote) {
+          let noteId = focusNote.noteId
           let studyFrame = MNUtil.studyView.bounds
           if (beginFrame.x+450 > studyFrame.width) {
             let endFrame = MNUtil.genFrame(studyFrame.width-450, beginFrame.y-10, 450, 500)

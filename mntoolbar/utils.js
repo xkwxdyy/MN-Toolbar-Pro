@@ -1424,10 +1424,10 @@ class toolbarUtils {
     }
 try {
     let des = toolbarConfig.getDescriptionByName("ocr")
-    let foucsNote = MNNote.getFocusNote()
+    let focusNote = MNNote.getFocusNote()
     let imageData = MNUtil.getDocImage(true,true)
     if (!imageData) {
-      imageData = MNNote.getImageFromNote(foucsNote)
+      imageData = MNNote.getImageFromNote(focusNote)
     }
     if (!imageData) {
       MNUtil.showHUD("No image found")
@@ -1450,9 +1450,9 @@ try {
     if (res) {
       switch (des.target) {
         case "comment":
-          if (foucsNote) {
+          if (focusNote) {
             MNUtil.undoGrouping(()=>{
-              foucsNote.appendMarkdownComment(res)
+              focusNote.appendMarkdownComment(res)
               MNUtil.showHUD("Append to comment")
             })
           }else{
@@ -1464,13 +1464,13 @@ try {
           MNUtil.showHUD("Save to clipboard")
           break;
         case "excerpt":
-          if (foucsNote) {
+          if (focusNote) {
             MNUtil.undoGrouping(()=>{
-              foucsNote.excerptText =  res
-              foucsNote.excerptTextMarkdown = true
+              focusNote.excerptText =  res
+              focusNote.excerptTextMarkdown = true
               MNUtil.showHUD("Set to excerpt")
             })
-            if (foucsNote.excerptPic && !foucsNote.textFirst) {
+            if (focusNote.excerptPic && !focusNote.textFirst) {
               MNUtil.delay(0.5).then(()=>{
                 MNUtil.excuteCommand("EditTextMode")
               })

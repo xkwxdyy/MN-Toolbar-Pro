@@ -381,9 +381,9 @@ try {
     self.onClick = true
     let selectionText = MNUtil.selectionText
     let noteId = undefined
-    let foucsNote = MNNote.getFocusNote()
-    if (foucsNote) {
-      noteId = foucsNote.noteId
+    let focusNote = MNNote.getFocusNote()
+    if (focusNote) {
+      noteId = focusNote.noteId
     }
     let studyFrame = MNUtil.studyView.bounds
     let beginFrame = self.view.frame
@@ -414,9 +414,9 @@ try {
     if (self.dynamicWindow && toolbarUtils.currentNoteId) {
       noteId = toolbarUtils.currentNoteId
     }else{
-      let foucsNote = MNNote.getFocusNote()
-      if (foucsNote) {
-        noteId = foucsNote.noteId
+      let focusNote = MNNote.getFocusNote()
+      if (focusNote) {
+        noteId = focusNote.noteId
       }
     }
     let studyFrame = MNUtil.studyView.bounds
