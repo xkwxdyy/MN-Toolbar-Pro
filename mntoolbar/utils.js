@@ -202,6 +202,18 @@ class toolbarUtils {
     }
   }
 
+  // 将“相关概念：”移动到下方
+  static makeCardsAuxMoveDownDefinitionsComments(focusNote) {
+    let definitionHtmlCommentIndex = focusNote.getCommentIndex("相关概念：", true)
+    let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
+    if (definitionHtmlCommentIndex < linkHtmlCommentIndex) {
+      for (let i = linkHtmlCommentIndex-1; i >=definitionHtmlCommentIndex; i-- ) {
+        // 注意这里不是 focusNote.moveComment(i, focusNote.comments.length-1)
+        focusNote.moveComment(definitionHtmlCommentIndex, focusNote.comments.length-1)
+      }
+    }
+  }
+
   static makeCardsAuxMoveDownApplicationsComments(focusNote) {
     let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：",true)
     let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
@@ -679,9 +691,10 @@ class toolbarUtils {
       let htmlCommentsIndexArr = []
 
       try {
-        MNUtil.undoGrouping(()=>{
+        // MNUtil.undoGrouping(()=>{
           this.makeCardsAuxMoveDownApplicationsComments(focusNote)
-        })
+          this.makeCardsAuxMoveDownDefinitionsComments(focusNote)
+        // })
       } catch (error) {
         MNUtil.showHUD(error);
       }
@@ -691,8 +704,7 @@ class toolbarUtils {
       // layerStartIndex = htmlCommentsIndexArr[htmlCommentsIndexArr.length - 1]
       layerStartIndex = 0
       layerEndIndex = focusNoteCommentLength - 1
-      if (focusNoteColorIndex == 0 || focusNoteColorIndex == 1 || focusNoteColorIndex == 4) {
-        // 淡绿色卡片
+      // if (focusNoteColorIndex == 0 || focusNoteColorIndex == 1 || focusNoteColorIndex == 4) {
         // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
         for (let i = layerEndIndex; i >= layerStartIndex; i--) {
           comment = focusNoteComments[i]
@@ -704,7 +716,9 @@ class toolbarUtils {
               comment.text.includes("两层") || 
               comment.text.includes("三层") || 
               comment.text.includes("四层") || 
-              comment.text.includes("五层")
+              comment.text.includes("五层") ||
+              comment.text == "-" ||
+              comment.text == "- "
             )
           ) {
             try {
@@ -716,7 +730,7 @@ class toolbarUtils {
             }
           }
         }
-      }
+      // }
       
       focusNoteComments.forEach((comment, index) => {
         if (comment.type == "HtmlNote") {
@@ -796,9 +810,13 @@ class toolbarUtils {
           if (childNote.colorIndex == 0 || childNote.colorIndex == 4) {
             childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
           } else {
+            // 其余颜色的内容卡片
             const regex = /【(.*?)：(.*?)(：.+)?】(.*)/;  // 注意前面的两个要加 ? 变成非贪婪模式
             try {
               childNote.noteTitle = childNote.noteTitle.replace(regex, `【$1：${prefix}$3】$4`);
+              childNote.descendantNodes.descendant.forEach(descendantNote => {
+                descendantNote.noteTitle = descendantNote.noteTitle.replace(regex, `【$1：${prefix}$3】$4`);
+              })
             } catch (error) {
               MNUtil.showHUD(error);
             }

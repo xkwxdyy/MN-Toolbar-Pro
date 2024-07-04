@@ -864,9 +864,9 @@ toolbarController.prototype.checkPopoverController = function () {
 }
 toolbarController.prototype.customAction = async function (actionName) {
   try {
-    if (!toolbarUtils.checkSubscribe(true)) {
-      return
-    }
+    // if (!toolbarUtils.checkSubscribe(true)) {
+    //   return
+    // }
     let des = JSON.parse(toolbarConfig.actions[actionName].description)
     let focusNote = MNNote.getFocusNote()
     let focusNotes = MNNote.getFocusNotes()
