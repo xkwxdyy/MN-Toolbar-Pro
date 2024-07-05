@@ -977,7 +977,7 @@ class toolbarUtils {
     }
   }
 
-  static achiveCards(focusNote) {
+  static achieveCards(focusNote) {
     if (!focusNote.noteTitle.includes("存档")) {
       focusNote.noteTitle += "（存档）"
     }
