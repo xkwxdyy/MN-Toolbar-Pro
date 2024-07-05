@@ -996,6 +996,15 @@ toolbarController.prototype.customAction = async function (actionName) {
           MNUtil.showHUD(error);
         }
         break;
+      case "achiveCards":
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.achiveCards(focusNote)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
       case "renewCards":
         try {
           MNUtil.undoGrouping(()=>{

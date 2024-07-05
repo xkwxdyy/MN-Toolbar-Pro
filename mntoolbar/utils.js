@@ -977,6 +977,22 @@ class toolbarUtils {
     }
   }
 
+  static achiveCards(focusNote) {
+    if (!focusNote.noteTitle.includes("存档")) {
+      focusNote.noteTitle += "（存档）"
+    }
+    focusNote.childNotes[0].childNotes.forEach(childNote => {
+      if (!childNote.noteTitle.includes("存档")) {
+        childNote.noteTitle += "（存档）"
+      }
+      childNote.childNotes[0].childNotes.forEach(grandChildNote => {
+        if (!grandChildNote.noteTitle.includes("存档")) {
+          grandChildNote.noteTitle += "（存档）"
+        }
+      })
+    })
+  }
+
   static init(){
     this.app = Application.sharedInstance()
     this.data = Database.sharedInstance()
