@@ -1976,6 +1976,32 @@ try {
     const hexColorPattern = /^#([A-Fa-f0-9]{6})$/;
     return hexColorPattern.test(str);
   }
+  static parseWinRect(winRect){
+    let rectArr = winRect.replace(/{/g, '').replace(/}/g, '').replace(/\s/g, '').split(',')
+    let X = Number(rectArr[0])
+    let Y = Number(rectArr[1])
+    let H = Number(rectArr[3])
+    let W = Number(rectArr[2])
+    let studyFrame = MNUtil.studyView.frame
+    let studyFrameX = studyFrame.x
+    let frame = MNUtil.genFrame(X-studyFrameX, Y, W, H)
+    return frame
+  }
+  static getButtonColor(){
+    if (!this.checkSubscribe(false,false,true)) {
+      return MNUtil.hexColorAlpha("#ffffff", 0.85)
+    }
+    // let color = MNUtil.app.defaultBookPageColor.hexStringValue
+    // MNUtil.copy(color)
+    let varColors = ["defaultBookPageColor","defaultHighlightBlendColor","defaultDisableColor","defaultTextColor","defaultNotebookColor","defaultTintColor","defaultTintColorForSelected","defaultTintColorForDarkBackground"]
+    if (varColors.includes(toolbarConfig.buttonConfig.color)) {
+      return MNUtil.app[toolbarConfig.buttonConfig.color].colorWithAlphaComponent(toolbarConfig.buttonConfig.alpha)
+    }
+    // if () {
+      
+    // }
+    return MNUtil.hexColorAlpha(toolbarConfig.buttonConfig.color, toolbarConfig.buttonConfig.alpha)
+  }
 }
 
 class toolbarConfig {

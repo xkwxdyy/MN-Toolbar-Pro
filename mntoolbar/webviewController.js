@@ -775,9 +775,9 @@ toolbarController.prototype.hideAfterDelay = function (frame) {
 /**
  * @this {toolbarController}
  */
-toolbarController.prototype.setToolbarButton = function (actionNames,newActions=undefined) {
+toolbarController.prototype.setToolbarButton = function (actionNames = toolbarConfig.action,newActions=undefined) {
 try {
-  let buttonColor = MNUtil.hexColorAlpha(toolbarConfig.buttonConfig.color, toolbarConfig.buttonConfig.alpha)
+  let buttonColor = toolbarUtils.getButtonColor()
   this.view.layer.shadowColor = buttonColor
   
   let actions

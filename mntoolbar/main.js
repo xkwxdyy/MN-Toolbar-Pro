@@ -344,6 +344,9 @@ JSB.newAddon = function (mainPath) {
         // MNUtil.showHUD("queryAddonCommandStatus")
         if (typeof MNUtil === 'undefined') return null
         if (MNUtil.studyMode < 3) {
+          if (self.addonController) {
+            self.addonController.setToolbarButton()
+          }
           // toolbarUtils.refreshSubscriptionStatus()
           return {
             image: 'logo.png',

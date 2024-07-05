@@ -1,6 +1,5 @@
 // JSB.require('utils');
 // JSB.require('base64')
-// require('es6-promise').polyfill();  // 解决“找不到全局值“Promise”，但加了的话打不开 setting 了
 /** @return {settingController} */
 const getSettingController = ()=>self
 var settingController = JSB.defineClass('settingController : UIViewController <NSURLConnectionDelegate>', {
@@ -365,10 +364,11 @@ viewWillLayoutSubviews: function() {
       return
     }
     let color = self.hexInput.text
-    if (toolbarUtils.isHexColor(color)) {
+    let varColors = ["defaultBookPageColor","defaultHighlightBlendColor","defaultDisableColor","defaultTextColor","defaultNotebookColor","defaultTintColor","defaultTintColorForSelected","defaultTintColorForDarkBackground"]
+    if (varColors.includes(color) || toolbarUtils.isHexColor(color)) {
       toolbarConfig.buttonConfig.color = color
       toolbarConfig.save("MNToolbar_buttonConfig")
-      self.toolbarController.setToolbarButton(toolbarConfig.action)
+      self.toolbarController.setToolbarButton()
       MNUtil.showHUD("Save color: "+color)
     }else{
       MNUtil.showHUD("Invalid hex color")
