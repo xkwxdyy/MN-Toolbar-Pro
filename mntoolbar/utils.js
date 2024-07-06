@@ -690,7 +690,7 @@ class toolbarUtils {
                 // 修改标题
                 focusNote.note.noteTitle = "“" + templateNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”相关" + type
                 // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
-                MNUtil.delay(0.5).then(()=>{
+                MNUtil.delay(1).then(()=>{
                   templateNote.focusInMindMap()
                 })
               })
@@ -722,7 +722,7 @@ class toolbarUtils {
                   // 修改标题
                   focusNote.note.noteTitle = "“" + templateNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”相关" + type
                   // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
-                  MNUtil.delay(0.5).then(()=>{
+                  MNUtil.delay(1).then(()=>{
                     templateNote.focusInMindMap()
                   })
                 })
@@ -746,7 +746,7 @@ class toolbarUtils {
                 templateNote.moveComment(templateNote.note.comments.length-1, 1)
               })
               // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
-              MNUtil.delay(0.5).then(()=>{
+              MNUtil.delay(1).then(()=>{
                 templateNote.focusInMindMap()
               })
             } else {
@@ -763,7 +763,7 @@ class toolbarUtils {
                 templateNote.moveComment(templateNote.note.comments.length-1, 1)
               })
               // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
-              MNUtil.delay(0.5).then(()=>{
+              MNUtil.delay(1).then(()=>{
                 templateNote.focusInMindMap()
               })
             }
