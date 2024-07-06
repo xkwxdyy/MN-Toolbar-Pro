@@ -863,11 +863,14 @@ class toolbarUtils {
 
   static changePrefix(focusNote, focusNoteColorIndex) {
     let prefix, postfix
+    let type
+    const contentCardRegex = /【(.*?)：(.*?)(：.+)?】(.*)/;  // 注意前面的两个要加 ? 变成非贪婪模式
     if (focusNoteColorIndex == 1) {
       // 淡绿色卡片
       prefix = focusNote.noteTitle.match(/“(.+)”相关.*/)[1]
+      type = focusNote.noteTitle.match(/“(.+)”相关(.*)/)[2]
       focusNote.childNotes.forEach(childNote => {
-        if (childNote.colorIndex == 0 || childNote.colorIndex == 4) {
+        if (childNote.note.colorIndex == 0 || childNote.note.colorIndex == 4) {
           childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
 
           // 确保有双向链接了
@@ -882,7 +885,22 @@ class toolbarUtils {
             childNote.moveComment(childNote.note.comments.length-1, 1)
           }
         } else {
-          MNUtil.showHUD("不处理非黄色卡片")
+          childNote.noteTitle = childNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`)
+
+          // 确保有双向链接了
+          let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
+          if (childNoteIdIndexInFocusNote == -1) {
+            focusNote.appendNoteLink(childNote, "To")
+          }
+          let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+          if (focusNoteIdIndexInChildNote == -1) {
+            let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
+            if (childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
+              childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+            }
+            childNote.appendNoteLink(focusNote, "To")
+            childNote.moveComment(childNote.comments.length-1, linkHtmlCommentIndex+1)
+          }
         }
       })
       // todo: focusNote 的链接，因为被链接的标题改变了，所以变成了空白，而且无法自己刷新
@@ -924,9 +942,8 @@ class toolbarUtils {
             }
           } else {
             // 其余颜色的内容卡片
-            const regex = /【(.*?)：(.*?)(：.+)?】(.*)/;  // 注意前面的两个要加 ? 变成非贪婪模式
             try {
-              childNote.noteTitle = childNote.noteTitle.replace(regex, `【$1：${prefix}$3】$4`);
+              childNote.noteTitle = childNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`);
               let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
               if (focusNoteIdIndexInChildNote == -1) {
                 let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
@@ -943,7 +960,7 @@ class toolbarUtils {
 
 
               childNote.descendantNodes.descendant.forEach(descendantNote => {
-                descendantNote.noteTitle = descendantNote.noteTitle.replace(regex, `【$1：${prefix}$3】$4`);
+                descendantNote.noteTitle = descendantNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`);
                 let focusNoteIdIndexInDescendantNote = descendantNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
                 if (focusNoteIdIndexInDescendantNote == -1) {
                   let linkHtmlCommentIndex = descendantNote.getCommentIndex("相关链接：", true)
