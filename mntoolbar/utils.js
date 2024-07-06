@@ -320,7 +320,9 @@ class toolbarUtils {
           if (comment.type == "PaintNote") {
             nonLinkNoteCommentsIndex.push(index)
           } else {
-            if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
+            if (
+              !comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") 
+            ) {
               nonLinkNoteCommentsIndex.push(index)
             }
           }
@@ -936,7 +938,7 @@ class toolbarUtils {
           let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
           if (focusNoteIdIndexInChildNote == -1) {
             let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
-            if (childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
+            if (childNote.comments[linkHtmlCommentIndex+1] && childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
               childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
             }
             childNote.appendNoteLink(focusNote, "To")
@@ -988,7 +990,7 @@ class toolbarUtils {
               let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
               if (focusNoteIdIndexInChildNote == -1) {
                 let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
-                if (childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
+                if (childNote.comments[linkHtmlCommentIndex+1] && childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
                   childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
                 }
                 childNote.appendNoteLink(focusNote, "To")

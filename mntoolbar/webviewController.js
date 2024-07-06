@@ -1095,10 +1095,12 @@ toolbarController.prototype.customAction = async function (actionName) {
                 - 反例类型的是“反例及证明：”
                 - 思想方法类型的是“原理：”
               */
-              try {
-                toolbarUtils.makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType)
-              } catch (error) {
-                MNUtil.showHUD(error)
+              if (focusNoteType !== "definition") {
+                try {
+                  toolbarUtils.makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType)
+                } catch (error) {
+                  MNUtil.showHUD(error)
+                }
               }
             })
           })
