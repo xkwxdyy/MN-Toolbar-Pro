@@ -1008,7 +1008,7 @@ toolbarController.prototype.customAction = async function (actionName) {
       case "renewCards":
         try {
           MNUtil.undoGrouping(()=>{
-            toolbarUtils.renewCards(focusNotes, focusNoteColorIndex)
+            toolbarUtils.renewCards(focusNotes)
           })
         } catch (error) {
           MNUtil.showHUD(error);
@@ -1084,16 +1084,22 @@ toolbarController.prototype.customAction = async function (actionName) {
                   parentNoteUrl = "marginnote4app://note/" + parentNoteId
                 }
               } 
-              // else {
-              //   MNUtil.showHUD("不支持对此颜色的卡片进行制卡！")
-              //   return // 使用 return 来提前结束函数, 避免了在内部函数中使用 break 导致的语法错误。
-              // }
+              else {
+                MNUtil.showHUD("不支持对此颜色的卡片进行制卡！")
+                return // 使用 return 来提前结束函数, 避免了在内部函数中使用 break 导致的语法错误。
+              }
 
               /* 开始制卡 */
               /* 合并第一层模板 */
               toolbarUtils.makeCardsAuxFirstLayerTemplate(focusNote, focusNoteType)
               /* 与父卡片的链接 */
-              toolbarUtils.makeCardsAuxLinkToParentNote(focusNote, parentNote, parentNoteTitle, parentNoteId)
+              try {
+                // MNUtil.undoGrouping(()=>{
+                  toolbarUtils.makeCardsAuxLinkToParentNote(focusNote, parentNote, parentNoteTitle, parentNoteId)
+                // })
+              } catch (error) {
+                MNUtil.showHUD(error);
+              }
               /* 修改卡片前缀 */
               toolbarUtils.makeCardsAuxChangefocusNotePrefix(focusNote, parentNoteTitle, focusNoteColorIndex)
               /* 合并第二层模板 */
