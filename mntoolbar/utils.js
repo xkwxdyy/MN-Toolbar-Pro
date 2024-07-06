@@ -206,10 +206,12 @@ class toolbarUtils {
   static makeCardsAuxMoveDownDefinitionsComments(focusNote) {
     let definitionHtmlCommentIndex = focusNote.getCommentIndex("相关概念：", true)
     let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
-    if (definitionHtmlCommentIndex < linkHtmlCommentIndex) {
-      for (let i = linkHtmlCommentIndex-1; i >=definitionHtmlCommentIndex; i-- ) {
-        // 注意这里不是 focusNote.moveComment(i, focusNote.comments.length-1)
-        focusNote.moveComment(definitionHtmlCommentIndex, focusNote.comments.length-1)
+    if (definitionHtmlCommentIndex !== -1) {
+      if (definitionHtmlCommentIndex < linkHtmlCommentIndex) {
+        for (let i = linkHtmlCommentIndex-1; i >=definitionHtmlCommentIndex; i-- ) {
+          // 注意这里不是 focusNote.moveComment(i, focusNote.comments.length-1)
+          focusNote.moveComment(definitionHtmlCommentIndex, focusNote.comments.length-1)
+        }
       }
     }
   }
@@ -775,15 +777,6 @@ class toolbarUtils {
       let comment
       let htmlCommentsIndexArr = []
 
-      try {
-        // MNUtil.undoGrouping(()=>{
-          this.makeCardsAuxMoveDownApplicationsComments(focusNote)
-          this.makeCardsAuxMoveDownDefinitionsComments(focusNote)
-        // })
-      } catch (error) {
-        MNUtil.showHUD(error);
-      }
-
       let layerStartIndex, layerEndIndex
       // layerEndIndex = focusNoteCommentLength - 1 - (templateHtmlCommentEndIndex - templateHtmlCommentStartIndex)
       // layerStartIndex = htmlCommentsIndexArr[htmlCommentsIndexArr.length - 1]
@@ -857,6 +850,14 @@ class toolbarUtils {
         }
       }
 
+      try {
+        MNUtil.undoGrouping(()=>{
+          this.makeCardsAuxMoveDownApplicationsComments(focusNote)
+          this.makeCardsAuxMoveDownDefinitionsComments(focusNote)
+        })
+      } catch (error) {
+        MNUtil.showHUD(error);
+      }
     })
   }
 
