@@ -935,26 +935,7 @@ toolbarController.prototype.customAction = async function (actionName) {
       case "addThought":
         MNUtil.undoGrouping(()=>{
           try {
-            /* 确定卡片类型 */
-            switch (focusNoteColorIndex) {
-              case 2: // 淡蓝色：定义类
-                focusNoteType = "definition"
-                break;
-              case 3: // 淡粉色：反例
-                focusNoteType = "antiexample"
-                break;
-              case 9: // 深绿色：思想方法
-                focusNoteType = "method"
-                break;
-              case 10: // 深蓝色：定理命题
-                focusNoteType = "theorem"
-                break;
-              case 15: // 淡紫色：例子
-                focusNoteType = "example"
-                break;
-            }
-
-            toolbarUtils.addThought(focusNote, focusNoteType)
+            toolbarUtils.addThought(focusNotes)
           } catch (error) {
             MNUtil.showHUD(error)
           }
