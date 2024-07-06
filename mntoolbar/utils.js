@@ -867,18 +867,22 @@ class toolbarUtils {
       // 淡绿色卡片
       prefix = focusNote.noteTitle.match(/“(.+)”相关.*/)[1]
       focusNote.childNotes.forEach(childNote => {
-        childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
+        if (childNote.colorIndex == 0 || childNote.colorIndex == 4) {
+          childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
 
-        // 确保有双向链接了
-        let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
-        if (childNoteIdIndexInFocusNote == -1) {
-          focusNote.appendNoteLink(childNote, "To")
-        }
-        let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
-        if (focusNoteIdIndexInChildNote == -1) {
-          childNote.removeCommentByIndex(1)
-          childNote.appendNoteLink(focusNote, "To")
-          childNote.moveComment(childNote.note.comments.length-1, 1)
+          // 确保有双向链接了
+          let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
+          if (childNoteIdIndexInFocusNote == -1) {
+            focusNote.appendNoteLink(childNote, "To")
+          }
+          let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+          if (focusNoteIdIndexInChildNote == -1) {
+            childNote.removeCommentByIndex(1)
+            childNote.appendNoteLink(focusNote, "To")
+            childNote.moveComment(childNote.note.comments.length-1, 1)
+          }
+        } else {
+          MNUtil.showHUD("不处理非黄色卡片")
         }
       })
       // todo: focusNote 的链接，因为被链接的标题改变了，所以变成了空白，而且无法自己刷新
