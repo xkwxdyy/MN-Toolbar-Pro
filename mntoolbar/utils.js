@@ -186,9 +186,19 @@ class toolbarUtils {
           parentNoteOldLinkIndex = focusNote.getCommentIndex(parentNoteOldUrl)
           parentNoteNewLinkIndex = focusNote.getCommentIndex(parentNoteNewUrl)
           linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：",true)
+          // 如果原来有链接，就去掉
+          if (focusNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
+            focusNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+          }
           if ((parentNoteOldLinkIndex == -1) && (parentNoteNewLinkIndex == -1)) { // 防止第二次链接
-            parentNote.appendNoteLink(focusNote, "Both")
+            // parentNote.appendNoteLink(focusNote, "Both")
+            focusNote.appendNoteLink(parentNote, "To")
             focusNote.moveComment(focusNote.note.comments.length-1, linkHtmlCommentIndex+1)  // 放在“相关链接：”下面
+          }
+          parentNoteOldLinkIndex = parentNote.getCommentIndex("marginnote3app://note/" + focusNote.noteId)
+          parentNoteNewLinkIndex = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+          if ((parentNoteOldLinkIndex == -1) && (parentNoteNewLinkIndex == -1)) { // 防止第二次链接
+            parentNote.appendNoteLink(focusNote, "To")
           }
         } else {
           // 非归类型的淡黄色卡片
