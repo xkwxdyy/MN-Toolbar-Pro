@@ -1060,6 +1060,67 @@ class toolbarUtils {
     })
   }
 
+  static moveUpLinkNotes(focusNotes) {
+    focusNotes.forEach(focusNote => {
+      let htmlCommentsIndexArr = []
+      let linkNoteCommentsIndexArr = []
+      focusNote.comments.forEach((comment, index) => {
+        if (comment.type == "HtmlNote") {
+          htmlCommentsIndexArr.push(index)
+        } else if (comment.type == "LinkNote") {
+          linkNoteCommentsIndexArr.push(index)
+        }
+      })
+      // MNUtil.showHUD("原：" + linkNoteCommentsIndexArr + "处理后" + this.findContinuousSectionFromEnd(linkNoteCommentsIndexArr))
+      if (focusNote.comments[focusNote.comments.length-1].type == "LinkNote") {
+        try {
+          MNUtil.undoGrouping(()=>{
+            // this.findContinuousSectionFromEnd(linkNoteCommentsIndexArr).forEach(linkNoteIndex => {
+            //   focusNote.moveComment(focusNote.comments.length-1, htmlCommentsIndexArr[0])
+            // })
+            for (let i = 1; i <= this.findContinuousSectionFromEnd(linkNoteCommentsIndexArr).length; i++) {
+              focusNote.moveComment(focusNote.comments.length-1, htmlCommentsIndexArr[0])
+            }
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+      }
+    })
+  }
+
+  static findContinuousSectionFromEnd(arr) {
+    // 如果数组长度为1或更短，直接返回数组本身
+    if (arr.length <= 1) {
+      return arr;
+    }
+  
+    // 如果数组长度为2，检查两个元素是否连续
+    if (arr.length === 2) {
+      // 如果两个元素是连续的，则返回整个数组；否则返回数组的最后一个元素
+      return arr[1] === arr[0] + 1 ? arr : [arr[1]];
+    }
+  
+    // 初始化当前连续子数组和最大连续子数组，初始值为数组最后一个元素
+    let continuousSection = [arr[arr.length - 1]];
+    let maxContinuous = [arr[arr.length - 1]];
+  
+    // 从倒数第二个元素开始向前遍历数组
+    for (let i = arr.length - 2; i >= 0; i--) {
+      // 如果当前元素和当前连续子数组的第一个元素连续
+      if (arr[i] === continuousSection[0] - 1) {
+        // 将当前元素添加到当前连续子数组的开头
+        continuousSection.unshift(arr[i]);
+      } else {
+        // 如果当前元素不连续，停止构建当前连续子数组
+        break;
+      }
+    }
+  
+    // 返回从后向前最长的连续子数组
+    return continuousSection.length > maxContinuous.length ? continuousSection : maxContinuous;
+  }
+
   static init(){
     this.app = Application.sharedInstance()
     this.data = Database.sharedInstance()

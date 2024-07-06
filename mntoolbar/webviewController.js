@@ -1004,6 +1004,15 @@ toolbarController.prototype.customAction = async function (actionName) {
           MNUtil.showHUD(error);
         }
         break;
+      case "moveUpLinkNotes":
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.moveUpLinkNotes(focusNotes)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
       case "makeCards":
         try {
           // MNUtil.showHUD("制卡")
