@@ -1029,8 +1029,9 @@ toolbarController.prototype.customAction = async function (actionName) {
           MNUtil.undoGrouping(()=>{
             focusNotes.forEach(focusNote=>{
               /* 初始化 */
-              let parentNoteType
-              let ifParentNoteColorLightYellow = false
+              ifParentNoteColorLightYellow = false
+
+              toolbarUtils.renewCards([focusNote])
 
               /* 确定卡片类型 */
               switch (focusNoteColorIndex) {
