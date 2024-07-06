@@ -412,6 +412,7 @@ class toolbarUtils {
       (alert, buttonIndex) => {
         if (buttonIndex == 1) {
           MNUtil.undoGrouping(()=>{
+            MNUtil.copy(focusNote.noteTitle)
             focusNote.noteTitle = ""
             // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
             for (let i = focusNoteCommentLength-1; i >= 0; i--) {
@@ -449,6 +450,7 @@ class toolbarUtils {
       (alert, buttonIndex) => {
         if (buttonIndex == 1) {
           MNUtil.undoGrouping(()=>{
+            MNUtil.copy(focusNote.noteTitle)
             focusNote.noteTitle = ""
             // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
             for (let i = focusNoteCommentLength-1; i >= 0; i--) {
