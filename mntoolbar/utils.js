@@ -186,7 +186,7 @@ class toolbarUtils {
           parentNoteOldLinkIndexInFocusNote = focusNote.getCommentIndex(parentNoteOldUrl)
           parentNoteNewLinkIndexInFocusNote = focusNote.getCommentIndex(parentNoteNewUrl)
           parentNoteLinkIndexInFocusNote = Math.max(parentNoteOldLinkIndexInFocusNote, parentNoteNewLinkIndexInFocusNote)
-          linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：",true)
+          linkHtmlCommentIndex = Math.max(focusNote.getCommentIndex("相关链接：",true), focusNote.getCommentIndex("所属：",true))
           if (parentNoteLinkIndexInFocusNote == -1) { // 防止第二次链接
             // parentNote.appendNoteLink(focusNote, "Both")
             // 如果原来有链接，就去掉
@@ -937,7 +937,8 @@ class toolbarUtils {
           }
           let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
           if (focusNoteIdIndexInChildNote == -1) {
-            let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
+            // let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
+            let linkHtmlCommentIndex = Math.max(childNote.getCommentIndex("相关链接：",true), childNote.getCommentIndex("所属：",true))
             if (childNote.comments[linkHtmlCommentIndex+1] && childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
               childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
             }
@@ -989,7 +990,8 @@ class toolbarUtils {
               childNote.noteTitle = childNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`);
               let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
               if (focusNoteIdIndexInChildNote == -1) {
-                let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
+                // let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
+                let linkHtmlCommentIndex = Math.max(childNote.getCommentIndex("相关链接：",true), childNote.getCommentIndex("所属：",true))
                 if (childNote.comments[linkHtmlCommentIndex+1] && childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
                   childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
                 }
@@ -1002,22 +1004,26 @@ class toolbarUtils {
               }
 
 
-              childNote.descendantNodes.descendant.forEach(descendantNote => {
-                descendantNote.noteTitle = descendantNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`);
-                let focusNoteIdIndexInDescendantNote = descendantNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
-                if (focusNoteIdIndexInDescendantNote == -1) {
-                  let linkHtmlCommentIndex = descendantNote.getCommentIndex("相关链接：", true)
-                  if (descendantNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
-                    descendantNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+              if (childNote.descendantNodes.descendant.length > 0) {
+                childNote.descendantNodes.descendant.forEach(descendantNote => {
+                  descendantNote.noteTitle = descendantNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`);
+                  let focusNoteIdIndexInDescendantNote = descendantNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                  if (focusNoteIdIndexInDescendantNote == -1) {
+                    // let linkHtmlCommentIndex = descendantNote.getCommentIndex("相关链接：", true)
+                    let linkHtmlCommentIndex = Math.max(descendantNote.getCommentIndex("相关链接：",true), descendantNote.getCommentIndex("所属：",true))
+                    // MNUtil.showHUD("linkHtmlCommentIndex: " + linkHtmlCommentIndex)
+                    if (descendantNote.comments[linkHtmlCommentIndex+1] && descendantNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
+                      descendantNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+                    }
+                    descendantNote.appendNoteLink(focusNote, "To")
+                    descendantNote.moveComment(descendantNote.comments.length-1, linkHtmlCommentIndex+1)
                   }
-                  descendantNote.appendNoteLink(focusNote, "To")
-                  descendantNote.moveComment(descendantNote.comments.length-1, linkHtmlCommentIndex+1)
-                }
-                let descendantNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + descendantNote.noteId)
-                if (descendantNoteIdIndexInFocusNote == -1) {
-                  focusNote.appendNoteLink(descendantNote, "To")
-                }
-              })
+                  let descendantNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + descendantNote.noteId)
+                  if (descendantNoteIdIndexInFocusNote == -1) {
+                    focusNote.appendNoteLink(descendantNote, "To")
+                  }
+                })
+              }
             } catch (error) {
               MNUtil.showHUD(error);
             }
