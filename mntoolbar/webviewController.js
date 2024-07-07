@@ -14,7 +14,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.isLoading = false;
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
-    self.buttonNumber = 20
+    self.buttonNumber = 16  // 注意自定义时要改这里的数量！
     if (self.dynamicWindow) {
       self.buttonNumber = 9
     }
@@ -30,8 +30,8 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.view.layer.opacity = 1.0
     self.view.layer.cornerRadius = 5
     self.view.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    if (toolbarConfig.action.length == 27) {
-      toolbarConfig.action = toolbarConfig.action.concat(["custom1","custom2","custom3","custom4","custom5","custom6","custom7","custom8","custom9"])
+    if (toolbarConfig.action.length == 28) {
+      toolbarConfig.action = toolbarConfig.action.concat(["custom1","custom2","custom3","custom4","custom5","custom6","custom7","custom8","custom9","custom10"])
     }
     self.setToolbarButton(toolbarConfig.action)
     // >>> max button >>>
@@ -807,7 +807,7 @@ try {
     if (actionName.includes("color")) {
       this["ColorButton"+index].color = parseInt(actionName.slice(5))
       this.setColorButtonLayout(this["ColorButton"+index],"setColor:",buttonColor)
-    }else if(actionName.includes("custom")){
+    }else if(actionName.includes("custom")){  // custom 是小写的
       this.setColorButtonLayout(this["ColorButton"+index],"customAction:",buttonColor)
     }else{
       this.setColorButtonLayout(this["ColorButton"+index],actionName+":",buttonColor)

@@ -286,7 +286,6 @@ class toolbarUtils {
     }
   }
 
-  // 问题所在：应用部分先往下移动了
   static makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType) {
     let focusNoteComments = focusNote.note.comments
     let focusNoteCommentLength = focusNoteComments.length
@@ -2315,44 +2314,45 @@ static getAction(actionName){
 }
 static getActions() {
   return {
-    "copy":{name:"Copy",image:"copyExcerptPic",description:"Copy"},
-    "searchInEudic":{name:"Search in Eudic",image:"searchInEudic",description:"Search in Eudic"},
-    "switchTitleorExcerpt":{name:"Switch title",image:"switchTitleorExcerpt",description:"Switch title"},
+    // "copy":{name:"Copy",image:"copyExcerptPic",description:"Copy"},
+    // "searchInEudic":{name:"Search in Eudic",image:"searchInEudic",description:"Search in Eudic"},
+    // "switchTitleorExcerpt":{name:"Switch title",image:"switchTitleorExcerpt",description:"Switch title"},
+    // "clearFormat":{name:"Clear Format",image:"clearFormat",description:"Clear Format"},
+    // "color0":{name:"Set Color 1",image:"color0",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color1":{name:"Set Color 2",image:"color1",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color2":{name:"Set Color 3",image:"color2",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color3":{name:"Set Color 4",image:"color3",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color4":{name:"Set Color 5",image:"color4",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color5":{name:"Set Color 6",image:"color5",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color6":{name:"Set Color 7",image:"color6",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color7":{name:"Set Color 8",image:"color7",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color8":{name:"Set Color 9",image:"color8",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color9":{name:"Set Color 10",image:"color9",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color10":{name:"Set Color 11",image:"color10",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color11":{name:"Set Color 12",image:"color11",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color12":{name:"Set Color 13",image:"color12",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color13":{name:"Set Color 14",image:"color13",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color14":{name:"Set Color 15",image:"color14",description:JSON.stringify({fillPattern:-1},null,2)},
+    // "color15":{name:"Set Color 16",image:"color15",description:JSON.stringify({fillPattern:-1},null,2)},
+    "custom1":{name:"Custom 1",image:"custom1",description: this.template("makeCards")},
+    "custom2":{name:"Custom 2",image:"custom2",description: this.template("addTemplate")},
+    "custom3":{name:"Custom 3",image:"custom3",description: this.template("addThought")},
+    "custom9":{name:"Custom 9",image:"custom9",description: this.template("moveUpLinkNotes")},
+    "custom10":{name:"Custom 10",image:"custom10",description: this.template("renewProof")},
+    "custom7":{name:"Custom 7",image:"custom7",description: this.template("renewCards")},
+    "custom6":{name:"Custom 6",image:"custom6",description: this.template("changePrefix")},
+    "custom4":{name:"Custom 4",image:"custom4",description: this.template("clearContentKeepExcerptAndImage")},
+    "custom5":{name:"Custom 5",image:"custom5",description: this.template("clearContentKeepText")},
+    "custom8":{name:"Custom 8",image:"custom8",description: this.template("achieveCards")},
+    "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
+    "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
+    "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})},
     "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
     "search":{name:"Search",image:"search",description:"Search"},
     "bigbang":{name:"Bigbang",image:"bigbang",description:"Bigbang"},
     "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
     "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"},
-    "setting":{name:"Setting",image:"setting",description:"Setting"},
-    "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
-    "clearFormat":{name:"Clear Format",image:"clearFormat",description:"Clear Format"},
-    "color0":{name:"Set Color 1",image:"color0",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color1":{name:"Set Color 2",image:"color1",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color2":{name:"Set Color 3",image:"color2",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color3":{name:"Set Color 4",image:"color3",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color4":{name:"Set Color 5",image:"color4",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color5":{name:"Set Color 6",image:"color5",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color6":{name:"Set Color 7",image:"color6",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color7":{name:"Set Color 8",image:"color7",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color8":{name:"Set Color 9",image:"color8",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color9":{name:"Set Color 10",image:"color9",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color10":{name:"Set Color 11",image:"color10",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color11":{name:"Set Color 12",image:"color11",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color12":{name:"Set Color 13",image:"color12",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color13":{name:"Set Color 14",image:"color13",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color14":{name:"Set Color 15",image:"color14",description:JSON.stringify({fillPattern:-1},null,2)},
-    "color15":{name:"Set Color 16",image:"color15",description:JSON.stringify({fillPattern:-1},null,2)},
-    "custom1":{name:"Custom 1",image:"custom1",description: this.template("cloneAndMerge")},
-    "custom2":{name:"Custom 2",image:"custom2",description: this.template("link")},
-    "custom3":{name:"Custom 3",image:"custom3",description: this.template("clearContent")},
-    "custom4":{name:"Custom 4",image:"custom4",description: this.template("copy")},
-    "custom5":{name:"Custom 5",image:"custom5",description: this.template("addChildNote")},
-    "custom6":{name:"Custom 6",image:"custom6",description: this.template("showInFloatWindow")},
-    "custom7":{name:"Custom 7",image:"custom7",description: this.template("setContent")},
-    "custom8":{name:"Custom 8",image:"custom8",description: this.template("addComment")},
-    "custom9":{name:"Custom 9",image:"custom9",description: this.template("removeComment")},
-    "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
-    "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})}
+    "setting":{name:"Setting",image:"setting",description:"Setting"}
   }
 }
 static getDefaultActionKeys() {
