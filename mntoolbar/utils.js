@@ -2245,13 +2245,13 @@ class toolbarConfig {
   static defalutButtonConfig = {color:"#ffffff",alpha:0.85}
   // static defaultConfig = {showEditorWhenEditingNote:false}
   static init(){
-    // this.config = this.getByDefault("MNToolBarPro_config",this.defaultConfig)
-    this.dynamic = this.getByDefault("MNToolBarPro_dynamic",false)
-    this.addonLogos = this.getByDefault("MNToolBarPro_addonLogos",{})
-    this.windowState = this.getByDefault("MNToolBarPro_windowState",{})
-    this.action = this.getByDefault("MNToolBarPro_action", this.getDefaultActionKeys())
-    this.actions = this.getByDefault("MNToolBarPro_actionConfig", this.getActions())
-    this.buttonConfig = this.getByDefault("MNToolBarPro_buttonConfig", this.defalutButtonConfig)
+    // this.config = this.getByDefault("MNToolBar_config",this.defaultConfig)
+    this.dynamic = this.getByDefault("MNToolBar_dynamic",false)
+    this.addonLogos = this.getByDefault("MNToolBar_addonLogos",{})
+    this.windowState = this.getByDefault("MNToolBar_windowState",{})
+    this.action = this.getByDefault("MNToolBar_action", this.getDefaultActionKeys())
+    this.actions = this.getByDefault("MNToolBar_actionConfig", this.getActions())
+    this.buttonConfig = this.getByDefault("MNToolBar_buttonConfig", this.defalutButtonConfig)
     this.highlightColor = UIColor.blendedColor(
       UIColor.colorWithHexString("#2c4d81").colorWithAlphaComponent(0.8),
       toolbarUtils.app.defaultTextColor,
@@ -2409,26 +2409,26 @@ static save(key,value = undefined) {
   }else{
     // showHUD(key)
     switch (key) {
-      case "MNToolBarPro_windowState":
+      case "MNToolBar_windowState":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.windowState,key)
         break;
-      case "MNToolBarPro_dynamic":
+      case "MNToolBar_dynamic":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.dynamic,key)
         break;
-      case "MNToolBarPro_action":
+      case "MNToolBar_action":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.action,key)
         break;
-      case "MNToolBarPro_actionConfig":
+      case "MNToolBar_actionConfig":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.actions,key)
         break;
-      case "MNToolBarPro_addonLogos":
+      case "MNToolBar_addonLogos":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.addonLogos,key)
         break;
-      case "MNToolBarPro_buttonConfig":
+      case "MNToolBar_buttonConfig":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.buttonConfig,key)
         break;
       default:
-        toolbarUtils.showHUD("Not supported")
+        // toolbarUtils.showHUD("Not supported")
         break;
     }
   }
@@ -2454,8 +2454,8 @@ static remove(key) {
 static reset(){
   this.action = this.getDefaultActionKeys()
   this.actions = this.getActions()
-  this.save("MNToolBarPro_action")
-  this.save("MNToolBarPro_actionConfig")
+  this.save("MNToolBar_action")
+  this.save("MNToolBar_actionConfig")
 }
 static getDescriptionByIndex(index){
   let actionName = toolbarConfig.action[index]

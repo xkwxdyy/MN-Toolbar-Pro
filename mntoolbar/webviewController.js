@@ -159,8 +159,8 @@ try {
       }
       // self.testController.view.hidden = true
     }
-    toolbarConfig.save("MNToolBarPro_dynamic")
-    // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolBarPro_dynamic")
+    toolbarConfig.save("MNToolBar_dynamic")
+    // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolBar_dynamic")
     if (self.dynamicToolbar) {
       self.dynamicToolbar.dynamic = toolbarConfig.dynamic
     }
@@ -565,7 +565,7 @@ try {
     if (gesture.state === 3) {
       // self.resi
       MNUtil.studyView.bringSubviewToFront(self.view)
-      toolbarConfig.save("MNToolBarPro_windowState",{open:true,frame:self.view.frame})
+      toolbarConfig.save("MNToolBar_windowState",{open:true,frame:self.view.frame})
       self.setToolbarLayout()
     }
     self.custom = false;
@@ -594,12 +594,12 @@ try {
       let windowState = toolbarConfig.windowState
       if (self.dynamicWindow) {
         windowState.dynamicButton = buttomNumber
-        // toolbarConfig.save("MNToolBarPro_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
+        // toolbarConfig.save("MNToolBar_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
       }else{
         windowState.frame = self.view.frame
         windowState.open = true
       }
-      toolbarConfig.save("MNToolBarPro_windowState",windowState)
+      toolbarConfig.save("MNToolBar_windowState",windowState)
       self.onResize = false
     }
   },
@@ -871,27 +871,15 @@ toolbarController.prototype.customAction = async function (actionName) {
     //   return
     // }
     let des = JSON.parse(toolbarConfig.actions[actionName].description)
-    let focusNote = MNNote.getFocusNote()
-    let focusNotes = MNNote.getFocusNotes()
+    let focusNote = MNNote.getFocusNote()? MNNote.getFocusNote():undefined
+    let focusNotes = MNNote.getFocusNotes() ? MNNote.getFocusNotes():undefined
     // MNUtil.showHUD("message"+(focusNote instanceof MNNote))
-    let notebookid = focusNote ? focusNote.notebookId : undefined
-    let title,content,color,config
+    let color,config
     let targetNoteId,parentNoteId,parentNoteUrl
-    let templateNoteId
-    let parentNote,focusNoteTitle
+    let parentNote
     let parentNoteTitle = ""
     let focusNoteType
-    let newTitle
-    let parentNoteIdIndex
-    let foundMatchingParentNote = false;
-    let focusNoteColorIndex = focusNote.note.colorIndex
-    let focusNoteComments,focusNoteCommentLength
-    let nonLinkNoteCommentsIndex
-    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：",true)
-    let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
-    let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
-    let keywordsHtmlCommentIndex = focusNote.getCommentIndex("关键词： ", true)
-    let testIndex
+    let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
     let ifParentNoteColorLightYellow
     switch (des.action) {
       // 夏大鱼羊定制函数

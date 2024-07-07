@@ -100,7 +100,7 @@ viewWillLayoutSubviews: function() {
     // MNUtil.postNotification("MNToolbarRefreshLayout",{})
     // NSNotificationCenter.defaultCenter().postNotificationNameObjectUserInfo("MNToolbarRefreshLayout", self.window, {})
     self.toolbarController.setToolbarButton(allActions)
-    toolbarConfig.save("MNToolBarPro_action")
+    toolbarConfig.save("MNToolBar_action")
   },
   moveForwardTapped :function () {
     let self = getSettingController()
@@ -108,14 +108,14 @@ viewWillLayoutSubviews: function() {
     toolbarUtils.moveElement(allActions, self.selectedItem, "up")
     self.setButtonText(allActions,self.selectedItem)
     self.toolbarController.setToolbarButton(allActions)
-    toolbarConfig.save("MNToolBarPro_action")
+    toolbarConfig.save("MNToolBar_action")
   },
   moveBackwardTapped :function () {
     let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
     toolbarUtils.moveElement(allActions, self.selectedItem, "down")
     self.setButtonText(allActions,self.selectedItem)
     self.toolbarController.setToolbarButton(allActions)
-    toolbarConfig.save("MNToolBarPro_action")
+    toolbarConfig.save("MNToolBar_action")
 
   },
   resetConfig: async function (button) {
@@ -273,7 +273,7 @@ viewWillLayoutSubviews: function() {
       if (self.toolbarController.dynamicToolbar) {
         self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
       }
-      toolbarConfig.save("MNToolBarPro_actionConfig")
+      toolbarConfig.save("MNToolBar_actionConfig")
       if (!self.selectedItem.includes("custom")) {
         MNUtil.showHUD("Save Action: "+self.titleInput.text)
       }else{
@@ -308,7 +308,7 @@ viewWillLayoutSubviews: function() {
         if (self.toolbarController.dynamicToolbar) {
           self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
         }
-        toolbarConfig.save("MNToolBarPro_actionConfig")
+        toolbarConfig.save("MNToolBar_actionConfig")
       }else{
         MNUtil.showHUD("Invalid JSON format!")
         return
@@ -327,10 +327,9 @@ viewWillLayoutSubviews: function() {
       toolbarUtils.ocr()
       return
     }
-    MNUtil.showHUD("Not supported")
+    // MNUtil.showHUD("Not supported")
   } catch (error) {
     toolbarUtils.addErrorLog(error, "configRunTapped", info)
-
   }
   },
   toggleSelected:function (sender) {
@@ -357,7 +356,7 @@ viewWillLayoutSubviews: function() {
       button.setTitleForState(addonName+": "+(toolbarConfig.checkLogoStatus(addonName)?"✅":"❌"),0)
       MNButton.setColor(button, toolbarConfig.checkLogoStatus(addonName)?"#457bd3":"#9bb2d6",0.8)
 
-      toolbarConfig.save("MNToolBarPro_addonLogos")
+      toolbarConfig.save("MNToolBar_addonLogos")
       MNUtil.refreshAddonCommands()
     }
   },
@@ -369,7 +368,7 @@ viewWillLayoutSubviews: function() {
     let varColors = ["defaultBookPageColor","defaultHighlightBlendColor","defaultDisableColor","defaultTextColor","defaultNotebookColor","defaultTintColor","defaultTintColorForSelected","defaultTintColorForDarkBackground"]
     if (varColors.includes(color) || toolbarUtils.isHexColor(color)) {
       toolbarConfig.buttonConfig.color = color
-      toolbarConfig.save("MNToolBarPro_buttonConfig")
+      toolbarConfig.save("MNToolBar_buttonConfig")
       self.toolbarController.setToolbarButton()
       MNUtil.showHUD("Save color: "+color)
     }else{
