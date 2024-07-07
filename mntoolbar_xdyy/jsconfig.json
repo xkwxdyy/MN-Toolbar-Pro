@@ -1,3 +1,0 @@
-{
-  "include": ["main.js","webviewController.js","settingController.js","index.d.ts","utils.js"]
-}
