@@ -2,7 +2,7 @@
 JSB.newAddon = function (mainPath) {
   JSB.require('utils')
   if (!toolbarUtils.checkMNUtilsFolder(mainPath)) {
-    Application.sharedInstance().showHUD("MN OCR: Please install 'MN Utils' first!",Application.sharedInstance().focusWindow,5)
+    Application.sharedInstance().showHUD("MN Toolbar: Please install 'MN Utils' first!",Application.sharedInstance().focusWindow,5)
     return undefined
   }
   JSB.require('webviewController');
@@ -12,9 +12,10 @@ JSB.newAddon = function (mainPath) {
   var MNToolbarClass = JSB.defineClass(
     'MNToolbar : JSExtension',
     { /* Instance members */
-      sceneWillConnect: function () { //Window initialize
+      sceneWillConnect: async function () { //Window initialize
+        await toolbarUtils.delay(0.01)
         if (typeof MNUtil === 'undefined') {
-          Application.sharedInstance().showHUD("MN OCR: Please install 'MN Utils' first!",Application.sharedInstance().focusWindow,5)
+          Application.sharedInstance().showHUD("MN Toolbar: Please install 'MN Utils' first!",Application.sharedInstance().focusWindow,5)
           return
         }
         let self = getMNToolbarClass()
@@ -45,6 +46,7 @@ JSB.newAddon = function (mainPath) {
         MNUtil.addObserver(self, 'onToggleDynamic:', 'toggleDynamic')
         MNUtil.addObserver(self, 'onClosePopupMenuOnNote:', 'ClosePopupMenuOnNote')
         MNUtil.addObserver(self, 'onRemoveMNToolbar:', 'removeMNToolbar')
+        MNUtil.addObserver(self, 'onToggleMindmapToolbar:', 'toggleMindmapToolbar')
         MNUtil.addObserver(self, 'onTextDidBeginEditing:', 'UITextViewTextDidBeginEditingNotification')
       },
 
@@ -53,6 +55,7 @@ JSB.newAddon = function (mainPath) {
         MNUtil.removeObserver(self,'PopupMenuOnNote')
         MNUtil.removeObserver(self,'toggleDynamic')
         MNUtil.removeObserver(self,'ClosePopupMenuOnNote')
+        MNUtil.removeObserver(self,'removeMNToolbar')
         MNUtil.removeObserver(self,'removeMNToolbar')
         MNUtil.removeObserver(self,'UITextViewTextDidBeginEditingNotification')
         // MNUtil.showHUD("remove")
@@ -359,6 +362,7 @@ JSB.newAddon = function (mainPath) {
         }
       },
       onToggleDynamic:function (sender) {
+        
         if (typeof MNUtil === 'undefined') return
         toolbarConfig.dynamic = !toolbarConfig.dynamic
         self.addonController.dynamic = toolbarConfig.dynamic
@@ -367,13 +371,68 @@ JSB.newAddon = function (mainPath) {
         }else{
           self.testController.view.hidden = true
         }
-        toolbarConfig.save("MNToolbarPro_dynamic")
-        // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbarPro_dynamic")
+        toolbarConfig.save("MNToolBarPro_dynamic")
+        // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolBarPro_dynamic")
         self.testController.dynamic = toolbarConfig.dynamic
       },
-      onRemoveMNToolbar:function (params) {
-        self.addonController.view.removeFromSuperview()
-        toolbarConfig.addonLogos = {}
+      onToggleMindmapToolbar:function (sender) {
+        if ("target" in sender.userInfo) {
+          switch (sender.userInfo.target) {
+            case "addonBar":
+              if (!self.addonBar) {
+                self.addonBar = MNUtil.studyView.subviews.find(subview=>{
+                  let frame = subview.frame
+                  if (!subview.hidden && frame.y > 100 && frame.width === 40 && (frame.x < 100 || frame.x > MNUtil.studyView.bounds.width-150)) {
+                    if (self.addonController.view && subview === self.addonController.view) {
+                      return false
+                    }
+                    return true
+                  }
+                  return false
+                
+                })
+                // self.addonBar = MNUtil.studyView.subviews[37]
+              }
+              // MNUtil.copyJSON(self.addonBar.frame)
+              if (self.isAddonBarRemoved) {
+                MNUtil.studyView.addSubview(self.addonBar)
+                self.isAddonBarRemoved = false
+              }else{
+                self.addonBar.removeFromSuperview()
+                self.isAddonBarRemoved = true
+              }
+              break;
+            case "mindmapToolbar":
+              if (!self.view0) {
+                self.isRemoved = false
+                self.view0 = MNUtil.mindmapView.superview.subviews.at(-4)
+                self.view1 = MNUtil.mindmapView.superview.subviews.at(-6)
+                self.view2 = MNUtil.mindmapView.superview.subviews.at(-1)
+                // MNUtil.copy(self.view2.frame.width)
+              }
+              if (!self.isRemoved) {
+                self.isRemoved = true
+                // if (self.view2.subviews.length === 9) {
+                  self.view0.removeFromSuperview()
+                  self.view1.removeFromSuperview()
+                  self.view2.removeFromSuperview()
+                // }
+                // let frame = self.view0.frame
+                // frame
+              }else{
+                self.isRemoved = false
+                MNUtil.mindmapView.superview.addSubview(self.view1)
+                MNUtil.mindmapView.superview.addSubview(self.view0)
+                MNUtil.mindmapView.superview.addSubview(self.view2)
+              }
+              break;
+            default:
+              break;
+          }
+
+
+        }
+
       },
       /**
        * 
@@ -516,12 +575,12 @@ try {
           toolbarConfig.windowState.frame = self.addonController.view.frame
           // showHUD(JSON.stringify(self.addonBar.frame))
           self.addonController.show(self.addonBar.frame)
-          toolbarConfig.save("MNToolbarPro_windowState")
+          toolbarConfig.save("MNToolBarPro_windowState")
         }else{
           toolbarConfig.windowState.open = false
           toolbarConfig.windowState.frame = self.addonController.view.frame
           self.addonController.hide(self.addonBar.frame)
-          toolbarConfig.save("MNToolbarPro_windowState")
+          toolbarConfig.save("MNToolBarPro_windowState")
         }
       // self.addonController.view.hidden = !self.addonController.view.hidden
       }
@@ -533,10 +592,10 @@ try {
       addonWillDisconnect: async function () {
         let confirm = await MNUtil.confirm("Remove all config?\n删除所有配置？", "")
         if (confirm) {
-          toolbarConfig.remove("MNToolbarPro_dynamic")
-          toolbarConfig.remove("MNToolbarPro_windowState")
-          toolbarConfig.remove("MNToolbarPro_action")
-          toolbarConfig.remove("MNToolbarPro_actionConfig")
+          toolbarConfig.remove("MNToolBarPro_dynamic")
+          toolbarConfig.remove("MNToolBarPro_windowState")
+          toolbarConfig.remove("MNToolBarPro_action")
+          toolbarConfig.remove("MNToolBarPro_actionConfig")
         }
         MNUtil.postNotification("removeMNToolbar", {})
       },

@@ -30,8 +30,9 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.view.layer.opacity = 1.0
     self.view.layer.cornerRadius = 5
     self.view.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    if (toolbarConfig.action.length == 28) {
-      toolbarConfig.action = toolbarConfig.action.concat(["custom1","custom2","custom3","custom4","custom5","custom6","custom7","custom8","custom9","custom10"])
+    self.view.mntoolbar = true
+    if (toolbarConfig.action.length == 27) {
+      toolbarConfig.action = toolbarConfig.action.concat(["custom1","custom2","custom3","custom4","custom5","custom6","custom7","custom8","custom9"])
     }
     self.setToolbarButton(toolbarConfig.action)
     // >>> max button >>>
@@ -158,8 +159,8 @@ try {
       }
       // self.testController.view.hidden = true
     }
-    toolbarConfig.save("MNToolbarPro_dynamic")
-    // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbarPro_dynamic")
+    toolbarConfig.save("MNToolBarPro_dynamic")
+    // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolBarPro_dynamic")
     if (self.dynamicToolbar) {
       self.dynamicToolbar.dynamic = toolbarConfig.dynamic
     }
@@ -564,7 +565,7 @@ try {
     if (gesture.state === 3) {
       // self.resi
       MNUtil.studyView.bringSubviewToFront(self.view)
-      toolbarConfig.save("MNToolbarPro_windowState",{open:true,frame:self.view.frame})
+      toolbarConfig.save("MNToolBarPro_windowState",{open:true,frame:self.view.frame})
       self.setToolbarLayout()
     }
     self.custom = false;
@@ -593,12 +594,12 @@ try {
       let windowState = toolbarConfig.windowState
       if (self.dynamicWindow) {
         windowState.dynamicButton = buttomNumber
-        // toolbarConfig.save("MNToolbarPro_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
+        // toolbarConfig.save("MNToolBarPro_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
       }else{
         windowState.frame = self.view.frame
         windowState.open = true
       }
-      toolbarConfig.save("MNToolbarPro_windowState",windowState)
+      toolbarConfig.save("MNToolBarPro_windowState",windowState)
       self.onResize = false
     }
   },
@@ -667,9 +668,9 @@ toolbarController.prototype.show = async function (frame) {
   this.view.hidden = false
   // this.moveButton.hidden = true
   this.screenButton.hidden = true
-  for (let index = 0; index < this.buttonNumber; index++) {
-    this["ColorButton"+index].hidden = true
-  }
+  // for (let index = 0; index < this.buttonNumber; index++) {
+  //   this["ColorButton"+index].hidden = true
+  // }
   this.setToolbarButton(toolbarConfig.action)
 
   // showHUD(JSON.stringify(preFrame))
@@ -732,9 +733,9 @@ toolbarController.prototype.hide = function (frame) {
   this.view.frame = this.currentFrame
   // copy(JSON.stringify(preFrame))
   let preOpacity = 1.0
-  for (let index = 0; index < this.buttonNumber; index++) {
-    this["ColorButton"+index].hidden = true
-  }
+  // for (let index = 0; index < this.buttonNumber; index++) {
+  //   this["ColorButton"+index].hidden = true
+  // }
   // this.moveButton.hidden = true
   this.screenButton.hidden = true
   // return
@@ -807,7 +808,7 @@ try {
     if (actionName.includes("color")) {
       this["ColorButton"+index].color = parseInt(actionName.slice(5))
       this.setColorButtonLayout(this["ColorButton"+index],"setColor:",buttonColor)
-    }else if(actionName.includes("custom")){  // custom 是小写的
+    }else if(actionName.includes("custom")){
       this.setColorButtonLayout(this["ColorButton"+index],"customAction:",buttonColor)
     }else{
       this.setColorButtonLayout(this["ColorButton"+index],actionName+":",buttonColor)
@@ -1523,6 +1524,23 @@ toolbarController.prototype.customAction = async function (actionName) {
       case "focus":
         toolbarUtils.focus(focusNote, des)
         break 
+      case "toggleView":
+        // let widths = []
+        // MNUtil.mindmapView.subviews.map(subview=>{
+        //   let frame = subview.frame
+        //   if (frame.width === 50) {
+        //     widths.push(subview.frame)
+        //   }
+        // })
+        // MNUtil.copyJSON(widths)
+        if ("targets" in des) {
+          des.targets.map(target=>{
+            MNUtil.postNotification("toggleMindmapToolbar", {target:target})
+          })
+        }else{
+          MNUtil.postNotification("toggleMindmapToolbar", {target:des.target})
+        }
+        break
       default:
         MNUtil.showHUD("Not supported yet...")
         break;

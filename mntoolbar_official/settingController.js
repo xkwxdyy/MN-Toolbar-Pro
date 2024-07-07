@@ -261,6 +261,8 @@ viewWillLayoutSubviews: function() {
     try {
     let selected = self.selectedItem
     let input = await self.getWebviewContent()
+          // self.runJavaScript(`editor.blur();`)
+    self.webviewInput.endEditing(true)
     if (MNUtil.isValidJSON(input)) {
       if (!toolbarConfig.actions[selected]) {
         toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
@@ -325,7 +327,7 @@ viewWillLayoutSubviews: function() {
       toolbarUtils.ocr()
       return
     }
-    // MNUtil.showHUD("Not supported")
+    MNUtil.showHUD("Not supported")
   } catch (error) {
     toolbarUtils.addErrorLog(error, "configRunTapped", info)
 

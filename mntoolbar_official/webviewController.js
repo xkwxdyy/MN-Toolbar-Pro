@@ -30,6 +30,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.view.layer.opacity = 1.0
     self.view.layer.cornerRadius = 5
     self.view.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
+    self.view.mntoolbar = true
     if (toolbarConfig.action.length == 27) {
       toolbarConfig.action = toolbarConfig.action.concat(["custom1","custom2","custom3","custom4","custom5","custom6","custom7","custom8","custom9"])
     }
@@ -381,9 +382,9 @@ try {
     self.onClick = true
     let selectionText = MNUtil.selectionText
     let noteId = undefined
-    let foucsNote = MNNote.getFocusNote()
-    if (foucsNote) {
-      noteId = foucsNote.noteId
+    let focusNote = MNNote.getFocusNote()
+    if (focusNote) {
+      noteId = focusNote.noteId
     }
     let studyFrame = MNUtil.studyView.bounds
     let beginFrame = self.view.frame
@@ -414,9 +415,9 @@ try {
     if (self.dynamicWindow && toolbarUtils.currentNoteId) {
       noteId = toolbarUtils.currentNoteId
     }else{
-      let foucsNote = MNNote.getFocusNote()
-      if (foucsNote) {
-        noteId = foucsNote.noteId
+      let focusNote = MNNote.getFocusNote()
+      if (focusNote) {
+        noteId = focusNote.noteId
       }
     }
     let studyFrame = MNUtil.studyView.bounds
@@ -667,9 +668,9 @@ toolbarController.prototype.show = async function (frame) {
   this.view.hidden = false
   // this.moveButton.hidden = true
   this.screenButton.hidden = true
-  for (let index = 0; index < this.buttonNumber; index++) {
-    this["ColorButton"+index].hidden = true
-  }
+  // for (let index = 0; index < this.buttonNumber; index++) {
+  //   this["ColorButton"+index].hidden = true
+  // }
   this.setToolbarButton(toolbarConfig.action)
 
   // showHUD(JSON.stringify(preFrame))
@@ -732,9 +733,9 @@ toolbarController.prototype.hide = function (frame) {
   this.view.frame = this.currentFrame
   // copy(JSON.stringify(preFrame))
   let preOpacity = 1.0
-  for (let index = 0; index < this.buttonNumber; index++) {
-    this["ColorButton"+index].hidden = true
-  }
+  // for (let index = 0; index < this.buttonNumber; index++) {
+  //   this["ColorButton"+index].hidden = true
+  // }
   // this.moveButton.hidden = true
   this.screenButton.hidden = true
   // return
@@ -1271,6 +1272,23 @@ toolbarController.prototype.customAction = async function (actionName) {
       case "focus":
         toolbarUtils.focus(focusNote, des)
         break 
+      case "toggleView":
+        // let widths = []
+        // MNUtil.mindmapView.subviews.map(subview=>{
+        //   let frame = subview.frame
+        //   if (frame.width === 50) {
+        //     widths.push(subview.frame)
+        //   }
+        // })
+        // MNUtil.copyJSON(widths)
+        if ("targets" in des) {
+          des.targets.map(target=>{
+            MNUtil.postNotification("toggleMindmapToolbar", {target:target})
+          })
+        }else{
+          MNUtil.postNotification("toggleMindmapToolbar", {target:des.target})
+        }
+        break
       default:
         MNUtil.showHUD("Not supported yet...")
         break;

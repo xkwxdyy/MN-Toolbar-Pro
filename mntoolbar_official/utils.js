@@ -383,6 +383,27 @@ class toolbarUtils {
         break;
     }
   }
+  static async delay (seconds) {
+    return new Promise((resolve, reject) => {
+      NSTimer.scheduledTimerWithTimeInterval(seconds, false, function () {
+        resolve()
+      })
+    })
+  }
+  static replaceIndex(text,index,des){
+    let circleIndices = ["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳","㉑","㉒","㉓","㉔","㉕","㉖","㉗","㉘","㉙","㉚","㉛","㉜","㉝","㉞","㉟","㊱","㊲","㊳"]
+    let emojiIndices = ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟"]
+    let indices = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30']
+    let alphabetIndices = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+    if (des.customIndices && des.customIndices.length) {
+      indices = des.customIndices
+    }
+    let tem = text.replace("{{index}}",indices[index])
+                  .replace("{{circleIndex}}",circleIndices[index])
+                  .replace("{{emojiIndex}}",emojiIndices[index])
+                  .replace("{{alphabetIndex}}",alphabetIndices[index])
+    return tem
+  }
   /**
    * 
    * @param {MNNote} note 
@@ -406,9 +427,12 @@ class toolbarUtils {
         return
       }
       if (text.includes("{{textComments}}")) {
+        let elementIndex = 0
         note.comments.map((comment,index)=>{
           if (comment.type === "TextNote" && !/^marginnote\dapp:\/\/note\//.test(comment.text) && !comment.text.startsWith("#") ) {
-            textList.push(text.replace('{{textComments}}',(des.trim ? comment.text.trim(): comment.text)))
+            let tem = text.replace('{{textComments}}',(des.trim ? comment.text.trim(): comment.text))
+            textList.push(this.replaceIndex(tem, elementIndex, des))
+            elementIndex = elementIndex+1
             if (des.removeSource) {
               if (note.noteId in toolbarUtils.commentToRemove) {
                 toolbarUtils.commentToRemove[note.noteId].push(index)
@@ -421,9 +445,12 @@ class toolbarUtils {
         return
       }
       if (text.includes("{{htmlComments}}")) {
+        let elementIndex = 0
         note.comments.map((comment,index)=>{
           if (comment.type === "HtmlNote") {
-            textList.push(text.replace('{{htmlComments}}',(des.trim ? comment.text.trim(): comment.text)))
+            let tem = text.replace('{{htmlComments}}',(des.trim ? comment.text.trim(): comment.text))
+            textList.push(this.replaceIndex(tem, elementIndex, des))
+            elementIndex = elementIndex+1
             if (des.removeSource) {
               if (note.noteId in toolbarUtils.commentToRemove) {
                 toolbarUtils.commentToRemove[note.noteId].push(index)
@@ -436,21 +463,21 @@ class toolbarUtils {
         return
       }
       if (text.includes("{{excerptTexts}}")) {
-        // MNUtil.undoGrouping(()=>{
-          note.notes.map(n=>{
-            if (n.excerptText) {
-              let targetText = n.excerptText
-              if (des.trim) {
-                targetText = targetText.trim()
-              }
-              textList.push(text.replace('{{excerptTexts}}',targetText))
-              if (des.removeSource && n.noteId !== note.noteId) {
-                this.sourceToRemove.push(n)
-                  // n.excerptText = ""
-              }
+        let index = 0
+        note.notes.map(n=>{
+          if (n.excerptText) {
+            let targetText = n.excerptText
+            if (des.trim) {
+              targetText = targetText.trim()
             }
-          })
-        // })
+            let tem = text.replace('{{excerptTexts}}',targetText)
+            textList.push(this.replaceIndex(tem, index, des))
+            index = index+1
+            if (des.removeSource && n.noteId !== note.noteId) {
+              this.sourceToRemove.push(n)
+            }
+          }
+        })
         return
       }
 
@@ -458,7 +485,8 @@ class toolbarUtils {
     })
     if (des.format) {
       textList = textList.map((text,index)=>{
-        return des.format.replace("{{element}}",text).replace("{{index}}",index+1)
+        let tem = des.format.replace("{{element}}",text)
+        return this.replaceIndex(tem, index, des)
       })
     }
     let join = des.join ?? ""
@@ -499,7 +527,7 @@ class toolbarUtils {
     return this.replacVar(text,config)
   }
   static checkHeight(height,maxButtons = 9){
-    if (height > 420 && !this.checkSubscribe(false,false,true)) {
+    if (height > 420 && !this.isSubscribed(false)) {
       return 420
     }
     // let maxNumber = this.isSubscribe?maxButtons:9
@@ -607,10 +635,10 @@ class toolbarUtils {
     }
 try {
     let des = toolbarConfig.getDescriptionByName("ocr")
-    let foucsNote = MNNote.getFocusNote()
+    let focusNote = MNNote.getFocusNote()
     let imageData = MNUtil.getDocImage(true,true)
     if (!imageData) {
-      imageData = MNNote.getImageFromNote(foucsNote)
+      imageData = MNNote.getImageFromNote(focusNote)
     }
     if (!imageData) {
       MNUtil.showHUD("No image found")
@@ -633,9 +661,9 @@ try {
     if (res) {
       switch (des.target) {
         case "comment":
-          if (foucsNote) {
+          if (focusNote) {
             MNUtil.undoGrouping(()=>{
-              foucsNote.appendMarkdownComment(res)
+              focusNote.appendMarkdownComment(res)
               MNUtil.showHUD("Append to comment")
             })
           }else{
@@ -647,13 +675,13 @@ try {
           MNUtil.showHUD("Save to clipboard")
           break;
         case "excerpt":
-          if (foucsNote) {
+          if (focusNote) {
             MNUtil.undoGrouping(()=>{
-              foucsNote.excerptText =  res
-              foucsNote.excerptTextMarkdown = true
+              focusNote.excerptText =  res
+              focusNote.excerptTextMarkdown = true
               MNUtil.showHUD("Set to excerpt")
             })
-            if (foucsNote.excerptPic && !foucsNote.textFirst) {
+            if (focusNote.excerptPic && !focusNote.textFirst) {
               MNUtil.delay(0.5).then(()=>{
                 MNUtil.excuteCommand("EditTextMode")
               })
@@ -813,6 +841,7 @@ try {
         } catch (e) {
             console.error("Invalid JSON:", e.message);
         }
+        document.getElementById('editor').blur();
     }
 
     function syntaxHighlight(json) {
@@ -863,6 +892,17 @@ try {
       }
       return false
     }
+  }
+  static isSubscribed(msg = true){
+    if (typeof subscriptionConfig !== 'undefined') {
+      return subscriptionConfig.isSubscribed()
+    }else{
+      if (msg) {
+        this.showHUD("Please install 'MN Subscription' first!")
+      }
+      return false
+    }
+  
   }
   /**
    * 
@@ -1021,7 +1061,7 @@ try {
     return frame
   }
   static getButtonColor(){
-    if (!this.checkSubscribe(false,false,true)) {
+    if (!this.isSubscribed(false)) {
       return MNUtil.hexColorAlpha("#ffffff", 0.85)
     }
     // let color = MNUtil.app.defaultBookPageColor.hexStringValue
@@ -1228,7 +1268,7 @@ static save(key,value = undefined) {
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.buttonConfig,key)
         break;
       default:
-        // toolbarUtils.showHUD("Not supported")
+        toolbarUtils.showHUD("Not supported")
         break;
     }
   }
