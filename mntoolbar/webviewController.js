@@ -14,7 +14,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.isLoading = false;
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
-    self.buttonNumber = 16  // 注意自定义时要改这里的数量！
+    self.buttonNumber = 17  // 注意自定义时要改这里的数量！
     if (self.dynamicWindow) {
       self.buttonNumber = 9
     }

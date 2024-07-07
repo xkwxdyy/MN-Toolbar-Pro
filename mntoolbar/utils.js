@@ -2341,6 +2341,9 @@ static template(action) {
       config.title = "title"
       config.content = "{{clipboardText}}"
       break;
+    case "toggleView":
+      config.target = "addonBar"
+      break;
     default:
       break;
   }
@@ -2379,6 +2382,7 @@ static getActions() {
     "custom3":{name:"Custom 3",image:"custom3",description: this.template("addThought")},
     "custom9":{name:"Custom 9",image:"custom9",description: this.template("moveUpLinkNotes")},
     "custom10":{name:"Custom 10",image:"custom10",description: this.template("renewProof")},
+    "custom10":{name:"Custom 11",image:"custom11",description: this.template("toggleView")},
     "custom7":{name:"Custom 7",image:"custom7",description: this.template("renewCards")},
     "custom6":{name:"Custom 6",image:"custom6",description: this.template("changePrefix")},
     "custom4":{name:"Custom 4",image:"custom4",description: this.template("clearContentKeepExcerptAndImage")},
