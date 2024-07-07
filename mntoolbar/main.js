@@ -30,10 +30,10 @@ JSB.newAddon = function (mainPath) {
         self.rect = '{{0, 0}, {10, 10}}';
         self.arrow = 1;
         try {
-        // toolbarConfig.remove("MNToolbar_actionConfig")
-        // toolbarConfig.remove("MNToolbar_action")
-        // toolbarConfig.remove("MNToolbar_windowState")
-        // toolbarConfig.remove("MNToolbar_dynamic")
+        // toolbarConfig.remove("MNToolbarPro_actionConfig")
+        // toolbarConfig.remove("MNToolbarPro_action")
+        // toolbarConfig.remove("MNToolbarPro_windowState")
+        // toolbarConfig.remove("MNToolbarPro_dynamic")
           toolbarUtils.init()
           toolbarConfig.init()
           toolbarConfig.mainPath = mainPath
@@ -130,7 +130,7 @@ JSB.newAddon = function (mainPath) {
         }
         toolbarConfig.windowState.open  = !self.addonController.view.hidden
         toolbarConfig.windowState.frame = self.addonController.view.frame
-        toolbarConfig.save("MNToolbar_windowState")
+        toolbarConfig.save("MNToolbarPro_windowState")
       },
       onPopupMenuOnNote: async function (sender) { // Clicking note
         if (typeof MNUtil === 'undefined') return
@@ -367,8 +367,8 @@ JSB.newAddon = function (mainPath) {
         }else{
           self.testController.view.hidden = true
         }
-        toolbarConfig.save("MNToolbar_dynamic")
-        // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbar_dynamic")
+        toolbarConfig.save("MNToolbarPro_dynamic")
+        // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbarPro_dynamic")
         self.testController.dynamic = toolbarConfig.dynamic
       },
       onRemoveMNToolbar:function (params) {
@@ -516,12 +516,12 @@ try {
           toolbarConfig.windowState.frame = self.addonController.view.frame
           // showHUD(JSON.stringify(self.addonBar.frame))
           self.addonController.show(self.addonBar.frame)
-          toolbarConfig.save("MNToolbar_windowState")
+          toolbarConfig.save("MNToolbarPro_windowState")
         }else{
           toolbarConfig.windowState.open = false
           toolbarConfig.windowState.frame = self.addonController.view.frame
           self.addonController.hide(self.addonBar.frame)
-          toolbarConfig.save("MNToolbar_windowState")
+          toolbarConfig.save("MNToolbarPro_windowState")
         }
       // self.addonController.view.hidden = !self.addonController.view.hidden
       }
@@ -533,10 +533,10 @@ try {
       addonWillDisconnect: async function () {
         let confirm = await MNUtil.confirm("Remove all config?\n删除所有配置？", "")
         if (confirm) {
-          toolbarConfig.remove("MNToolbar_dynamic")
-          toolbarConfig.remove("MNToolbar_windowState")
-          toolbarConfig.remove("MNToolbar_action")
-          toolbarConfig.remove("MNToolbar_actionConfig")
+          toolbarConfig.remove("MNToolbarPro_dynamic")
+          toolbarConfig.remove("MNToolbarPro_windowState")
+          toolbarConfig.remove("MNToolbarPro_action")
+          toolbarConfig.remove("MNToolbarPro_actionConfig")
         }
         MNUtil.postNotification("removeMNToolbar", {})
       },

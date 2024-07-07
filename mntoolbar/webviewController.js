@@ -158,8 +158,8 @@ try {
       }
       // self.testController.view.hidden = true
     }
-    toolbarConfig.save("MNToolbar_dynamic")
-    // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbar_dynamic")
+    toolbarConfig.save("MNToolbarPro_dynamic")
+    // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbarPro_dynamic")
     if (self.dynamicToolbar) {
       self.dynamicToolbar.dynamic = toolbarConfig.dynamic
     }
@@ -564,7 +564,7 @@ try {
     if (gesture.state === 3) {
       // self.resi
       MNUtil.studyView.bringSubviewToFront(self.view)
-      toolbarConfig.save("MNToolbar_windowState",{open:true,frame:self.view.frame})
+      toolbarConfig.save("MNToolbarPro_windowState",{open:true,frame:self.view.frame})
       self.setToolbarLayout()
     }
     self.custom = false;
@@ -593,12 +593,12 @@ try {
       let windowState = toolbarConfig.windowState
       if (self.dynamicWindow) {
         windowState.dynamicButton = buttomNumber
-        // toolbarConfig.save("MNToolbar_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
+        // toolbarConfig.save("MNToolbarPro_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
       }else{
         windowState.frame = self.view.frame
         windowState.open = true
       }
-      toolbarConfig.save("MNToolbar_windowState",windowState)
+      toolbarConfig.save("MNToolbarPro_windowState",windowState)
       self.onResize = false
     }
   },
