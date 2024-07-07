@@ -74,7 +74,7 @@ class toolbarUtils {
   // 合并第一层模板
   static makeCardsAuxFirstLayerTemplate(focusNote, focusNoteType) {
     let templateNoteId
-    let testIndex = focusNote.getCommentIndex("相关链接：", true)
+    let testIndex = Math.max(focusNote.getCommentIndex("相关链接：", true), focusNote.getCommentIndex("所属：", true))
     // MNUtil.showHUD(testIndex)
     if (testIndex == -1) { // 每种模板卡里都有“相关链接：”
       switch (focusNoteType) {
