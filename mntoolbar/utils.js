@@ -163,6 +163,13 @@ class toolbarUtils {
         }
         focusNote.noteTitle = newTitle;
       }
+
+      focusNote.parentNote.refresh()
+      if (focusNote.descendantNodes.descendant.length > 0) {
+        focusNote.descendantNodes.descendant.forEach(descendantNote => {
+          descendantNote.refresh()
+        })
+      }
     }
   }
   static makeCardsAuxLinkToParentNote(focusNote, parentNote, parentNoteTitle, parentNoteId) {
