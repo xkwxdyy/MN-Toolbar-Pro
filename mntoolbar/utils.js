@@ -1134,6 +1134,54 @@ class toolbarUtils {
     return continuousSection.length > maxContinuous.length ? continuousSection : maxContinuous;
   }
 
+  static renewProof(focusNotes){
+    UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+      "请确认",
+      "确定要更新证明吗（会删除原来的证明）？",
+      0,
+      "点错了",
+      ["确定"],
+      (alert, buttonIndex) => {
+        if (buttonIndex == 1) {
+          focusNotes.forEach(focusNote => {
+            let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+            let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+            if (Math.min(proofHtmlCommentIndex, thoughtHtmlCommentIndex) !== -1) {
+              if (thoughtHtmlCommentIndex - proofHtmlCommentIndex > 1) {
+                MNUtil.undoGrouping(()=>{
+                  for (let i = thoughtHtmlCommentIndex - 1; i > proofHtmlCommentIndex; i--) {
+                    focusNote.removeCommentByIndex(i)
+                  }
+                })
+              }
+            }
+            let focusNoteColorIndex = focusNote.note.colorIndex
+            let focusNoteType
+            /* 确定卡片类型 */
+            switch (focusNoteColorIndex) {
+              case 2: // 淡蓝色：定义类
+                focusNoteType = "definition"
+                break;
+              case 3: // 淡粉色：反例
+                focusNoteType = "antiexample"
+                break;
+              case 9: // 深绿色：思想方法
+                focusNoteType = "method"
+                break;
+              case 10: // 深蓝色：定理命题
+                focusNoteType = "theorem"
+                break;
+              case 15: // 淡紫色：例子
+                focusNoteType = "example"
+                break;
+            }
+            this.makeCardsAuxMoveProofHtmlComment(focusNote, focusNoteType)
+          })
+        }
+      }
+    )
+  }
+
   static init(){
     this.app = Application.sharedInstance()
     this.data = Database.sharedInstance()

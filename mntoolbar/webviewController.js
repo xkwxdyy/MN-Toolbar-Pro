@@ -1013,6 +1013,15 @@ toolbarController.prototype.customAction = async function (actionName) {
           MNUtil.showHUD(error);
         }
         break;
+      case "renewProof":
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.renewProof(focusNotes)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
       case "makeCards":
         try {
           // MNUtil.showHUD("制卡")
