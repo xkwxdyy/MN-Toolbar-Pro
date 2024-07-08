@@ -1531,7 +1531,7 @@ class toolbarUtils {
         note.noteTitle = content.replace(ptt, des.to)
         break;
       case "excerpt":
-        content = note.excerptText
+        content = note.excerptText ?? ""
         note.excerptText = content.replace(ptt, des.to)
         break;
       default:
@@ -1545,10 +1545,19 @@ class toolbarUtils {
       })
     })
   }
+  static replaceNoteIndex(text,index,des){ 
+    let noteIndices = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30'] 
+    if (des.noteIndices && des.noteIndices.length) {
+      noteIndices = des.noteIndices
+    }
+    let tem = text.replace("{{noteIndex}}",noteIndices[index])
+    return tem
+  
+  }
   static replaceIndex(text,index,des){
     let circleIndices = ["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳","㉑","㉒","㉓","㉔","㉕","㉖","㉗","㉘","㉙","㉚","㉛","㉜","㉝","㉞","㉟","㊱","㊲","㊳"]
     let emojiIndices = ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟"]
-    let indices = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30']
+    let indices = ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30'] 
     let alphabetIndices = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
     if (des.customIndices && des.customIndices.length) {
       indices = des.customIndices
@@ -1565,7 +1574,10 @@ class toolbarUtils {
    * @param {*} des 
    * @returns 
    */
-  static getMergedText(note,des){
+  static getMergedText(note,des,noteIndex){
+  try {
+    
+
     let textList = []
     des.source.map(text=>{
       if (text.includes("{{title}}") && des.removeSource) {
@@ -1586,7 +1598,9 @@ class toolbarUtils {
         note.comments.map((comment,index)=>{
           if (comment.type === "TextNote" && !/^marginnote\dapp:\/\/note\//.test(comment.text) && !comment.text.startsWith("#") ) {
             let tem = text.replace('{{textComments}}',(des.trim ? comment.text.trim(): comment.text))
-            textList.push(this.replaceIndex(tem, elementIndex, des))
+            tem = this.replaceIndex(tem, elementIndex, des)
+            tem = this.replaceNoteIndex(tem, noteIndex, des)
+            textList.push(tem)
             elementIndex = elementIndex+1
             if (des.removeSource) {
               if (note.noteId in toolbarUtils.commentToRemove) {
@@ -1604,7 +1618,9 @@ class toolbarUtils {
         note.comments.map((comment,index)=>{
           if (comment.type === "HtmlNote") {
             let tem = text.replace('{{htmlComments}}',(des.trim ? comment.text.trim(): comment.text))
-            textList.push(this.replaceIndex(tem, elementIndex, des))
+            tem = this.replaceIndex(tem, index, des)
+            tem = this.replaceNoteIndex(tem, noteIndex, des)
+            textList.push(tem)
             elementIndex = elementIndex+1
             if (des.removeSource) {
               if (note.noteId in toolbarUtils.commentToRemove) {
@@ -1617,16 +1633,28 @@ class toolbarUtils {
         })
         return
       }
+      if (text.includes("{{excerptText}}")) {
+        let targetText = note.excerptText ?? ""
+        if (des.trim) {
+          targetText = targetText.trim()
+        }
+        let tem = text.replace('{{excerptText}}',targetText)
+        tem = this.replaceNoteIndex(tem, noteIndex, des)
+        textList.push(tem)
+        return
+      }
       if (text.includes("{{excerptTexts}}")) {
         let index = 0
         note.notes.map(n=>{
           if (n.excerptText) {
-            let targetText = n.excerptText
+            let targetText = n.excerptText ?? ""
             if (des.trim) {
               targetText = targetText.trim()
             }
             let tem = text.replace('{{excerptTexts}}',targetText)
-            textList.push(this.replaceIndex(tem, index, des))
+            tem = this.replaceIndex(tem, index, des)
+            tem = this.replaceNoteIndex(tem, noteIndex, des)
+            textList.push(tem)
             index = index+1
             if (des.removeSource && n.noteId !== note.noteId) {
               this.sourceToRemove.push(n)
@@ -1635,13 +1663,16 @@ class toolbarUtils {
         })
         return
       }
-
-      textList.push(toolbarUtils.detectAndReplaceWithNote(text,note)) 
+      let tem = this.detectAndReplaceWithNote(text,note)
+      tem = this.replaceNoteIndex(tem, noteIndex, des)
+      textList.push(tem) 
     })
     if (des.format) {
       textList = textList.map((text,index)=>{
         let tem = des.format.replace("{{element}}",text)
-        return this.replaceIndex(tem, index, des)
+        tem = this.replaceIndex(tem, index, des)
+        tem = this.replaceNoteIndex(tem, index, des)
+        return tem
       })
     }
     let join = des.join ?? ""
@@ -1651,6 +1682,9 @@ class toolbarUtils {
       mergedText = mergedText.replace(ptt,des.replace[1])
     }
     return mergedText
+  } catch (error) {
+    return undefined
+  }
   }
   static replacVar(text,varInfo) {
     let vars = Object.keys(varInfo)
@@ -2243,15 +2277,21 @@ class toolbarConfig {
   static action = []
   static showEditorOnNoteEdit = false
   static defalutButtonConfig = {color:"#ffffff",alpha:0.85}
+  static defaultWindowState = {
+    sideMode:"",//固定工具栏下贴边模式
+    splitMode:false,//固定工具栏下是否跟随分割线
+    open:false,//固定工具栏是否默认常驻
+    dynamicButton:9//跟随模式下的工具栏显示的按钮数量
+  }
   // static defaultConfig = {showEditorWhenEditingNote:false}
   static init(){
-    // this.config = this.getByDefault("MNToolBar_config",this.defaultConfig)
-    this.dynamic = this.getByDefault("MNToolBar_dynamic",false)
-    this.addonLogos = this.getByDefault("MNToolBar_addonLogos",{})
-    this.windowState = this.getByDefault("MNToolBar_windowState",{})
-    this.action = this.getByDefault("MNToolBar_action", this.getDefaultActionKeys())
-    this.actions = this.getByDefault("MNToolBar_actionConfig", this.getActions())
-    this.buttonConfig = this.getByDefault("MNToolBar_buttonConfig", this.defalutButtonConfig)
+    // this.config = this.getByDefault("MNToolbar_config",this.defaultConfig)
+    this.dynamic = this.getByDefault("MNToolbar_dynamic",false)
+    this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})
+    this.windowState = this.getByDefault("MNToolbar_windowState",this.defaultWindowState)
+    this.action = this.getByDefault("MNToolbar_action", this.getDefaultActionKeys())
+    this.actions = this.getByDefault("MNToolbar_actionConfig", this.getActions())
+    this.buttonConfig = this.getByDefault("MNToolbar_buttonConfig", this.defalutButtonConfig)
     this.highlightColor = UIColor.blendedColor(
       UIColor.colorWithHexString("#2c4d81").colorWithAlphaComponent(0.8),
       toolbarUtils.app.defaultTextColor,
@@ -2267,6 +2307,14 @@ class toolbarConfig {
       // toolbarUtils.addErrorLog(error, "init")
     }
 
+  }
+  static getWindowState(key){
+    //用户已有配置可能不包含某些新的key，用这个方法做兼容性处理
+    if (this.windowState[key] !== undefined) {
+      return this.windowState[key]
+    }else{
+      return this.defaultWindowState[key]
+    }
   }
   /**
    * 
@@ -2406,26 +2454,26 @@ static save(key,value = undefined) {
   }else{
     // showHUD(key)
     switch (key) {
-      case "MNToolBar_windowState":
+      case "MNToolbar_windowState":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.windowState,key)
         break;
-      case "MNToolBar_dynamic":
+      case "MNToolbar_dynamic":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.dynamic,key)
         break;
-      case "MNToolBar_action":
+      case "MNToolbar_action":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.action,key)
         break;
-      case "MNToolBar_actionConfig":
+      case "MNToolbar_actionConfig":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.actions,key)
         break;
-      case "MNToolBar_addonLogos":
+      case "MNToolbar_addonLogos":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.addonLogos,key)
         break;
-      case "MNToolBar_buttonConfig":
+      case "MNToolbar_buttonConfig":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.buttonConfig,key)
         break;
       default:
-        // toolbarUtils.showHUD("Not supported")
+        toolbarUtils.showHUD("Not supported")
         break;
     }
   }
@@ -2451,8 +2499,8 @@ static remove(key) {
 static reset(){
   this.action = this.getDefaultActionKeys()
   this.actions = this.getActions()
-  this.save("MNToolBar_action")
-  this.save("MNToolBar_actionConfig")
+  this.save("MNToolbar_action")
+  this.save("MNToolbar_actionConfig")
 }
 static getDescriptionByIndex(index){
   let actionName = toolbarConfig.action[index]

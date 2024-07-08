@@ -100,7 +100,7 @@ viewWillLayoutSubviews: function() {
     // MNUtil.postNotification("MNToolbarRefreshLayout",{})
     // NSNotificationCenter.defaultCenter().postNotificationNameObjectUserInfo("MNToolbarRefreshLayout", self.window, {})
     self.toolbarController.setToolbarButton(allActions)
-    toolbarConfig.save("MNToolBar_action")
+    toolbarConfig.save("MNToolbar_action")
   },
   moveForwardTapped :function () {
     let self = getSettingController()
@@ -108,14 +108,14 @@ viewWillLayoutSubviews: function() {
     toolbarUtils.moveElement(allActions, self.selectedItem, "up")
     self.setButtonText(allActions,self.selectedItem)
     self.toolbarController.setToolbarButton(allActions)
-    toolbarConfig.save("MNToolBar_action")
+    toolbarConfig.save("MNToolbar_action")
   },
   moveBackwardTapped :function () {
     let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
     toolbarUtils.moveElement(allActions, self.selectedItem, "down")
     self.setButtonText(allActions,self.selectedItem)
     self.toolbarController.setToolbarButton(allActions)
-    toolbarConfig.save("MNToolBar_action")
+    toolbarConfig.save("MNToolbar_action")
 
   },
   resetConfig: async function (button) {
@@ -134,7 +134,8 @@ viewWillLayoutSubviews: function() {
     MNUtil.showHUD("Error in resetConfig: "+error)
   }
   },
-  closeButtonTapped: function() {
+  closeButtonTapped: async function() {
+    self.getWebviewContent()
     if (self.addonBar) {
       self.hide(self.addonBar.frame)
     }else{
@@ -261,8 +262,6 @@ viewWillLayoutSubviews: function() {
     try {
     let selected = self.selectedItem
     let input = await self.getWebviewContent()
-          // self.runJavaScript(`editor.blur();`)
-    self.webviewInput.endEditing(true)
     if (MNUtil.isValidJSON(input)) {
       if (!toolbarConfig.actions[selected]) {
         toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
@@ -273,7 +272,7 @@ viewWillLayoutSubviews: function() {
       if (self.toolbarController.dynamicToolbar) {
         self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
       }
-      toolbarConfig.save("MNToolBar_actionConfig")
+      toolbarConfig.save("MNToolbar_actionConfig")
       if (!self.selectedItem.includes("custom")) {
         MNUtil.showHUD("Save Action: "+self.titleInput.text)
       }else{
@@ -308,7 +307,7 @@ viewWillLayoutSubviews: function() {
         if (self.toolbarController.dynamicToolbar) {
           self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
         }
-        toolbarConfig.save("MNToolBar_actionConfig")
+        toolbarConfig.save("MNToolbar_actionConfig")
       }else{
         MNUtil.showHUD("Invalid JSON format!")
         return
@@ -327,9 +326,10 @@ viewWillLayoutSubviews: function() {
       toolbarUtils.ocr()
       return
     }
-    // MNUtil.showHUD("Not supported")
+    MNUtil.showHUD("Not supported")
   } catch (error) {
     toolbarUtils.addErrorLog(error, "configRunTapped", info)
+
   }
   },
   toggleSelected:function (sender) {
@@ -356,7 +356,7 @@ viewWillLayoutSubviews: function() {
       button.setTitleForState(addonName+": "+(toolbarConfig.checkLogoStatus(addonName)?"✅":"❌"),0)
       MNButton.setColor(button, toolbarConfig.checkLogoStatus(addonName)?"#457bd3":"#9bb2d6",0.8)
 
-      toolbarConfig.save("MNToolBar_addonLogos")
+      toolbarConfig.save("MNToolbar_addonLogos")
       MNUtil.refreshAddonCommands()
     }
   },
@@ -368,7 +368,7 @@ viewWillLayoutSubviews: function() {
     let varColors = ["defaultBookPageColor","defaultHighlightBlendColor","defaultDisableColor","defaultTextColor","defaultNotebookColor","defaultTintColor","defaultTintColorForSelected","defaultTintColorForDarkBackground"]
     if (varColors.includes(color) || toolbarUtils.isHexColor(color)) {
       toolbarConfig.buttonConfig.color = color
-      toolbarConfig.save("MNToolBar_buttonConfig")
+      toolbarConfig.save("MNToolbar_buttonConfig")
       self.toolbarController.setToolbarButton()
       MNUtil.showHUD("Save color: "+color)
     }else{
@@ -922,7 +922,9 @@ settingController.prototype.setWebviewContent = function (content) {
  * @this {settingController}
  */
 settingController.prototype.getWebviewContent = async function () {
-  return await this.runJavaScript(`updateContent(); document.body.innerText`)
+  let content = await this.runJavaScript(`updateContent(); document.body.innerText`)
+  this.webviewInput.endEditing(true)
+  return content
 }
 
 /** @this {settingController} */

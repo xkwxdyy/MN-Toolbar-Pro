@@ -94,7 +94,8 @@ JSB.newAddon = function (mainPath) {
           if (toolbarConfig.windowState.frame) {
             self.addonController.view.frame = toolbarConfig.windowState.frame;
             self.addonController.currentFrame = toolbarConfig.windowState.frame;
-            self.addonController.view.hidden = !toolbarConfig.windowState.open;
+            // self.addonController.view.hidden = !toolbarConfig.windowState.open;
+            self.addonController.view.hidden = !toolbarConfig.getWindowState("open");
             toolbarConfig.isFirst = false
           }else{
             toolbarConfig.windowState={}
@@ -178,7 +179,7 @@ JSB.newAddon = function (mainPath) {
           self.addonController.dynamicToolbar = self.testController
           MNUtil.studyView.addSubview(self.testController.view);
           lastFrame = self.addonController.view.frame
-          let buttomNumber = toolbarConfig.windowState.dynamicButton??9
+          let buttomNumber = toolbarConfig.getWindowState("dynamicButton")
           lastFrame.height = toolbarUtils.checkHeight(lastFrame.height,buttomNumber)
         }else{
           self.testController.refreshHeight()
@@ -330,7 +331,7 @@ JSB.newAddon = function (mainPath) {
             return
           }
           let currentFrame = self.testController.currentFrame
-          let buttomNumber = toolbarConfig.windowState.dynamicButton??9
+          let buttomNumber = toolbarConfig.getWindowState("dynamicButton");
           currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,buttomNumber)
           self.testController.view.frame = currentFrame
           self.testController.currentFrame = currentFrame
@@ -371,8 +372,8 @@ JSB.newAddon = function (mainPath) {
         }else{
           self.testController.view.hidden = true
         }
-        toolbarConfig.save("MNToolBar_dynamic")
-        // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolBar_dynamic")
+        toolbarConfig.save("MNToolbar_dynamic")
+        // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbar_dynamic")
         self.testController.dynamic = toolbarConfig.dynamic
       },
       onToggleMindmapToolbar:function (sender) {
@@ -575,12 +576,12 @@ try {
           toolbarConfig.windowState.frame = self.addonController.view.frame
           // showHUD(JSON.stringify(self.addonBar.frame))
           self.addonController.show(self.addonBar.frame)
-          toolbarConfig.save("MNToolBar_windowState")
+          toolbarConfig.save("MNToolbar_windowState")
         }else{
           toolbarConfig.windowState.open = false
           toolbarConfig.windowState.frame = self.addonController.view.frame
           self.addonController.hide(self.addonBar.frame)
-          toolbarConfig.save("MNToolBar_windowState")
+          toolbarConfig.save("MNToolbar_windowState")
         }
       // self.addonController.view.hidden = !self.addonController.view.hidden
       }
@@ -592,10 +593,10 @@ try {
       addonWillDisconnect: async function () {
         let confirm = await MNUtil.confirm("Remove all config?\n删除所有配置？", "")
         if (confirm) {
-          toolbarConfig.remove("MNToolBar_dynamic")
-          toolbarConfig.remove("MNToolBar_windowState")
-          toolbarConfig.remove("MNToolBar_action")
-          toolbarConfig.remove("MNToolBar_actionConfig")
+          toolbarConfig.remove("MNToolbar_dynamic")
+          toolbarConfig.remove("MNToolbar_windowState")
+          toolbarConfig.remove("MNToolbar_action")
+          toolbarConfig.remove("MNToolbar_actionConfig")
         }
         MNUtil.postNotification("removeMNToolbar", {})
       },

@@ -20,7 +20,8 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     }
     // self.buttonNumber = 9
     self.mode = 0
-    self.sideMode = ""
+    self.sideMode = toolbarConfig.getWindowState("sideMode")
+    self.splitMode = toolbarConfig.getWindowState("splitMode")
     self.moveDate = Date.now()
     self.settingMode = false
     self.view.layer.shadowOffset = {width: 0, height: 0};
@@ -159,8 +160,8 @@ try {
       }
       // self.testController.view.hidden = true
     }
-    toolbarConfig.save("MNToolBar_dynamic")
-    // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolBar_dynamic")
+    toolbarConfig.save("MNToolbar_dynamic")
+    // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbar_dynamic")
     if (self.dynamicToolbar) {
       self.dynamicToolbar.dynamic = toolbarConfig.dynamic
     }
@@ -565,7 +566,11 @@ try {
     if (gesture.state === 3) {
       // self.resi
       MNUtil.studyView.bringSubviewToFront(self.view)
-      toolbarConfig.save("MNToolBar_windowState",{open:true,frame:self.view.frame})
+      toolbarConfig.windowState.open = true
+      toolbarConfig.windowState.frame = self.view.frame
+      toolbarConfig.windowState.splitMode = self.splitMode
+      toolbarConfig.windowState.sideMode = self.sideMode
+      toolbarConfig.save("MNToolbar_windowState")
       self.setToolbarLayout()
     }
     self.custom = false;
@@ -594,12 +599,12 @@ try {
       let windowState = toolbarConfig.windowState
       if (self.dynamicWindow) {
         windowState.dynamicButton = buttomNumber
-        // toolbarConfig.save("MNToolBar_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
+        // toolbarConfig.save("MNToolbar_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
       }else{
         windowState.frame = self.view.frame
         windowState.open = true
       }
-      toolbarConfig.save("MNToolBar_windowState",windowState)
+      toolbarConfig.save("MNToolbar_windowState",windowState)
       self.onResize = false
     }
   },
@@ -1403,8 +1408,11 @@ toolbarController.prototype.customAction = async function (actionName) {
         MNUtil.undoGrouping(()=>{
           let range = des.range ?? "currentNotes"
           let targetNotes = toolbarUtils.getNotesByRange(range)
-          targetNotes.forEach(note=>{
-            let mergedText = toolbarUtils.getMergedText(note, des)
+          targetNotes.forEach((note,index)=>{
+            let mergedText = toolbarUtils.getMergedText(note, des, index)
+            if (mergedText === undefined) {
+              return
+            }
             switch (des.target) {
               case "excerptText":
                 note.excerptText = mergedText
