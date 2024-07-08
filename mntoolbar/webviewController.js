@@ -1011,6 +1011,9 @@ toolbarController.prototype.customAction = async function (actionName) {
           MNUtil.showHUD(error);
         }
         break;
+      case "hideAddonBar":
+        MNUtil.postNotification("toggleMindmapToolbar", {target:"addonBar"})
+        break;
       case "makeCards":
         try {
           // MNUtil.showHUD("制卡")

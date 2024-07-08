@@ -2341,9 +2341,6 @@ static template(action) {
       config.title = "title"
       config.content = "{{clipboardText}}"
       break;
-    case "toggleView":
-      config.target = "addonBar"
-      break;
     default:
       break;
   }
