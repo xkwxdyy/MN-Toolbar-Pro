@@ -36,6 +36,7 @@ try {
 }
     self.selectedItem = toolbarConfig.action[0]
     let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
+
     try {
       self.setButtonText(allActions,self.selectedItem)
       self.setTextview(self.selectedItem)
@@ -255,14 +256,14 @@ viewWillLayoutSubviews: function() {
   },
   configSaveTapped: async function (params) {
     // MNUtil.copy(self.selectedItem)
-    if (!self.selectedItem.includes("custom") && !self.selectedItem.includes("color") && self.selectedItem !== "ocr" && self.selectedItem !== "edit") {
+    let selected = self.selectedItem
+    if (!selected.includes("custom") && !selected.includes("color") && selected !== "ocr" && selected !== "edit" && selected !== "excute") {
       MNUtil.showHUD("Only available for Custom Action!")
       return
     }
     try {
-    let selected = self.selectedItem
     let input = await self.getWebviewContent()
-    if (MNUtil.isValidJSON(input)) {
+    if (selected === "excute" || MNUtil.isValidJSON(input)) {
       if (!toolbarConfig.actions[selected]) {
         toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
       }
@@ -273,17 +274,21 @@ viewWillLayoutSubviews: function() {
         self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
       }
       toolbarConfig.save("MNToolbar_actionConfig")
-      if (!self.selectedItem.includes("custom")) {
+      if (!selected.includes("custom")) {
         MNUtil.showHUD("Save Action: "+self.titleInput.text)
       }else{
         MNUtil.showHUD("Save Custom Action: "+self.titleInput.text)
       }
-      if (self.selectedItem === "edit") {
+      if (selected === "edit") {
         let config = JSON.parse(input)
         if ("showOnNoteEdit" in config) {
           toolbarConfig.showEditorOnNoteEdit = config.showOnNoteEdit
         }
       }
+      // if (selected === "excute") {
+      //   // self.setJSContent(selected)
+      //   self.runJavaScript(`document.getElementById('editor').innerHTML = document.body.innerText`)
+      // }
     }else{
       MNUtil.showHUD("Invalid JSON format!")
     }
@@ -294,10 +299,10 @@ viewWillLayoutSubviews: function() {
   configRunTapped: async function (params) {
   try {
     let selected = self.selectedItem
-    if (selected.includes("custom")  || selected.includes("color") || selected === "ocr") {
+    if (selected.includes("custom")  || selected.includes("color") || selected === "ocr" || selected === "excute") {
       let input = await self.getWebviewContent()
       // toolbarUtils.copy(selected)
-      if (MNUtil.isValidJSON(input)) {
+      if (self.selectedItem === "excute" || MNUtil.isValidJSON(input)) {
         if (!toolbarConfig.actions[selected]) {
           toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
         }
@@ -324,6 +329,12 @@ viewWillLayoutSubviews: function() {
     }
     if (selected === "ocr") {
       toolbarUtils.ocr()
+      return
+    }
+    if (selected === "excute") {
+      // self.runJavaScript(`document.getElementById('editor').innerHTML = document.body.innerText`)
+      let code = toolbarConfig.getExcuteCode()
+      toolbarSandbox.excute(code)
       return
     }
     MNUtil.showHUD("Not supported")
@@ -602,7 +613,7 @@ try {
 /**
  * @this {settingController}
  */
-settingController.prototype.setButtonText = function (names,highlight) {
+settingController.prototype.setButtonText = function (names=toolbarConfig.getAllActions(),highlight=self.selectedItem) {
     this.words = names
     let actions = toolbarConfig.actions
     let defaultActions = toolbarConfig.getActions()
@@ -617,11 +628,13 @@ settingController.prototype.setButtonText = function (names,highlight) {
       this[buttonName].id = word
       this[buttonName].isSelected = (word === highlight)
       MNButton.setColor(this[buttonName], (word === highlight)?"#9bb2d6":"#ffffff", 0.8)
-      if (word in actions) {
-        MNButton.setImage(this[buttonName], this.mainPath+`/${actions[word].image}.png`)
-      }else{
-        MNButton.setImage(this[buttonName], this.mainPath+`/${defaultActions[word].image}.png`)
-      }
+      MNButton.setImage(this[buttonName], toolbarConfig.imageConfigs[word])
+
+      // if (word in actions) {
+      //   MNButton.setImage(this[buttonName], this.mainPath+`/${actions[word].image}.png`)
+      // }else{
+      //   MNButton.setImage(this[buttonName], this.mainPath+`/${defaultActions[word].image}.png`)
+      // }
       // this[buttonName].titleEdgeInsets = {top:0,left:-100,bottom:0,right:-50}
       // this[buttonName].setTitleForState(this.imagePattern[index]===this.textPattern[index]?` ${this.imagePattern[index]} `:"-1",0) 
     })
@@ -643,7 +656,11 @@ settingController.prototype.setTextview = function (name) {
       }else{
         actions = toolbarConfig.getActions()
         description = action.description
-        this.setWebviewContent(description)
+        if (name === "excute") {
+          this.setJSContent(description)
+        }else{
+          this.setWebviewContent(description)
+        }
       }
       // if (!text.system) {
       //   text.system = ""
@@ -916,6 +933,14 @@ settingController.prototype.createWebviewInput = function (superView) {
 settingController.prototype.setWebviewContent = function (content) {
   // toolbarUtils.copy(content)
   this.webviewInput.loadHTMLStringBaseURL(toolbarUtils.html(content))
+}
+
+/**
+ * @this {settingController}
+ */
+settingController.prototype.setJSContent = function (content) {
+  // toolbarUtils.copy(content)
+  this.webviewInput.loadHTMLStringBaseURL(toolbarUtils.JShtml(content))
 }
 
 /**

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Highlight.js Custom Highlighting</title>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/styles/default.min.css">
+    <style>
+    .hljs-keyword {
+        color: #007700; /* 自定义关键字颜色 */
+    }
+
+    .hljs-built_in {
+        color: #0000ff; /* 自定义内置类颜色 */
+    }
+        code {
+            white-space: pre-wrap; /* 保留空格和换行符，并自动换行 */
+            word-wrap: break-word; /* 针对长单词进行换行 */
+        }
+    </style>
+</head>
+<body>
+
+<pre><code class="language-javascript">
+MNUtil.undoGrouping(() => {  
+    let focusNote = MNNote.getFocusNote();
+    focusNote.noteTitle = "https://cdn.icon-icons.com/icons2/4231/PNG/512/temple_of_heaven_building_icon_263766.png";
+});
+</code></pre>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/highlight.min.js"></script>
+<script>
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    document.querySelectorAll('code.language-javascript').forEach((block) => {
+        hljs.highlightElement(block);
+        block.innerHTML = block.innerHTML.replace(/MNUtil/g, '<span class="hljs-built_in">MNUtil</span>').replace(/MNNote/g, '<span class="hljs-built_in">MNNote</span>');
+    });
+});
+</script>
+
+</body>
+</html>

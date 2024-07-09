@@ -14,7 +14,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.isLoading = false;
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
-    self.buttonNumber = 17  // 注意自定义时要改这里的数量！
+    self.buttonNumber = 18  // 注意自定义时要改这里的数量！
     if (self.dynamicWindow) {
       self.buttonNumber = 9
     }
@@ -183,7 +183,13 @@ try {
       self.hideAfterDelay()
     }
   },
+  excute: async function (button) {
+    let code = toolbarConfig.getExcuteCode()
+    toolbarSandbox.excute(code)
+  },
   customAction: async function (button) {
+    // eval("MNUtil.showHUD('123')")
+    // return
     let actionName = toolbarConfig.action[button.index]
     self.customAction(actionName)
   },
@@ -818,8 +824,10 @@ try {
     }else{
       this.setColorButtonLayout(this["ColorButton"+index],actionName+":",buttonColor)
     }
-    let image = (actionName in actions)?actions[actionName].image+".png":defaultActions[actionName].image+".png"
-    this["ColorButton"+index].setImageForState(MNUtil.getImage(toolbarConfig.mainPath + `/`+image),0)
+    // MNButton.setImage(this["ColorButton"+index], toolbarConfig.imageConfigs[actionName])
+    // let image = (actionName in actions)?actions[actionName].image+".png":defaultActions[actionName].image+".png"
+    // this["ColorButton"+index].setImageForState(MNUtil.getImage(toolbarConfig.mainPath + `/`+image),0)
+    this["ColorButton"+index].setImageForState(toolbarConfig.imageConfigs[actionName],0)
     // self["ColorButton"+index].setTitleForState("",0) 
     // self["ColorButton"+index].contentHorizontalAlignment = 1
   }
@@ -872,9 +880,9 @@ toolbarController.prototype.checkPopoverController = function () {
 }
 toolbarController.prototype.customAction = async function (actionName) {
   try {
-    // if (!toolbarUtils.checkSubscribe(true)) {
-    //   return
-    // }
+    if (!toolbarUtils.checkSubscribe(true)) {
+      return
+    }
     let des = JSON.parse(toolbarConfig.actions[actionName].description)
     let focusNote = MNNote.getFocusNote()? MNNote.getFocusNote():undefined
     let focusNotes = MNNote.getFocusNotes() ? MNNote.getFocusNotes():undefined
@@ -1527,14 +1535,6 @@ toolbarController.prototype.customAction = async function (actionName) {
         toolbarUtils.focus(focusNote, des)
         break 
       case "toggleView":
-        // let widths = []
-        // MNUtil.mindmapView.subviews.map(subview=>{
-        //   let frame = subview.frame
-        //   if (frame.width === 50) {
-        //     widths.push(subview.frame)
-        //   }
-        // })
-        // MNUtil.copyJSON(widths)
         if ("targets" in des) {
           des.targets.map(target=>{
             MNUtil.postNotification("toggleMindmapToolbar", {target:target})
@@ -1543,6 +1543,19 @@ toolbarController.prototype.customAction = async function (actionName) {
           MNUtil.postNotification("toggleMindmapToolbar", {target:des.target})
         }
         break
+      case "setButtonImage":
+        if ("imageConfig" in des) {
+          let config = des.imageConfig
+          let keys = Object.keys(config)
+          keys.map(key=>{
+            let url = config[key]
+            toolbarConfig.setImageByURL(key, url)
+          })
+          MNUtil.postNotification("refreshToolbarButton", {})
+        }else{
+          MNUtil.showHUD("Missing imageConfig")
+        }
+        break;
       default:
         MNUtil.showHUD("Not supported yet...")
         break;
@@ -1552,6 +1565,7 @@ toolbarController.prototype.customAction = async function (actionName) {
     // }
     // copyJSON(des)
   } catch (error) {
-    MNUtil.showHUD(error)
+    toolbarUtils.addErrorLog(error, "customAction")
+    // MNUtil.showHUD(error)
   }
 }

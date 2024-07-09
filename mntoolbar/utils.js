@@ -2065,6 +2065,77 @@ try {
 </html>
 `
   }
+  static JShtml(content){
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0,minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JSON Editor with Highlighting</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css" rel="stylesheet">
+    <style>
+        body{
+          margin: 0;
+            background-color: lightgray;
+        }
+        pre{
+          margin: 0;
+          padding: 0;
+        }
+        code{
+            background-color: lightgray !important;
+            height: calc(100vh - 25px);
+            white-space: pre-wrap; /* 保留空格和换行符，并自动换行 */
+            word-wrap: break-word; /* 针对长单词进行换行 */
+        }
+        .editor {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow: auto;
+            outline: none; /* Removes the default focus outline */
+        }
+        .key {
+            color: red;
+        }
+        .string {
+            color: green;
+        }
+        .number {
+            color: blue;
+        }
+        .boolean {
+            color: magenta;
+        }
+        .null {
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+<pre><code class="javascript" id="code-block" contenteditable>${content}</code></pre>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/languages/javascript.min.js"></script>
+<script>
+    function updateContent() {
+        const editor = document.getElementById('code-block');
+        hljs.highlightElement(editor);
+        editor.innerHTML = editor.innerHTML.replace(/MNUtil\\b/g, '<span class="hljs-built_in">MNUtil</span>')
+                                           .replace(/MNNote\\b/g, '<span class="hljs-built_in">MNNote</span>')
+                                           .replace(/toolbarConfig\\b/g, '<span class="hljs-built_in">toolbarConfig</span>')
+                                           .replace(/toolbarUtil\\b/g, '<span class="hljs-built_in">toolbarUtil</span>');
+        editor.blur();
+    }
+    
+    updateContent();
+</script>
+
+</body>
+</html>
+`
+  }
   /**
    * count为true代表本次check会消耗一次免费额度（如果当天未订阅），如果为false则表示只要当天免费额度没用完，check就会返回true
    * 开启ignoreFree则代表本次check只会看是否订阅，不管是否还有免费额度
@@ -2233,6 +2304,24 @@ try {
       }
     }
   }
+  static checkExtendView(textView) {
+    try {
+      if (textView.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.readerController.view) {
+        // MNUtil.showHUD("嵌入")
+        return true
+      }
+      if (textView.superview.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.readerController.view) {
+        // MNUtil.showHUD("折叠")
+        return true
+      }
+      if (textView.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.readerController.view) {
+        // MNUtil.showHUD("页边")
+        return true
+      }
+    } catch (error) {
+      return false
+    }
+  }
   static isHexColor(str) {
     // 正则表达式匹配 3 位或 6 位的十六进制颜色代码
     const hexColorPattern = /^#([A-Fa-f0-9]{6})$/;
@@ -2264,6 +2353,17 @@ try {
     // }
     return MNUtil.hexColorAlpha(toolbarConfig.buttonConfig.color, toolbarConfig.buttonConfig.alpha)
   }
+  static getOnlineImage(url){
+    MNUtil.showHUD("Downloading image")
+    let imageData = NSData.dataWithContentsOfURL(MNUtil.genNSURL(url))
+    if (imageData) {
+      MNUtil.showHUD("Download success")
+      MNUtil.copyImage(imageData)
+      return UIImage.imageWithDataScale(imageData,2)
+    }
+    MNUtil.showHUD("Download failed")
+    return undefined
+  }
 }
 
 class toolbarConfig {
@@ -2283,9 +2383,11 @@ class toolbarConfig {
     open:false,//固定工具栏是否默认常驻
     dynamicButton:9//跟随模式下的工具栏显示的按钮数量
   }
+  static imageConfigs = {}
   // static defaultConfig = {showEditorWhenEditingNote:false}
-  static init(){
+  static init(mainPath){
     // this.config = this.getByDefault("MNToolbar_config",this.defaultConfig)
+    this.mainPath = mainPath
     this.dynamic = this.getByDefault("MNToolbar_dynamic",false)
     this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})
     this.windowState = this.getByDefault("MNToolbar_windowState",this.defaultWindowState)
@@ -2306,7 +2408,31 @@ class toolbarConfig {
     } catch (error) {
       // toolbarUtils.addErrorLog(error, "init")
     }
+    this.initImage()
 
+  }
+  static initImage(){
+    try {
+    let keys = this.getDefaultActionKeys()
+    // let images = keys.map(key=>this.mainPath+"/"+this.getAction(key).image+".png")
+    // MNUtil.copyJSON(images)
+    keys.forEach((key)=>{
+      this.imageConfigs[key] = MNUtil.getImage(this.mainPath+"/"+this.getAction(key).image+".png")
+    })
+    // MNUtil.copyJSON(this.imageConfigs)
+      } catch (error) {
+      toolbarUtils.addErrorLog(error, "initImage")
+    }
+  }
+  static setImageByURL(action,url,refresh = false) {    
+    this.imageConfigs[action] = toolbarUtils.getOnlineImage(url)
+    if (refresh) {
+      MNUtil.postNotification("refreshToolbarButton", {})
+    }
+  }
+  static getAllActions(){
+    let allActions = this.action.concat(this.getDefaultActionKeys().slice(this.action.length))
+    return allActions
   }
   static getWindowState(key){
     //用户已有配置可能不包含某些新的key，用这个方法做兼容性处理
@@ -2434,6 +2560,7 @@ static getActions() {
     "custom8":{name:"存档",image:"custom8",description: this.template("achieveCards")},
     "custom11":{name:"隐藏插件栏",image:"custom11",description: this.template("hideAddonBar")},
     "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
+    "excute":{name:"excute",image:"excute",description:"MNUtil.showHUD('Hello world')"},
     "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
     "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})},
     "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
@@ -2444,7 +2571,12 @@ static getActions() {
     "setting":{name:"Setting",image:"setting",description:"Setting"}
   }
 }
+
+static excute(){
+
+}
 static getDefaultActionKeys() {
+  
   let actions = this.getActions()
   return Object.keys(actions)
 }
@@ -2510,6 +2642,14 @@ static getDescriptionByIndex(index){
     return JSON.parse(toolbarConfig.getActions()[actionName].description)
   }
 }
+static getExcuteCode(){
+  let actionName = "excute"
+  if (actionName in toolbarConfig.actions) {
+    return toolbarConfig.actions[actionName].description
+  }else{
+    return toolbarConfig.getActions()[actionName].description
+  }
+}
 static getDescriptionByName(actionName){
   if (actionName in toolbarConfig.actions) {
     return JSON.parse(toolbarConfig.actions[actionName].description)
@@ -2517,4 +2657,17 @@ static getDescriptionByName(actionName){
     return JSON.parse(toolbarConfig.getActions()[actionName].description)
   }
 }
+}
+class toolbarSandbox{
+  static async excute(code){
+    'use strict';
+    if (!toolbarUtils.checkSubscribe(true)) {
+      return
+    }
+    try {
+      eval(code)
+    } catch (error) {
+      toolbarUtils.addErrorLog(error, "excuteInSandbox",code)
+    }
+  }
 }
