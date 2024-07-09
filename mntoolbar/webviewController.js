@@ -1060,6 +1060,9 @@ toolbarController.prototype.customAction = async function (actionName) {
                   // 点击第一次：将摘录版本变成非摘录版本
                   // 点击第二次：开始制卡
                   // 误打误撞产生最佳效果了属于是
+                } else {
+                  // 非摘录的话就添加到复习卡组
+                  MNUtil.excuteCommand("AddToReview")
                 }
 
                 /* 检测父卡片的存在和颜色 */
