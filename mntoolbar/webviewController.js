@@ -183,9 +183,9 @@ try {
       self.hideAfterDelay()
     }
   },
-  excute: async function (button) {
-    let code = toolbarConfig.getExcuteCode()
-    toolbarSandbox.excute(code)
+  execute: async function (button) {
+    let code = toolbarConfig.getExecuteCode()
+    toolbarSandbox.execute(code)
   },
   customAction: async function (button) {
     // eval("MNUtil.showHUD('123')")
@@ -805,6 +805,7 @@ try {
   }else{
     toolbarConfig.action = actionNames
   }
+  // MNUtil.copyJSON(actionNames)
   // let activeActionNumbers = actionNames.length
   for (let index = 0; index < this.buttonNumber; index++) {
     let actionName = actionNames[index]
@@ -1551,11 +1552,13 @@ toolbarController.prototype.customAction = async function (actionName) {
         if ("imageConfig" in des) {
           let config = des.imageConfig
           let keys = Object.keys(config)
-          keys.map(key=>{
-            let url = config[key]
-            toolbarConfig.setImageByURL(key, url)
+          let asyncActions = keys.map(key=>{
+            let url = config[key].url
+            let scale = config[key].scale??3
+            return toolbarConfig.setImageByURL(key, url,true,scale)
           })
-          MNUtil.postNotification("refreshToolbarButton", {})
+          // await Promise.all(asyncActions)
+          // MNUtil.postNotification("refreshToolbarButton", {})
         }else{
           MNUtil.showHUD("Missing imageConfig")
         }

@@ -254,16 +254,73 @@ viewWillLayoutSubviews: function() {
     MNButton.setColor(self.configButton, "#457bd3", 0.8)
     MNButton.setColor(self.advancedButton, "#9bb2d6", 0.8)
   },
-  configSaveTapped: async function (params) {
+  configCopyTapped: async function (params) {
     // MNUtil.copy(self.selectedItem)
     let selected = self.selectedItem
-    if (!selected.includes("custom") && !selected.includes("color") && selected !== "ocr" && selected !== "edit" && selected !== "excute") {
+    if (!selected.includes("custom") && !selected.includes("color") && selected !== "ocr" && selected !== "edit" && selected !== "execute") {
       MNUtil.showHUD("Only available for Custom Action!")
       return
     }
     try {
     let input = await self.getWebviewContent()
-    if (selected === "excute" || MNUtil.isValidJSON(input)) {
+    MNUtil.copy(input)
+    } catch (error) {
+      toolbarUtils.addErrorLog(error, "configCopyTapped", info)
+    }
+  },
+  configPasteTapped: async function (params) {
+    // MNUtil.copy(self.selectedItem)
+    let selected = self.selectedItem
+    if (!selected.includes("custom") && !selected.includes("color") && selected !== "ocr" && selected !== "edit" && selected !== "execute") {
+      MNUtil.showHUD("Only available for Custom Action!")
+      return
+    }
+    try {
+    let input = MNUtil.clipboardText
+    if (selected === "execute" || MNUtil.isValidJSON(input)) {
+      if (!toolbarConfig.actions[selected]) {
+        toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
+      }
+      toolbarConfig.actions[selected].description = input
+      toolbarConfig.actions[selected].name = self.titleInput.text
+      self.toolbarController.actions = toolbarConfig.actions
+      if (self.toolbarController.dynamicToolbar) {
+        self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
+      }
+      toolbarConfig.save("MNToolbar_actionConfig")
+      if (!selected.includes("custom")) {
+        MNUtil.showHUD("Save Action: "+self.titleInput.text)
+      }else{
+        MNUtil.showHUD("Save Custom Action: "+self.titleInput.text)
+      }
+      if (selected === "edit") {
+        let config = JSON.parse(input)
+        if ("showOnNoteEdit" in config) {
+          toolbarConfig.showEditorOnNoteEdit = config.showOnNoteEdit
+        }
+      }
+      if (selected === "execute") {
+        self.setJSContent(input)
+      }else{
+        self.setWebviewContent(input)
+      }
+    }else{
+      MNUtil.showHUD("Invalid JSON format!")
+    }
+    } catch (error) {
+      toolbarUtils.addErrorLog(error, "configSaveTapped", info)
+    }
+  },
+  configSaveTapped: async function (params) {
+    // MNUtil.copy(self.selectedItem)
+    let selected = self.selectedItem
+    if (!selected.includes("custom") && !selected.includes("color") && selected !== "ocr" && selected !== "edit" && selected !== "execute") {
+      MNUtil.showHUD("Only available for Custom Action!")
+      return
+    }
+    try {
+    let input = await self.getWebviewContent()
+    if (selected === "execute" || MNUtil.isValidJSON(input)) {
       if (!toolbarConfig.actions[selected]) {
         toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
       }
@@ -299,10 +356,10 @@ viewWillLayoutSubviews: function() {
   configRunTapped: async function (params) {
   try {
     let selected = self.selectedItem
-    if (selected.includes("custom")  || selected.includes("color") || selected === "ocr" || selected === "excute") {
+    if (selected.includes("custom")  || selected.includes("color") || selected === "ocr" || selected === "execute") {
       let input = await self.getWebviewContent()
       // toolbarUtils.copy(selected)
-      if (self.selectedItem === "excute" || MNUtil.isValidJSON(input)) {
+      if (self.selectedItem === "execute" || MNUtil.isValidJSON(input)) {
         if (!toolbarConfig.actions[selected]) {
           toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
         }
@@ -331,10 +388,10 @@ viewWillLayoutSubviews: function() {
       toolbarUtils.ocr()
       return
     }
-    if (selected === "excute") {
+    if (selected === "execute") {
       // self.runJavaScript(`document.getElementById('editor').innerHTML = document.body.innerText`)
-      let code = toolbarConfig.getExcuteCode()
-      toolbarSandbox.excute(code)
+      let code = toolbarConfig.getExecuteCode()
+      toolbarSandbox.execute(code)
       return
     }
     MNUtil.showHUD("Not supported")
@@ -445,6 +502,9 @@ settingController.prototype.settingViewLayout = function (){
     this.advanceView.frame = MNUtil.genFrame(0,40,width-2,height-60)
     this.webviewInput.frame = {x:10,y:215,width:width-20,height:height-320}
     this.titleInput.frame = {x:10,y:175,width:width-20,height:35}
+    this.copyButton.frame = {x:10,y:height-100,width:70,height:30}
+    this.pasteButton.frame = {x:85,y:height-100,width:70,height:30}
+
     this.saveButton.frame = {x:width-80,y:height-100,width:70,height:30}
     this.runButton.frame = {x:width-155,y:height-100,width:70,height:30}
     this.scrollview.frame = {x:10,y:15,width:width-20,height:150}
@@ -597,6 +657,14 @@ try {
   this.moveTopButton.layer.opacity = 1.0
   this.moveTopButton.setTitleForState("🔝",0)
 
+  this.createButton("copyButton","configCopyTapped:","configView")
+  this.copyButton.layer.opacity = 1.0
+  this.copyButton.setTitleForState("Copy",0)
+
+  this.createButton("pasteButton","configPasteTapped:","configView")
+  this.pasteButton.layer.opacity = 1.0
+  this.pasteButton.setTitleForState("Paste",0)
+
   this.createButton("saveButton","configSaveTapped:","configView")
   this.saveButton.layer.opacity = 1.0
   this.saveButton.setTitleForState("Save",0)
@@ -656,7 +724,7 @@ settingController.prototype.setTextview = function (name) {
       }else{
         actions = toolbarConfig.getActions()
         description = action.description
-        if (name === "excute") {
+        if (name === "execute") {
           this.setJSContent(description)
         }else{
           this.setWebviewContent(description)

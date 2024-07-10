@@ -2203,6 +2203,15 @@ try {
         .null {
             color: gray;
         }
+    .hljs-property {
+        color: #1870dc; /* 自定义内置类颜色 */
+    }
+    .hljs-function {
+        color: #8f21d8; /* 自定义内置类颜色 */
+    }
+    .hljs-string {
+        color: #429904; /* 自定义内置类颜色 */
+    }
     </style>
 </head>
 <body>
@@ -2210,13 +2219,44 @@ try {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/languages/javascript.min.js"></script>
 <script>
+hljs.registerLanguage('javascript', function(hljs) {
+  var KEYWORDS = 'in if for while finally var new function do return void else break catch ' +
+                 'instanceof with throw case default try this switch continue typeof delete ' +
+                 'let yield const export super debugger as await static import from as async await';
+  var LITERALS = 'true false null undefined NaN Infinity';
+  var TYPES = 'Object Function Boolean Symbol MNUtil MNNote toolbarUtils toolbarConfig';
+
+  return {
+    keywords: {
+      keyword: KEYWORDS,
+      literal: LITERALS,
+      built_in: TYPES
+    },
+    contains: [
+      hljs.APOS_STRING_MODE,
+      hljs.QUOTE_STRING_MODE,
+      hljs.C_LINE_COMMENT_MODE,
+      hljs.C_BLOCK_COMMENT_MODE,
+      hljs.C_NUMBER_MODE,
+      {
+        className: 'property',
+        begin: '(?<=\\\\.)\\\\w+\\\\b(?!\\\\()'
+      },
+      {
+        className: 'function',
+        begin: '(?<=\\\\.)\\\\w+(?=\\\\()'
+      }
+    ]
+  };
+});
     function updateContent() {
         const editor = document.getElementById('code-block');
         hljs.highlightElement(editor);
-        editor.innerHTML = editor.innerHTML.replace(/MNUtil\\b/g, '<span class="hljs-built_in">MNUtil</span>')
-                                           .replace(/MNNote\\b/g, '<span class="hljs-built_in">MNNote</span>')
-                                           .replace(/toolbarConfig\\b/g, '<span class="hljs-built_in">toolbarConfig</span>')
-                                           .replace(/toolbarUtil\\b/g, '<span class="hljs-built_in">toolbarUtil</span>');
+        // editor.innerHTML = editor.innerHTML
+                          // .replace(/MNUtil\\b/g, '<span class="hljs-built_in">MNUtil</span>')
+                          // .replace(/MNNote\\b/g, '<span class="hljs-built_in">MNNote</span>')
+                          // .replace(/toolbarConfig\\b/g, '<span class="hljs-built_in">toolbarConfig</span>')
+                          // .replace(/toolbarUtil\\b/g, '<span class="hljs-built_in">toolbarUtil</span>');
         editor.blur();
     }
     
@@ -2227,6 +2267,7 @@ try {
 </html>
 `
   }
+
   /**
    * count为true代表本次check会消耗一次免费额度（如果当天未订阅），如果为false则表示只要当天免费额度没用完，check就会返回true
    * 开启ignoreFree则代表本次check只会看是否订阅，不管是否还有免费额度
@@ -2234,6 +2275,7 @@ try {
    */
   static checkSubscribe(count = true, msg = true,ignoreFree = false){
     // return true
+
     if (typeof subscriptionConfig !== 'undefined') {
       let res = subscriptionConfig.checkSubscribed(count,ignoreFree,msg)
       return res
@@ -2444,13 +2486,12 @@ try {
     // }
     return MNUtil.hexColorAlpha(toolbarConfig.buttonConfig.color, toolbarConfig.buttonConfig.alpha)
   }
-  static getOnlineImage(url){
+  static getOnlineImage(url,scale=3){
     MNUtil.showHUD("Downloading image")
     let imageData = NSData.dataWithContentsOfURL(MNUtil.genNSURL(url))
     if (imageData) {
       MNUtil.showHUD("Download success")
-      MNUtil.copyImage(imageData)
-      return UIImage.imageWithDataScale(imageData,2)
+      return UIImage.imageWithDataScale(imageData,scale)
     }
     MNUtil.showHUD("Download failed")
     return undefined
@@ -2483,7 +2524,25 @@ class toolbarConfig {
     this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})
     this.windowState = this.getByDefault("MNToolbar_windowState",this.defaultWindowState)
     this.action = this.getByDefault("MNToolbar_action", this.getDefaultActionKeys())
+    this.action = this.action.map(a=>{
+      if (a === "excute") {
+        return "execute"
+      }
+      return a
+    })
     this.actions = this.getByDefault("MNToolbar_actionConfig", this.getActions())
+    if ("excute" in this.actions) {
+      let action = this.actions["excute"]
+      action.image = "execute"
+      this.actions["execute"] = action
+      delete this.actions["excute"]
+    }
+    if ("execute" in this.actions) {
+      if (this.actions["execute"].image === "excute") {
+        this.actions["execute"].image = "execute"
+      }
+    }
+
     this.buttonConfig = this.getByDefault("MNToolbar_buttonConfig", this.defalutButtonConfig)
     this.highlightColor = UIColor.blendedColor(
       UIColor.colorWithHexString("#2c4d81").colorWithAlphaComponent(0.8),
@@ -2505,6 +2564,7 @@ class toolbarConfig {
   static initImage(){
     try {
     let keys = this.getDefaultActionKeys()
+    // MNUtil.copyJSON(keys)
     // let images = keys.map(key=>this.mainPath+"/"+this.getAction(key).image+".png")
     // MNUtil.copyJSON(images)
     keys.forEach((key)=>{
@@ -2515,11 +2575,22 @@ class toolbarConfig {
       toolbarUtils.addErrorLog(error, "initImage")
     }
   }
-  static setImageByURL(action,url,refresh = false) {    
-    this.imageConfigs[action] = toolbarUtils.getOnlineImage(url)
-    if (refresh) {
-      MNUtil.postNotification("refreshToolbarButton", {})
-    }
+  // static setImageByURL(action,url,refresh = false) {
+  //   this.imageConfigs[action] = toolbarUtils.getOnlineImage(url)
+  //   if (refresh) {
+  //     MNUtil.postNotification("refreshToolbarButton", {})
+  //   }
+  // }
+  static async setImageByURL(action,url,refresh = false,scale = 3) {
+    return new Promise((resolve, reject) => {
+      MNUtil.delay(0.01).then(()=>{
+        this.imageConfigs[action] = toolbarUtils.getOnlineImage(url,scale)
+        if (refresh) {
+          MNUtil.postNotification("refreshToolbarButton", {})
+        }
+      })
+      resolve()
+    })
   }
   static getAllActions(){
     let allActions = this.action.concat(this.getDefaultActionKeys().slice(this.action.length))
@@ -2733,8 +2804,8 @@ static getDescriptionByIndex(index){
     return JSON.parse(toolbarConfig.getActions()[actionName].description)
   }
 }
-static getExcuteCode(){
-  let actionName = "excute"
+static getExecuteCode(){
+  let actionName = "execute"
   if (actionName in toolbarConfig.actions) {
     return toolbarConfig.actions[actionName].description
   }else{
@@ -2750,7 +2821,7 @@ static getDescriptionByName(actionName){
 }
 }
 class toolbarSandbox{
-  static async excute(code){
+  static async execute(code){
     'use strict';
     if (!toolbarUtils.checkSubscribe(true)) {
       return
@@ -2758,7 +2829,7 @@ class toolbarSandbox{
     try {
       eval(code)
     } catch (error) {
-      toolbarUtils.addErrorLog(error, "excuteInSandbox",code)
+      toolbarUtils.addErrorLog(error, "executeInSandbox",code)
     }
   }
 }
