@@ -128,28 +128,15 @@ class toolbarUtils {
     // 有淡黄色的父卡片时，parentNoteTitle 非空（只考虑父卡片都有标题的情况）
     if (parentNoteTitle) {
       if (parentNoteColorIndex == 1) {
-        // MNUtil.showHUD(parentNoteTitle)
-        let focusNoteTitle = focusNote.noteTitle
-        let prefix = parentNoteTitle.match(/“(.+)”相关.*/)[1]
-        focusNote.noteTitle = focusNoteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
-      } else {
-        if (parentNoteColorIndex == 0 || parentNoteColorIndex == 4) {
+        if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
           // MNUtil.showHUD(parentNoteTitle)
           let focusNoteTitle = focusNote.noteTitle
-          let prefix = parentNoteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]
+          let prefix = parentNoteTitle.match(/“(.+)”相关.*/)[1]
           focusNote.noteTitle = focusNoteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
         } else {
           // MNUtil.showHUD(parentNoteTitle)
           let focusNoteTitle = focusNote.noteTitle
-          let matchContentFromParentNoteTitle = parentNoteTitle.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
-          // let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.+)”：“(.+)”\s*相关(.+)/g)
-          // if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
-          //   MNUtil.showHUD("匹配成功");
-          // } else {
-          //   MNUtil.showHUD("匹配失败");
-          // }
-
-          // MNUtil.showHUD(matchContentFromParentNoteTitle)
+          let matchContentFromParentNoteTitle = parentNoteTitle.replace(/“(.+)”相关(.+)/g, "$2：$1")
           // 检查【xxx】格式，并捕获xxx内容
           let matchResult = focusNoteTitle.match(/^【([^】]*)/);
           // MNUtil.showHUD(matchResult)
@@ -178,6 +165,48 @@ class toolbarUtils {
               newTitle = "【" + matchContentFromParentNoteTitle + "】" + focusNoteTitle;
             }
             focusNote.noteTitle = newTitle;
+          }
+        }
+      } else {
+        if (parentNoteColorIndex == 0 || parentNoteColorIndex == 4) {
+          if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
+            // MNUtil.showHUD(parentNoteTitle)
+            let focusNoteTitle = focusNote.noteTitle
+            let prefix = parentNoteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]
+            focusNote.noteTitle = focusNoteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
+          } else {
+            // MNUtil.showHUD(parentNoteTitle)
+            let focusNoteTitle = focusNote.noteTitle
+            let matchContentFromParentNoteTitle = parentNoteTitle.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
+            // 检查【xxx】格式，并捕获xxx内容
+            let matchResult = focusNoteTitle.match(/^【([^】]*)/);
+            // MNUtil.showHUD(matchResult)
+            if (matchResult) { // 如果有匹配结果
+              // MNUtil.showHUD("匹配！")
+              let capturedText = matchResult[1];
+              // 检查是否包含 capturedText 并且是否需要补上】
+              if (capturedText.includes(matchContentFromParentNoteTitle) && !focusNoteTitle.includes("】")) {
+                focusNote.noteTitle = focusNoteTitle + "】";
+              } else if (!capturedText.includes(matchContentFromParentNoteTitle)) {
+                // 如果不包含 capturedText，替换原有【】内容
+                if (focusNoteColorIndex == 2) {
+                  // 淡蓝色（定义类）的要在【】后加 “; ”
+                  newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】; ");
+                } else {
+                  newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】");
+                }
+                focusNote.noteTitle = newTitle;
+              }
+            } else { // 如果标题不是以【xxx开头
+              // MNUtil.showHUD("不匹配！")
+              if (focusNoteColorIndex == 2) {
+                // 淡蓝色（定义类）的要在【】后加 “; ”
+                newTitle = "【" + matchContentFromParentNoteTitle + "】; " + focusNoteTitle;
+              } else {
+                newTitle = "【" + matchContentFromParentNoteTitle + "】" + focusNoteTitle;
+              }
+              focusNote.noteTitle = newTitle;
+            }
           }
         }
       }
