@@ -101,8 +101,9 @@ class toolbarUtils {
       }
     }
   }
-  static makeCardsAuxSecondLayerTemplate(focusNote, focusNoteType,focusNoteColorIndex) {
+  static makeCardsAuxSecondLayerTemplate(focusNote, focusNoteType) {
     let templateNoteId
+    let focusNoteColorIndex = focusNote.note.colorIndex
     let testIndexI = focusNote.getCommentIndex("相关概念：", true)
     let testIndexII = focusNote.getCommentIndex("应用：", true)
     let testIndex = Math.max(testIndexI, testIndexII)
@@ -119,51 +120,67 @@ class toolbarUtils {
     }
   }
   // 修改卡片前缀
-  static makeCardsAuxChangefocusNotePrefix(focusNote, parentNoteTitle, focusNoteColorIndex) {
+  static makeCardsAuxChangefocusNotePrefix(focusNote, parentNote) {
     let newTitle
+    let focusNoteColorIndex = focusNote.note.colorIndex
+    let parentNoteTitle = parentNote.noteTitle
+    let parentNoteColorIndex = parentNote.note.colorIndex
     // 有淡黄色的父卡片时，parentNoteTitle 非空（只考虑父卡片都有标题的情况）
     if (parentNoteTitle) {
-      // MNUtil.showHUD(parentNoteTitle)
-      let focusNoteTitle = focusNote.noteTitle
-      let matchContentFromParentNoteTitle = parentNoteTitle.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
-      // let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.+)”：“(.+)”\s*相关(.+)/g)
-      // if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
-      //   MNUtil.showHUD("匹配成功");
-      // } else {
-      //   MNUtil.showHUD("匹配失败");
-      // }
-
-      // MNUtil.showHUD(matchContentFromParentNoteTitle)
-      // 检查【xxx】格式，并捕获xxx内容
-      let matchResult = focusNoteTitle.match(/^【([^】]*)/);
-      // MNUtil.showHUD(matchResult)
-      if (matchResult) { // 如果有匹配结果
-        // MNUtil.showHUD("匹配！")
-        let capturedText = matchResult[1];
-        // 检查是否包含 capturedText 并且是否需要补上】
-        if (capturedText.includes(matchContentFromParentNoteTitle) && !focusNoteTitle.includes("】")) {
-          focusNote.noteTitle = focusNoteTitle + "】";
-        } else if (!capturedText.includes(matchContentFromParentNoteTitle)) {
-          // 如果不包含 capturedText，替换原有【】内容
-          if (focusNoteColorIndex == 2) {
-            // 淡蓝色（定义类）的要在【】后加 “; ”
-            newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】; ");
-          } else {
-            newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】");
-          }
-          focusNote.noteTitle = newTitle;
-        }
-      } else { // 如果标题不是以【xxx开头
-        // MNUtil.showHUD("不匹配！")
-        if (focusNoteColorIndex == 2) {
-          // 淡蓝色（定义类）的要在【】后加 “; ”
-          newTitle = "【" + matchContentFromParentNoteTitle + "】; " + focusNoteTitle;
+      if (parentNoteColorIndex == 1) {
+        // MNUtil.showHUD(parentNoteTitle)
+        let focusNoteTitle = focusNote.noteTitle
+        let prefix = parentNoteTitle.match(/“(.+)”相关.*/)[1]
+        focusNote.noteTitle = focusNoteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
+      } else {
+        if (parentNoteColorIndex == 0 || parentNoteColorIndex == 4) {
+          // MNUtil.showHUD(parentNoteTitle)
+          let focusNoteTitle = focusNote.noteTitle
+          let prefix = parentNoteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]
+          focusNote.noteTitle = focusNoteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
         } else {
-          newTitle = "【" + matchContentFromParentNoteTitle + "】" + focusNoteTitle;
-        }
-        focusNote.noteTitle = newTitle;
-      }
+          // MNUtil.showHUD(parentNoteTitle)
+          let focusNoteTitle = focusNote.noteTitle
+          let matchContentFromParentNoteTitle = parentNoteTitle.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
+          // let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.+)”：“(.+)”\s*相关(.+)/g)
+          // if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
+          //   MNUtil.showHUD("匹配成功");
+          // } else {
+          //   MNUtil.showHUD("匹配失败");
+          // }
 
+          // MNUtil.showHUD(matchContentFromParentNoteTitle)
+          // 检查【xxx】格式，并捕获xxx内容
+          let matchResult = focusNoteTitle.match(/^【([^】]*)/);
+          // MNUtil.showHUD(matchResult)
+          if (matchResult) { // 如果有匹配结果
+            // MNUtil.showHUD("匹配！")
+            let capturedText = matchResult[1];
+            // 检查是否包含 capturedText 并且是否需要补上】
+            if (capturedText.includes(matchContentFromParentNoteTitle) && !focusNoteTitle.includes("】")) {
+              focusNote.noteTitle = focusNoteTitle + "】";
+            } else if (!capturedText.includes(matchContentFromParentNoteTitle)) {
+              // 如果不包含 capturedText，替换原有【】内容
+              if (focusNoteColorIndex == 2) {
+                // 淡蓝色（定义类）的要在【】后加 “; ”
+                newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】; ");
+              } else {
+                newTitle = focusNoteTitle.replace(/^【.*?】/, "【" + matchContentFromParentNoteTitle + "】");
+              }
+              focusNote.noteTitle = newTitle;
+            }
+          } else { // 如果标题不是以【xxx开头
+            // MNUtil.showHUD("不匹配！")
+            if (focusNoteColorIndex == 2) {
+              // 淡蓝色（定义类）的要在【】后加 “; ”
+              newTitle = "【" + matchContentFromParentNoteTitle + "】; " + focusNoteTitle;
+            } else {
+              newTitle = "【" + matchContentFromParentNoteTitle + "】" + focusNoteTitle;
+            }
+            focusNote.noteTitle = newTitle;
+          }
+        }
+      }
       focusNote.parentNote.refresh()
       if (focusNote.descendantNodes.descendant.length > 0) {
         focusNote.descendantNodes.descendant.forEach(descendantNote => {
@@ -172,45 +189,120 @@ class toolbarUtils {
       }
     }
   }
-  static makeCardsAuxLinkToParentNote(focusNote, parentNote, parentNoteTitle, parentNoteId) {
+  static makeCardsAuxLinkToParentNote(focusNote, focusNoteType, parentNote) {
     /*
-      归类型的淡黄色卡片：双向链接
-      非归类型的淡黄色卡片：单向链接
-      其它卡片：不链接
-
+      【focusNote 为非黄色卡片时】
+        父卡片为：
+          归类型的淡黄色卡片：双向链接
+          非归类型的淡黄色卡片：单向链接
+          其它卡片：不链接
+      【focusNote 为淡黄色或黄色卡片时】
+        父卡片为：
+          淡绿色、黄色或者淡黄色卡片：双向链接
       要注意防止第二次链接
     */
     let focusNoteOldLinkIndexInParentNote,focusNoteNewLinkIndexInParentNote,focusNoteLinkIndexInParentNote
     let parentNoteOldLinkIndexInFocusNote,parentNoteNewLinkIndexInFocusNote,parentNoteLinkIndexInFocusNote
     let linkHtmlCommentIndex
+    let parentNoteTitle = parentNote.noteTitle
+    let parentNoteId = parentNote.noteId
     if (!focusNote.excerptText) { // 非摘录版本才开始链接
-      if (parentNoteTitle) { // 有 parentNoteTitle 说明是淡黄色卡片
-      //   let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.*)”：“(.*)”相关(.*)/)
-      //   if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
-          // 归类型的淡黄色卡片
-          let parentNoteOldUrl = "marginnote3app://note/" + parentNoteId
-          let parentNoteNewUrl = "marginnote4app://note/" + parentNoteId
-          parentNoteOldLinkIndexInFocusNote = focusNote.getCommentIndex(parentNoteOldUrl)
-          parentNoteNewLinkIndexInFocusNote = focusNote.getCommentIndex(parentNoteNewUrl)
-          parentNoteLinkIndexInFocusNote = Math.max(parentNoteOldLinkIndexInFocusNote, parentNoteNewLinkIndexInFocusNote)
-          linkHtmlCommentIndex = Math.max(focusNote.getCommentIndex("相关链接：",true), focusNote.getCommentIndex("所属：",true))
-          if (parentNoteLinkIndexInFocusNote == -1) { // 防止第二次链接
-            // parentNote.appendNoteLink(focusNote, "Both")
-            // 如果原来有链接，就去掉
-            if (
-              focusNote.comments[linkHtmlCommentIndex+1] &&
-              focusNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote"
-            ) {
-              focusNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+      if (parentNoteTitle !== undefined) {
+          if (focusNoteType == "outline") {
+            let parentNoteColorIndex = parentNote.note.colorIndex
+            if (parentNoteColorIndex == 1) {
+              // 淡绿色
+              // MNUtil.undoGrouping(()=>{
+                // 把选中的变成黄色
+                try {
+                  focusNote.note.colorIndex = 4
+                  let focusNoteIdIndexInParentNote = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                  if (focusNoteIdIndexInParentNote == -1) {
+                    // 增加新的链接
+                    parentNote.appendNoteLink(focusNote, "To")
+                  }
+                  let parentNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + parentNote.noteId)
+                  if (parentNoteIdIndexInFocusNote == -1) {
+                    // 删除原来的链接
+                    if (focusNote.comments[1] && focusNote.comments[1].type !== "HtmlNote") {
+                      // 去掉原来被链接的卡片里的链接
+                      let oldLinkedNoteId = focusNote.comments[1].text.match(/marginnote4app:\/\/note\/(.*)/)[1]
+                      let oldLinkedNote = MNNote.new(oldLinkedNoteId)
+                      let oldIndexInOldLinkedNote = oldLinkedNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                      // MNUtil.showHUD(oldIndexInOldLinkedNote)
+                      if (oldIndexInOldLinkedNote !== -1) {
+                        oldLinkedNote.removeCommentByIndex(oldIndexInOldLinkedNote)
+                      }
+                      focusNote.removeCommentByIndex(1)
+                    }
+                    // 增加新的链接
+                    focusNote.appendNoteLink(parentNote, "To")
+                    focusNote.moveComment(focusNote.note.comments.length-1, 1)
+                  }
+                } catch (error) {
+                  MNUtil.showHUD(error);
+                }
+              // })
+            } else {
+              if (parentNoteColorIndex == 0 || parentNoteColorIndex == 4) {
+                // 淡黄色 or 黄色
+                MNUtil.undoGrouping(()=>{
+                  // 把选中的变成黄色
+                  focusNote.note.colorIndex = 0
+                  let focusNoteIdIndexInParentNote = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                  if (focusNoteIdIndexInParentNote == -1) {
+                    // 增加新的链接
+                    parentNote.appendNoteLink(focusNote, "To")
+                  }
+                  let parentNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + parentNote.noteId)
+                  if (parentNoteIdIndexInFocusNote == -1) {
+                    // 删除原来的链接
+                    if (focusNote.comments[1] && focusNote.comments[1].type !== "HtmlNote") {
+                      // 去掉原来被链接的卡片里的链接
+                      let oldLinkedNoteId = focusNote.comments[1].text.match(/marginnote4app:\/\/note\/(.*)/)[1]
+                      let oldLinkedNote = MNNote.new(oldLinkedNoteId)
+                      let oldIndexInOldLinkedNote = oldLinkedNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                      // MNUtil.showHUD(oldIndexInOldLinkedNote)
+                      if (oldIndexInOldLinkedNote !== -1) {
+                        oldLinkedNote.removeCommentByIndex(oldIndexInOldLinkedNote)
+                      }
+                      focusNote.removeCommentByIndex(1)
+                    }
+                    // 增加新的链接
+                    focusNote.appendNoteLink(parentNote, "To")
+                    focusNote.moveComment(focusNote.note.comments.length-1, 1)
+                  }
+                })
+              }
             }
-            focusNote.appendNoteLink(parentNote, "To")
-            focusNote.moveComment(focusNote.note.comments.length-1, linkHtmlCommentIndex+1)  // 放在“相关链接：”下面
-          }
-          focusNoteOldLinkIndexInParentNote = parentNote.getCommentIndex("marginnote3app://note/" + focusNote.noteId)
-          focusNoteNewLinkIndexInParentNote = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
-          focusNoteLinkIndexInParentNote = Math.max(focusNoteOldLinkIndexInParentNote, focusNoteNewLinkIndexInParentNote)
-          if (focusNoteLinkIndexInParentNote == -1) { // 防止第二次链接
-            parentNote.appendNoteLink(focusNote, "To")
+          } else {
+            // let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.*)”：“(.*)”相关(.*)/)
+            // if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
+            // 归类型的淡黄色卡片
+            let parentNoteOldUrl = "marginnote3app://note/" + parentNoteId
+            let parentNoteNewUrl = "marginnote4app://note/" + parentNoteId
+            parentNoteOldLinkIndexInFocusNote = focusNote.getCommentIndex(parentNoteOldUrl)
+            parentNoteNewLinkIndexInFocusNote = focusNote.getCommentIndex(parentNoteNewUrl)
+            parentNoteLinkIndexInFocusNote = Math.max(parentNoteOldLinkIndexInFocusNote, parentNoteNewLinkIndexInFocusNote)
+            linkHtmlCommentIndex = Math.max(focusNote.getCommentIndex("相关链接：",true), focusNote.getCommentIndex("所属：",true))
+            if (parentNoteLinkIndexInFocusNote == -1) { // 防止第二次链接
+              // parentNote.appendNoteLink(focusNote, "Both")
+              // 如果原来有链接，就去掉
+              if (
+                focusNote.comments[linkHtmlCommentIndex+1] &&
+                focusNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote"
+              ) {
+                focusNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+              }
+              focusNote.appendNoteLink(parentNote, "To")
+              focusNote.moveComment(focusNote.note.comments.length-1, linkHtmlCommentIndex+1)  // 放在“相关链接：”下面
+            }
+            focusNoteOldLinkIndexInParentNote = parentNote.getCommentIndex("marginnote3app://note/" + focusNote.noteId)
+            focusNoteNewLinkIndexInParentNote = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+            focusNoteLinkIndexInParentNote = Math.max(focusNoteOldLinkIndexInParentNote, focusNoteNewLinkIndexInParentNote)
+            if (focusNoteLinkIndexInParentNote == -1) { // 防止第二次链接
+              parentNote.appendNoteLink(focusNote, "To")
+            }
           }
         } else {
           // 非归类型的淡黄色卡片
@@ -220,7 +312,6 @@ class toolbarUtils {
             parentNote.appendNoteLink(focusNote, "To")
           }
         }
-      // }
     }
   }
 

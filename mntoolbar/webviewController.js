@@ -888,12 +888,10 @@ toolbarController.prototype.customAction = async function (actionName) {
     let focusNotes = MNNote.getFocusNotes() ? MNNote.getFocusNotes():undefined
     // MNUtil.showHUD("message"+(focusNote instanceof MNNote))
     let color,config
-    let targetNoteId,parentNoteId,parentNoteUrl
+    let targetNoteId
     let parentNote
-    let parentNoteTitle = ""
     let focusNoteType
     let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
-    let ifParentNoteColorLightYellow
     switch (des.action) {
       // 夏大鱼羊定制函数
       case "convertNoteToNonexcerptVersion":
@@ -1033,17 +1031,23 @@ toolbarController.prototype.customAction = async function (actionName) {
           MNUtil.undoGrouping(()=>{
             focusNotes.forEach(focusNote=>{
               /* 初始化 */
-              ifParentNoteColorLightYellow = false
+              let ifParentNoteChosen = false
 
               toolbarUtils.renewCards([focusNote])
 
               /* 确定卡片类型 */
               switch (focusNoteColorIndex) {
+                case 0: // 淡黄色
+                  focusNoteType = "outline"
+                  break;
                 case 2: // 淡蓝色：定义类
                   focusNoteType = "definition"
                   break;
                 case 3: // 淡粉色：反例
                   focusNoteType = "antiexample"
+                  break;
+                case 4: // 黄色
+                  focusNoteType = "outline"
                   break;
                 case 9: // 深绿色：思想方法
                   focusNoteType = "method"
@@ -1058,7 +1062,7 @@ toolbarController.prototype.customAction = async function (actionName) {
 
               /* 预处理 */
               /* 只对淡蓝色、淡粉色、深绿色、深蓝色、淡紫色的卡片进行制卡 */
-              if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
+              if ([0, 2, 3, 4, 9, 10, 15].includes(focusNoteColorIndex)) {
                 /* 先将卡变成非摘录版本 */
                 // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
                 if (focusNote.excerptText) {
@@ -1070,28 +1074,28 @@ toolbarController.prototype.customAction = async function (actionName) {
                   // 误打误撞产生最佳效果了属于是
                 } else {
                   // 非摘录的话就添加到复习卡组
-                  MNUtil.excuteCommand("AddToReview")
+                  if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
+                    MNUtil.excuteCommand("AddToReview")
+                  }
                 }
 
                 /* 检测父卡片的存在和颜色 */
                 parentNote = focusNote.parentNote
                 if (parentNote) {
                   // 有父节点
-                  // 检测父卡片是否是淡黄色 or 黄色的，不是的话获取父卡片的父卡片，直到是淡黄色为止，获取第一次出现的淡黄色的父卡片作为 parentNote
+                  // 检测父卡片是否是淡黄色、淡绿色或黄色的，不是的话获取父卡片的父卡片，直到是为止，获取第一次出现特定颜色的父卡片作为 parentNote
                   while (parentNote) {
-                    if (parentNote.colorIndex == 0 || parentNote.colorIndex == 4) {
-                      ifParentNoteColorLightYellow = true
+                    if (parentNote.colorIndex == 0 || parentNote.colorIndex == 1 || parentNote.colorIndex == 4) {
+                      ifParentNoteChosen = true
                       break
                     }
                     parentNote = parentNote.parentNote
                   }
-                  parentNoteTitle = parentNote.noteTitle
-                  // 获取父卡片的 URL，用来判断是否与卡片进行链接
-                  parentNoteId = parentNote.noteId
-                  parentNoteUrl = "marginnote4app://note/" + parentNoteId
+                  if (!ifParentNoteChosen) {
+                    parentNote = undefined
+                  }
                 }
-              } 
-              else {
+              } else {
                 MNUtil.showHUD("不支持对此颜色的卡片进行制卡！")
                 return // 使用 return 来提前结束函数, 避免了在内部函数中使用 break 导致的语法错误。
               }
@@ -1102,15 +1106,15 @@ toolbarController.prototype.customAction = async function (actionName) {
               /* 与父卡片的链接 */
               try {
                 // MNUtil.undoGrouping(()=>{
-                  toolbarUtils.makeCardsAuxLinkToParentNote(focusNote, parentNote, parentNoteTitle, parentNoteId)
+                  toolbarUtils.makeCardsAuxLinkToParentNote(focusNote, focusNoteType, parentNote)
                 // })
               } catch (error) {
                 MNUtil.showHUD(error);
               }
               /* 修改卡片前缀 */
-              toolbarUtils.makeCardsAuxChangefocusNotePrefix(focusNote, parentNoteTitle, focusNoteColorIndex)
+              toolbarUtils.makeCardsAuxChangefocusNotePrefix(focusNote, parentNote)
               /* 合并第二层模板 */
-              toolbarUtils.makeCardsAuxSecondLayerTemplate(focusNote, focusNoteType,focusNoteColorIndex)
+              toolbarUtils.makeCardsAuxSecondLayerTemplate(focusNote, focusNoteType)
 
               // bug：先应用再证明时，无反应
               /* 移动“应用：”和链接部分到最下方 */
@@ -1121,7 +1125,7 @@ toolbarController.prototype.customAction = async function (actionName) {
                 - 反例类型的是“反例及证明：”
                 - 思想方法类型的是“原理：”
               */
-              if (focusNoteType !== "definition") {
+              if (focusNoteType !== "definition" && focusNoteType !== "outline") {
                 try {
                   toolbarUtils.makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType)
                 } catch (error) {
