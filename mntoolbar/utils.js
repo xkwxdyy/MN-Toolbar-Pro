@@ -2722,7 +2722,7 @@ static getActions() {
     "custom8":{name:"存档",image:"custom8",description: this.template("achieveCards")},
     "custom11":{name:"隐藏插件栏",image:"custom11",description: this.template("hideAddonBar")},
     "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
-    "excute":{name:"excute",image:"excute",description:"MNUtil.showHUD('Hello world')"},
+    "execute":{name:"execute",image:"execute",description:"MNUtil.showHUD('Hello world')"},
     "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
     "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})},
     "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
@@ -2730,11 +2730,11 @@ static getActions() {
     "bigbang":{name:"Bigbang",image:"bigbang",description:"Bigbang"},
     "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
     "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"},
-    "setting":{name:"Setting",image:"setting",description:"Setting"}
+    // "setting":{name:"Setting",image:"setting",description:"Setting"}
   }
 }
 
-static excute(){
+static execute(){
 
 }
 static getDefaultActionKeys() {
