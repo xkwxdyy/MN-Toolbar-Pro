@@ -729,7 +729,7 @@ class toolbarUtils {
   }
 
   static addTemplate(focusNote,focusNoteColorIndex) {
-    let parentNote, templateNote
+    let templateNote
     let type
     let contentInTitle
     if (focusNoteColorIndex == 1) {
@@ -778,8 +778,10 @@ class toolbarUtils {
               }
             )
             break;
-          case 4:
-            /* 增加最顶层的淡绿色模板 */
+          case 4: 
+          /* 增加最顶层的淡绿色模板 */
+          try {
+            let parentNote
             // 先选到第一个白色的父卡片
             if (focusNoteColorIndex == 12) {
               // 如果选中的就是白色的（比如刚建立专题的时候）
@@ -790,31 +792,34 @@ class toolbarUtils {
                 parentNote = parentNote.parentNote
               }
             }
-            
-            if (parentNote) {
-              const typeRegex = /^(.*)（/; // 匹配以字母或数字开头的字符直到左括号 '('
-
-              const match = parentNote.noteTitle.match(typeRegex);
-              if (match) {
-                type = match[1]; // 提取第一个捕获组的内容
-                // MNUtil.showHUD(type);
-                templateNote = MNNote.clone("121387A2-740E-4BC6-A184-E4115AFA90C3")
-                templateNote.note.colorIndex = 1  // 颜色为淡绿色
-                templateNote.note.noteTitle = "“" + userInputTitle + "”相关" + type
-                MNUtil.undoGrouping(()=>{
-                  parentNote.addChild(templateNote.note)
-                  parentNote.parentNote.appendNoteLink(templateNote, "Both")
-                  templateNote.moveComment(templateNote.note.comments.length-1, 1)
-                })
-                // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
-                MNUtil.delay(0.5).then(()=>{
-                  templateNote.focusInMindMap()
-                })
+            // MNUtil.showHUD(parentNote.noteTitle)
+              if (parentNote) {
+                const typeRegex = /^(.*)（/; // 匹配以字母或数字开头的字符直到左括号 '('
+  
+                const match = parentNote.noteTitle.match(typeRegex);
+                if (match) {
+                  type = match[1]; // 提取第一个捕获组的内容
+                  // MNUtil.showHUD(type);
+                  templateNote = MNNote.clone("121387A2-740E-4BC6-A184-E4115AFA90C3")
+                  templateNote.note.colorIndex = 1  // 颜色为淡绿色
+                  templateNote.note.noteTitle = "“" + userInputTitle + "”相关" + type
+                  MNUtil.undoGrouping(()=>{
+                    parentNote.addChild(templateNote.note)
+                    parentNote.parentNote.appendNoteLink(templateNote, "Both")
+                    templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                  })
+                  // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
+                  MNUtil.delay(0.5).then(()=>{
+                    templateNote.focusInMindMap()
+                  })
+                } else {
+                  MNUtil.showHUD("匹配失败，匹配到的标题为" +  parentNote.noteTitle);
+                }
               } else {
-                MNUtil.showHUD("匹配失败，匹配到的标题为" +  parentNote.noteTitle);
+                MNUtil.showHUD("无父卡片");
               }
-            } else {
-              MNUtil.showHUD("无父卡片");
+            } catch (error) {
+              MNUtil.showHUD(error);
             }
             
             break;
