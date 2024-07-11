@@ -2751,7 +2751,7 @@ static getActions() {
     "custom8":{name:"存档",image:"custom8",description: this.template("achieveCards")},
     "custom11":{name:"隐藏插件栏",image:"custom11",description: this.template("hideAddonBar")},
     "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
-    "execute":{name:"execute",image:"execute",description:"MNUtil.showHUD('Hello world')"},
+    "execute":{name:"execute",image:"execute",description:"let focusNote = MNNote.getFocusNote()"},
     "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
     "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})},
     "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
