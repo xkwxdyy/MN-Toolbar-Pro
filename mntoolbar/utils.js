@@ -242,8 +242,8 @@ class toolbarUtils {
             if (parentNoteColorIndex == 1) {
               // 淡绿色
               // MNUtil.undoGrouping(()=>{
-                // 把选中的变成黄色
                 try {
+                  // 把选中的变成黄色
                   focusNote.note.colorIndex = 4
                   let focusNoteIdIndexInParentNote = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
                   if (focusNoteIdIndexInParentNote == -1) {
@@ -316,11 +316,18 @@ class toolbarUtils {
             linkHtmlCommentIndex = Math.max(focusNote.getCommentIndex("相关链接：",true), focusNote.getCommentIndex("所属：",true))
             if (parentNoteLinkIndexInFocusNote == -1) { // 防止第二次链接
               // parentNote.appendNoteLink(focusNote, "Both")
-              // 如果原来有链接，就去掉
               if (
                 focusNote.comments[linkHtmlCommentIndex+1] &&
                 focusNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote"
               ) {
+                // 去掉原来被链接的卡片里的链接
+                let oldLinkedNoteId = focusNote.comments[linkHtmlCommentIndex+1].text.match(/marginnote4app:\/\/note\/(.*)/)[1]
+                let oldLinkedNote = MNNote.new(oldLinkedNoteId)
+                let oldIndexInOldLinkedNote = oldLinkedNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                // MNUtil.showHUD(oldIndexInOldLinkedNote)
+                if (oldIndexInOldLinkedNote !== -1) {
+                  oldLinkedNote.removeCommentByIndex(oldIndexInOldLinkedNote)
+                }
                 focusNote.removeCommentByIndex(linkHtmlCommentIndex+1)
               }
               focusNote.appendNoteLink(parentNote, "To")
