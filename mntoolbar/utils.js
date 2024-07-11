@@ -925,76 +925,6 @@ class toolbarUtils {
                   case 1:
                     targetType = "命题"
                     targetTopParentNote = finalParentNote.childNotes[1]
-
-                    // 优先用 locationTextI 来检测
-                    for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
-                      let descendantNoteColorIndex = descendantNote.note.colorIndex;
-                      if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
-                        if (descendantNote.noteTitle.includes(locationTextI)) {
-                          targetParentNote = descendantNote;
-                          findTargetParentNote = true;
-                          break;  // 找到目标后退出循环
-                        }
-                      }
-                    }
-                    
-
-
-                    if (findTargetParentNote) {
-
-                    } else {
-                      // 找不到的话就换一个 locationText
-                      for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
-                        let descendantNoteColorIndex = descendantNote.note.colorIndex;
-                        if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
-                          if (descendantNote.noteTitle.includes(locationTextII)) {
-                            targetParentNote = descendantNote;
-                            findTargetParentNote = true;
-                            break;  // 找到目标后退出循环
-                          }
-                        }
-                      }
-
-                      if (findTargetParentNote) {
-
-                      } else {
-                        for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
-                          let descendantNoteColorIndex = descendantNote.note.colorIndex;
-                          if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
-                            if (descendantNote.noteTitle.includes(locationTextIII)) {
-                              targetParentNote = descendantNote;
-                              findTargetParentNote = true;
-                              break;  // 找到目标后退出循环
-                            }
-                          }
-                        }
-
-  
-                        if (findTargetParentNote) {
-  
-                        } else {
-                          for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
-                            let descendantNoteColorIndex = descendantNote.note.colorIndex;
-                            if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
-                              if (descendantNote.noteTitle.includes(locationTextIV)) {
-                                targetParentNote = descendantNote;
-                                findTargetParentNote = true;
-                                break;  // 找到目标后退出循环
-                              }
-                            }
-                          }
-
-                          if (findTargetParentNote) {
-
-                          } else {
-                            // 如果最后找不到
-                            targetParentNote = targetTopParentNote.childNotes[0]
-                          }
-                        }
-                      }
-                    }
-
-                    MNUtil.showHUD(targetParentNote.noteTitle)
                     break;
                   case 2:
                     targetType = "例子"
@@ -1008,6 +938,77 @@ class toolbarUtils {
                     targetType = "问题"
                     targetTopParentNote = finalParentNote.childNotes[4]
                     break;
+                }
+                try {
+                  // 优先用 locationTextI 来检测
+                  for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
+                    let descendantNoteColorIndex = descendantNote.note.colorIndex;
+                    if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
+                      if (descendantNote.noteTitle.includes(locationTextI)) {
+                        targetParentNote = descendantNote;
+                        findTargetParentNote = true;
+                        break;  // 找到目标后退出循环
+                      }
+                    }
+                  }
+                  
+                  if (findTargetParentNote) {
+    
+                  } else {
+                    // 找不到的话就换一个 locationText
+                    for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
+                      let descendantNoteColorIndex = descendantNote.note.colorIndex;
+                      if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
+                        if (descendantNote.noteTitle.includes(locationTextII)) {
+                          targetParentNote = descendantNote;
+                          findTargetParentNote = true;
+                          break;  // 找到目标后退出循环
+                        }
+                      }
+                    }
+    
+                    if (findTargetParentNote) {
+    
+                    } else {
+                      for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
+                        let descendantNoteColorIndex = descendantNote.note.colorIndex;
+                        if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
+                          if (descendantNote.noteTitle.includes(locationTextIII)) {
+                            targetParentNote = descendantNote;
+                            findTargetParentNote = true;
+                            break;  // 找到目标后退出循环
+                          }
+                        }
+                      }
+    
+    
+                      if (findTargetParentNote) {
+    
+                      } else {
+                        for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
+                          let descendantNoteColorIndex = descendantNote.note.colorIndex;
+                          if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
+                            if (descendantNote.noteTitle.includes(locationTextIV)) {
+                              targetParentNote = descendantNote;
+                              findTargetParentNote = true;
+                              break;  // 找到目标后退出循环
+                            }
+                          }
+                        }
+    
+                        if (findTargetParentNote) {
+    
+                        } else {
+                          // 如果最后找不到
+                          targetParentNote = targetTopParentNote.childNotes[0]
+                        }
+                      }
+                    }
+                  }
+    
+                  // MNUtil.showHUD(targetParentNote.noteTitle)
+                } catch (error) {
+                  MNUtil.showHUD(error);
                 }
               }
             )
