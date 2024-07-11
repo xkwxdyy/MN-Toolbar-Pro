@@ -727,6 +727,7 @@ class toolbarUtils {
         return "D1B864F5-DD3A-435E-8D15-49DA219D3895"
     }
   }
+
   static addTemplate(focusNote,focusNoteColorIndex) {
     let parentNote, templateNote
     let type
@@ -745,11 +746,11 @@ class toolbarUtils {
       "请输入标题并选择类型",
       2,
       "取消",
-      ["向下层增加模板", "向上层增加模板","最顶层（淡绿色）", "专题"],
+      ["向下层增加模板", "增加概念衍生层级","向上层增加模板", "最顶层（淡绿色）", "专题"],
       (alert, buttonIndex) => {
         let userInputTitle = alert.textFieldAtIndex(0).text;
         switch (buttonIndex) {
-          case 4:
+          case 5:
             /* 专题 */
             // 因为专题模板卡片比较多，所以增加一个确认界面
             UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
@@ -777,7 +778,7 @@ class toolbarUtils {
               }
             )
             break;
-          case 3:
+          case 4:
             /* 增加最顶层的淡绿色模板 */
             // 先选到第一个白色的父卡片
             if (focusNoteColorIndex == 12) {
@@ -817,7 +818,7 @@ class toolbarUtils {
             }
             
             break;
-          case 2:
+          case 3:
             /* 向上增加模板 */
             parentNote = focusNote.parentNote
             let parentNoteColorIndex = parentNote.note.colorIndex
@@ -886,6 +887,130 @@ class toolbarUtils {
                 })
               }
             }
+            break;
+
+          case 2:
+            let targetType
+            let targetTopParentNote
+            let targetParentNote
+            let findTargetParentNote = false
+            let parentNote = focusNote.parentNote
+            let previousParentNote = null; // 初始化为null，以便在没有父节点时保持不变
+            let finalParentNote = null; // 设置一个变量来保存符合条件的最终父节点
+
+            while (parentNote && !finalParentNote) { // 在找到最终的父节点之前继续循环
+              if (parentNote.noteTitle && parentNote.noteTitle.includes("- 定义")) { // 检查标题是否包含"- 定义"
+                finalParentNote = parentNote.parentNote; // 找到符合条件的父节点，将其赋值给finalParentNote变量
+                break; // 结束循环，因为我们找到了所需的父节点
+              }
+              previousParentNote = parentNote; // 保存当前父节点为上一个父节点
+              parentNote = parentNote.parentNote; // 继续向上查找父节点
+            }
+
+            const locationRegexI = /(“.*”：“.*”相关)定义/;
+            const locationRegexII = /“(.*)”：“(.*)”相关定义/;
+            let locationTextI = focusNote.parentNote.noteTitle.match(locationRegexI)[1]
+            let locationTextII = "“" + focusNote.parentNote.noteTitle.match(locationRegexII)[2] + "”相关"
+            let locationTextIII = "：“" + focusNote.parentNote.noteTitle.match(locationRegexII)[1] + "”相关"
+            let locationTextIV = "“" + focusNote.parentNote.noteTitle.match(locationRegexII)[1] + "”相关"
+            // MNUtil.showHUD(finalParentNote.noteTitle)
+            UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+              "请确认增加的类型",
+              "",
+              0,
+              "写错了",
+              ["命题","例子","反例","问题"],
+              (alert, buttonIndex) => {
+                switch (buttonIndex) {
+                  case 1:
+                    targetType = "命题"
+                    targetTopParentNote = finalParentNote.childNotes[1]
+
+                    // 优先用 locationTextI 来检测
+                    for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
+                      let descendantNoteColorIndex = descendantNote.note.colorIndex;
+                      if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
+                        if (descendantNote.noteTitle.includes(locationTextI)) {
+                          targetParentNote = descendantNote;
+                          findTargetParentNote = true;
+                          break;  // 找到目标后退出循环
+                        }
+                      }
+                    }
+                    
+
+
+                    if (findTargetParentNote) {
+
+                    } else {
+                      // 找不到的话就换一个 locationText
+                      for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
+                        let descendantNoteColorIndex = descendantNote.note.colorIndex;
+                        if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
+                          if (descendantNote.noteTitle.includes(locationTextII)) {
+                            targetParentNote = descendantNote;
+                            findTargetParentNote = true;
+                            break;  // 找到目标后退出循环
+                          }
+                        }
+                      }
+
+                      if (findTargetParentNote) {
+
+                      } else {
+                        for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
+                          let descendantNoteColorIndex = descendantNote.note.colorIndex;
+                          if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
+                            if (descendantNote.noteTitle.includes(locationTextIII)) {
+                              targetParentNote = descendantNote;
+                              findTargetParentNote = true;
+                              break;  // 找到目标后退出循环
+                            }
+                          }
+                        }
+
+  
+                        if (findTargetParentNote) {
+  
+                        } else {
+                          for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
+                            let descendantNoteColorIndex = descendantNote.note.colorIndex;
+                            if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
+                              if (descendantNote.noteTitle.includes(locationTextIV)) {
+                                targetParentNote = descendantNote;
+                                findTargetParentNote = true;
+                                break;  // 找到目标后退出循环
+                              }
+                            }
+                          }
+
+                          if (findTargetParentNote) {
+
+                          } else {
+                            // 如果最后找不到
+                            targetParentNote = targetTopParentNote.childNotes[0]
+                          }
+                        }
+                      }
+                    }
+
+                    MNUtil.showHUD(targetParentNote.noteTitle)
+                    break;
+                  case 2:
+                    targetType = "例子"
+                    targetTopParentNote = finalParentNote.childNotes[2]
+                    break;
+                  case 3:
+                    targetType = "反例"
+                    targetTopParentNote = finalParentNote.childNotes[3]
+                    break;
+                  case 4:
+                    targetType = "问题"
+                    targetTopParentNote = finalParentNote.childNotes[4]
+                    break;
+                }
+              }
+            )
             break;
           case 1:
             /* 往下增加模板 */
