@@ -1021,40 +1021,69 @@ class toolbarUtils {
           case 1:
             /* 往下增加模板 */
             // 需要看选中的卡片的颜色
-            if (focusNoteColorIndex == 1) {
-              /* 淡绿色 */
-              type = focusNote.noteTitle.match(/“.+”相关(.*)/)[1]
-              // MNUtil.showHUD(type);
-              templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
-              templateNote.note.colorIndex = 4  // 颜色为黄色
-              // templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + userInputTitle + "”相关" + type
-              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" +  userInputTitle + "”相关" + type
-              MNUtil.undoGrouping(()=>{
-                focusNote.addChild(templateNote.note)
-                focusNote.appendNoteLink(templateNote, "Both")
-                templateNote.moveComment(templateNote.note.comments.length-1, 1)
-              })
-              // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
-              MNUtil.delay(0.8).then(()=>{
-                templateNote.focusInMindMap()
-              })
-            } else {
-              /* 淡黄色、黄色甚至其它颜色 */
-              type = focusNote.noteTitle.match(/“.+”相关(.*)/)[1]
-              // MNUtil.showHUD(type);
-              templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
-              templateNote.note.colorIndex = 0  // 颜色为淡黄色
-              // templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] +  userInputTitle + "”相关" + type
-              templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" +  userInputTitle + "”相关" + type
-              MNUtil.undoGrouping(()=>{
-                focusNote.addChild(templateNote.note)
-                focusNote.appendNoteLink(templateNote, "Both")
-                templateNote.moveComment(templateNote.note.comments.length-1, 1)
-              })
-              // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
-              MNUtil.delay(0.8).then(()=>{
-                templateNote.focusInMindMap()
-              })
+            switch (focusNoteColorIndex) {
+              case 1:
+                /* 淡绿色 */
+                type = focusNote.noteTitle.match(/“.+”相关(.*)/)[1]
+                // MNUtil.showHUD(type);
+                templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
+                templateNote.note.colorIndex = 4  // 颜色为黄色
+                // templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + userInputTitle + "”相关" + type
+                templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”相关.*/)[1] + "”：“" +  userInputTitle + "”相关" + type
+                MNUtil.undoGrouping(()=>{
+                  focusNote.addChild(templateNote.note)
+                  focusNote.appendNoteLink(templateNote, "Both")
+                  templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                })
+                // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
+                MNUtil.delay(0.8).then(()=>{
+                  templateNote.focusInMindMap()
+                })
+                break;
+              case 12:
+                /* 白色的：淡绿色的父卡片，此时和增加淡绿色卡片相同 */
+                const typeRegex = /^(.*)（/; // 匹配以字母或数字开头的字符直到左括号 '('
+  
+                const match = focusNote.noteTitle.match(typeRegex);
+                if (match) {
+                  type = match[1]; // 提取第一个捕获组的内容
+                  // MNUtil.showHUD(type);
+                  templateNote = MNNote.clone("121387A2-740E-4BC6-A184-E4115AFA90C3")
+                  templateNote.note.colorIndex = 1  // 颜色为淡绿色
+                  templateNote.note.noteTitle = "“" + userInputTitle + "”相关" + type
+                  MNUtil.undoGrouping(()=>{
+                    focusNote.addChild(templateNote.note)
+                    focusNote.parentNote.appendNoteLink(templateNote, "Both")
+                    templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                  })
+                  // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
+                  MNUtil.delay(0.5).then(()=>{
+                    templateNote.focusInMindMap()
+                  })
+                } else {
+                  MNUtil.showHUD("匹配失败，匹配到的标题为" +  parentNote.noteTitle);
+                }
+                break;
+              default:
+                /* 淡黄色、黄色 */
+                type = focusNote.noteTitle.match(/“.+”相关(.*)/)[1]
+                if (type) {
+                  // MNUtil.showHUD(type);
+                  templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
+                  templateNote.note.colorIndex = 0  // 颜色为淡黄色
+                  // templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] +  userInputTitle + "”相关" + type
+                  templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" +  userInputTitle + "”相关" + type
+                  MNUtil.undoGrouping(()=>{
+                    focusNote.addChild(templateNote.note)
+                    focusNote.appendNoteLink(templateNote, "Both")
+                    templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                  })
+                  // 林立飞：可能是 MN 底层的原因，数据库还没处理完，所以需要加一个延时
+                  MNUtil.delay(0.8).then(()=>{
+                    templateNote.focusInMindMap()
+                  })
+                }
+                break;
             }
             break;
         }
