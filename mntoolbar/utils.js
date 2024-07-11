@@ -957,9 +957,7 @@ class toolbarUtils {
                     }
                   }
                   
-                  if (findTargetParentNote) {
-    
-                  } else {
+                  if (!findTargetParentNote) {
                     // 找不到的话就换一个 locationText
                     for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
                       let descendantNoteColorIndex = descendantNote.note.colorIndex;
@@ -972,9 +970,7 @@ class toolbarUtils {
                       }
                     }
     
-                    if (findTargetParentNote) {
-    
-                    } else {
+                    if (!findTargetParentNote) {
                       for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
                         let descendantNoteColorIndex = descendantNote.note.colorIndex;
                         if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
@@ -987,9 +983,7 @@ class toolbarUtils {
                       }
     
     
-                      if (findTargetParentNote) {
-    
-                      } else {
+                      if (!findTargetParentNote) {
                         for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
                           let descendantNoteColorIndex = descendantNote.note.colorIndex;
                           if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
@@ -1001,9 +995,7 @@ class toolbarUtils {
                           }
                         }
     
-                        if (findTargetParentNote) {
-    
-                        } else {
+                        if (!findTargetParentNote) {
                           // 如果最后找不到
                           targetParentNote = targetTopParentNote.childNotes[0]
                         }
@@ -1012,6 +1004,54 @@ class toolbarUtils {
                   }
     
                   // MNUtil.showHUD(targetParentNote.noteTitle)
+                  let concept
+                  if (userInputTitle) {
+                    concept = userInputTitle
+                  } else {
+                    concept = focusNote.noteTitle.match(/【.*】;\s*([^;]*?)(?:;|$)/)[1]
+                  }
+                  // MNUtil.showHUD(concept)
+                  templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(targetType))
+                  templateNote.note.colorIndex = 0  // 颜色为淡黄色
+                  // templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] +  userInputTitle + "”相关" + type
+                  // let prefix = targetParentNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]? targetParentNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] : (targetParentNote.noteTitle.match(/“(.*)”相关.*/)[1]? targetParentNote.noteTitle.match(/“(.*)”相关.*/)[1] : "")
+                  let match1 = targetParentNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/);
+                  let match2 = targetParentNote.noteTitle.match(/“(.*)”相关.*/);
+                  let prefix = match1 ? match1[2] : (match2 ? match2[1] : "");
+                  // MNUtil.showHUD(prefix)
+                  templateNote.note.noteTitle = "“" + prefix + "”：“" + concept + "”相关" + targetType
+                  MNUtil.undoGrouping(()=>{
+                    if (match1) {
+                      // 找到黄色的卡片
+                      targetParentNote.addChild(templateNote.note)
+                      targetParentNote.appendNoteLink(templateNote, "Both")
+                      templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                      templateNote.appendNoteLink(focusNote, "Both")
+                      templateNote.moveComment(templateNote.note.comments.length-1, 2)
+                      focusNote.moveComment(focusNote.note.comments.length-1, focusNote.getCommentIndex("相关概念：", true))
+                    } else {
+                      if (match2) {
+                        // 找到绿色卡片
+                        targetParentNote.addChild(templateNote.note)
+                        targetParentNote.appendNoteLink(templateNote, "Both")
+                        templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                        templateNote.appendNoteLink(focusNote, "Both")
+                        templateNote.moveComment(templateNote.note.comments.length-1, 2)
+                        focusNote.moveComment(focusNote.note.comments.length-1, focusNote.getCommentIndex("相关概念：", true))
+                      } else {
+                        // 黄绿色都没有
+                        targetParentNote.addChild(templateNote.note)
+                        templateNote.appendNoteLink(targetParentNote, "To")
+                        templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                        templateNote.appendNoteLink(focusNote, "Both")
+                        templateNote.moveComment(templateNote.note.comments.length-1, templateNote.getCommentIndex("相关"+ targetType +"：", true))
+                        focusNote.moveComment(focusNote.note.comments.length-1, focusNote.getCommentIndex("相关概念：", true))
+                      }
+                    }
+                  })
+                  MNUtil.delay(0.8).then(()=>{
+                    templateNote.focusInMindMap()
+                  })
                 } catch (error) {
                   MNUtil.showHUD(error);
                 }
