@@ -902,143 +902,161 @@ class toolbarUtils {
             break;
 
           case 2:
-            let targetType
-            let targetTopParentNote
-            let targetParentNote
-            let findTargetParentNote = false
-            let parentNote = focusNote.parentNote
-            let previousParentNote = null; // 初始化为null，以便在没有父节点时保持不变
-            let finalParentNote = null; // 设置一个变量来保存符合条件的最终父节点
+            try {
+              let targetType
+              let targetTopParentNote
+              let targetParentNote
+              let findTargetParentNote = false
+              let parentNote = focusNote.parentNote
+              let previousParentNote = null; // 初始化为null，以便在没有父节点时保持不变
+              let finalParentNote = null; // 设置一个变量来保存符合条件的最终父节点
 
-            while (parentNote && !finalParentNote) { // 在找到最终的父节点之前继续循环
-              if (parentNote.noteTitle && parentNote.noteTitle.includes("- 定义")) { // 检查标题是否包含"- 定义"
-                finalParentNote = parentNote.parentNote; // 找到符合条件的父节点，将其赋值给finalParentNote变量
-                break; // 结束循环，因为我们找到了所需的父节点
-              }
-              previousParentNote = parentNote; // 保存当前父节点为上一个父节点
-              parentNote = parentNote.parentNote; // 继续向上查找父节点
-            }
-
-            const locationRegexI = /(“.*”：“.*”相关)定义/;
-            const locationRegexII = /“(.*)”：“(.*)”相关定义/;
-            let locationTextI = focusNote.parentNote.noteTitle.match(locationRegexI)[1]
-            let locationTextII = "“" + focusNote.parentNote.noteTitle.match(locationRegexII)[2] + "”相关"
-            let locationTextIII = "：“" + focusNote.parentNote.noteTitle.match(locationRegexII)[1] + "”相关"
-            let locationTextIV = "“" + focusNote.parentNote.noteTitle.match(locationRegexII)[1] + "”相关"
-            // MNUtil.showHUD(finalParentNote.noteTitle)
-            UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
-              "请确认增加的类型",
-              "",
-              0,
-              "写错了",
-              ["命题","例子","反例","问题"],
-              (alert, buttonIndex) => {
-                switch (buttonIndex) {
-                  case 1:
-                    targetType = "命题"
-                    targetTopParentNote = finalParentNote.childNotes[1]
-                    break;
-                  case 2:
-                    targetType = "例子"
-                    targetTopParentNote = finalParentNote.childNotes[2]
-                    break;
-                  case 3:
-                    targetType = "反例"
-                    targetTopParentNote = finalParentNote.childNotes[3]
-                    break;
-                  case 4:
-                    targetType = "问题"
-                    targetTopParentNote = finalParentNote.childNotes[4]
-                    break;
+              while (parentNote && !finalParentNote) { // 在找到最终的父节点之前继续循环
+                if (parentNote.noteTitle && parentNote.noteTitle.includes("- 定义")) { // 检查标题是否包含"- 定义"
+                  finalParentNote = parentNote.parentNote; // 找到符合条件的父节点，将其赋值给finalParentNote变量
+                  break; // 结束循环，因为我们找到了所需的父节点
                 }
-                try {
-                  // 优先用 locationTextI 来检测
-                  for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
-                    let descendantNoteColorIndex = descendantNote.note.colorIndex;
-                    if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
-                      if (descendantNote.noteTitle.includes(locationTextI)) {
-                        targetParentNote = descendantNote;
-                        findTargetParentNote = true;
-                        break;  // 找到目标后退出循环
-                      }
-                    }
+                previousParentNote = parentNote; // 保存当前父节点为上一个父节点
+                parentNote = parentNote.parentNote; // 继续向上查找父节点
+              }
+
+              let concept
+              if (userInputTitle) {
+                concept = userInputTitle
+              } else {
+                concept = focusNote.noteTitle.match(/【.*】;\s*([^;]*?)(?:;|$)/)[1]
+              }
+
+              const locationRegexI = /(“.*”：“.*”相关)定义/;
+              const locationRegexII = /“(.*)”：“(.*)”相关定义/;
+              const locationRegexIII = /“(.*)”相关定义/;
+              let locationTextI = "“" + concept + "”相关"
+              let locationTextII = focusNote.parentNote.noteTitle.match(locationRegexI)[1]
+              let locationTextIII = "“" + focusNote.parentNote.noteTitle.match(locationRegexII)[2] + "”相关"
+              let locationTextIV = "：“" + focusNote.parentNote.noteTitle.match(locationRegexII)[1] + "”相关"
+              let locationTextV = "“" + focusNote.parentNote.noteTitle.match(locationRegexII)[1] + "”相关"
+              // let locationTextV = "“" + focusNote.parentNote.noteTitle.match(locationRegexIII)[1] + "”相关"
+              // MNUtil.showHUD(finalParentNote.noteTitle)
+              // bug: 不知道为啥父卡片是淡绿色时，无法弹出这个框
+              UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+                "请确认增加的类型",
+                "",
+                0,
+                "写错了",
+                ["命题","例子","反例","问题"],
+                (alert, buttonIndex) => {
+                  if (buttonIndex == 0) { return }
+                  switch (buttonIndex) {
+                    case 1:
+                      targetType = "命题"
+                      targetTopParentNote = finalParentNote.childNotes[1]
+                      break;
+                    case 2:
+                      targetType = "例子"
+                      targetTopParentNote = finalParentNote.childNotes[2]
+                      break;
+                    case 3:
+                      targetType = "反例"
+                      targetTopParentNote = finalParentNote.childNotes[3]
+                      break;
+                    case 4:
+                      targetType = "问题"
+                      targetTopParentNote = finalParentNote.childNotes[4]
+                      break;
                   }
-                  
-                  if (!findTargetParentNote) {
-                    // 找不到的话就换一个 locationText
-                    for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
-                      let descendantNoteColorIndex = descendantNote.note.colorIndex;
-                      if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
-                        if (descendantNote.noteTitle.includes(locationTextII)) {
-                          targetParentNote = descendantNote;
-                          findTargetParentNote = true;
-                          break;  // 找到目标后退出循环
-                        }
-                      }
-                    }
-    
-                    if (!findTargetParentNote) {
+                  // try {
+                    // if (focusNote.parentNote.colorIndex !== 1) {
+                      // 优先用 locationTextI 来检测
                       for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
                         let descendantNoteColorIndex = descendantNote.note.colorIndex;
                         if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
-                          if (descendantNote.noteTitle.includes(locationTextIII)) {
+                          if (descendantNote.noteTitle.includes(locationTextI)) {
                             targetParentNote = descendantNote;
                             findTargetParentNote = true;
                             break;  // 找到目标后退出循环
                           }
                         }
                       }
-    
-    
-                      if (!findTargetParentNote) {
+                      
+                      if (findTargetParentNote) {
+                        // 如果已经有了就直接链接
+                        targetParentNote.appendNoteLink(focusNote, "Both")
+                        targetParentNote.moveComment(targetParentNote.note.comments.length-1, targetParentNote.getCommentIndex("相关"+ targetType +"：", true))
+                        focusNote.moveComment(focusNote.note.comments.length-1, focusNote.getCommentIndex("相关概念：", true))
+                      } else {
+                        // 找不到的话就换一个 locationText
                         for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
                           let descendantNoteColorIndex = descendantNote.note.colorIndex;
                           if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
-                            if (descendantNote.noteTitle.includes(locationTextIV)) {
+                            if (descendantNote.noteTitle.includes(locationTextII)) {
                               targetParentNote = descendantNote;
                               findTargetParentNote = true;
                               break;  // 找到目标后退出循环
                             }
                           }
                         }
-    
+        
                         if (!findTargetParentNote) {
-                          // 如果最后找不到
-                          targetParentNote = targetTopParentNote.childNotes[0]
+                          for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
+                            let descendantNoteColorIndex = descendantNote.note.colorIndex;
+                            if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
+                              if (descendantNote.noteTitle.includes(locationTextIII)) {
+                                targetParentNote = descendantNote;
+                                findTargetParentNote = true;
+                                break;  // 找到目标后退出循环
+                              }
+                            }
+                          }
+        
+        
+                          if (!findTargetParentNote) {
+                            for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
+                              let descendantNoteColorIndex = descendantNote.note.colorIndex;
+                              if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
+                                if (descendantNote.noteTitle.includes(locationTextIV)) {
+                                  targetParentNote = descendantNote;
+                                  findTargetParentNote = true;
+                                  break;  // 找到目标后退出循环
+                                }
+                              }
+                            }
+        
+                            if (!findTargetParentNote) {
+                              // 如果最后找不到
+                              targetParentNote = targetTopParentNote.childNotes[0]
+                            }
+                          }
                         }
-                      }
-                    }
-                  }
-    
-                  // MNUtil.showHUD(targetParentNote.noteTitle)
-                  let concept
-                  if (userInputTitle) {
-                    concept = userInputTitle
-                  } else {
-                    concept = focusNote.noteTitle.match(/【.*】;\s*([^;]*?)(?:;|$)/)[1]
-                  }
-                  // MNUtil.showHUD(concept)
-                  templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(targetType))
-                  templateNote.note.colorIndex = 0  // 颜色为淡黄色
-                  // templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] +  userInputTitle + "”相关" + type
-                  // let prefix = targetParentNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]? targetParentNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] : (targetParentNote.noteTitle.match(/“(.*)”相关.*/)[1]? targetParentNote.noteTitle.match(/“(.*)”相关.*/)[1] : "")
-                  let match1 = targetParentNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/);
-                  let match2 = targetParentNote.noteTitle.match(/“(.*)”相关.*/);
-                  let prefix = match1 ? match1[2] : (match2 ? match2[1] : "");
-                  // MNUtil.showHUD(prefix)
-                  templateNote.note.noteTitle = "“" + prefix + "”：“" + concept + "”相关" + targetType
-                  MNUtil.undoGrouping(()=>{
-                    if (match1) {
-                      // 找到黄色的卡片
-                      targetParentNote.addChild(templateNote.note)
-                      targetParentNote.appendNoteLink(templateNote, "Both")
-                      templateNote.moveComment(templateNote.note.comments.length-1, 1)
-                      templateNote.appendNoteLink(focusNote, "Both")
-                      templateNote.moveComment(templateNote.note.comments.length-1, 2)
-                      focusNote.moveComment(focusNote.note.comments.length-1, focusNote.getCommentIndex("相关概念：", true))
-                    } else {
-                      if (match2) {
-                        // 找到绿色卡片
+                      
+                    // } else {
+                    //   for (const descendantNote of targetTopParentNote.childNotes[0].descendantNodes.descendant) {
+                    //     let descendantNoteColorIndex = descendantNote.note.colorIndex;
+                    //     if (descendantNoteColorIndex === 0 || descendantNoteColorIndex === 1 || descendantNoteColorIndex === 4) {
+                    //       if (descendantNote.noteTitle.includes(locationTextV)) {
+                    //         targetParentNote = descendantNote;
+                    //         findTargetParentNote = true;
+                    //         break;  // 找到目标后退出循环
+                    //       }
+                    //     }
+                    //   }
+                    // }
+      
+                    // MNUtil.showHUD(targetParentNote.noteTitle)
+
+
+                    // MNUtil.showHUD(concept)
+                    templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(targetType))
+                    templateNote.note.colorIndex = 0  // 颜色为淡黄色
+                    // templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] +  userInputTitle + "”相关" + type
+                    // let prefix = targetParentNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]? targetParentNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] : (targetParentNote.noteTitle.match(/“(.*)”相关.*/)[1]? targetParentNote.noteTitle.match(/“(.*)”相关.*/)[1] : "")
+                    let match1 = targetParentNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/);
+                    let match2 = targetParentNote.noteTitle.match(/“(.*)”相关.*/);
+                    let prefix = match1 ? match1[2] : (match2 ? match2[1] : "");
+                    // MNUtil.showHUD(prefix)
+                    templateNote.note.noteTitle = "“" + prefix + "”：“" + concept + "”相关" + targetType
+                    MNUtil.undoGrouping(()=>{
+                      if (match1) {
+                        // 找到黄色的卡片
                         targetParentNote.addChild(templateNote.note)
                         targetParentNote.appendNoteLink(templateNote, "Both")
                         templateNote.moveComment(templateNote.note.comments.length-1, 1)
@@ -1046,24 +1064,37 @@ class toolbarUtils {
                         templateNote.moveComment(templateNote.note.comments.length-1, 2)
                         focusNote.moveComment(focusNote.note.comments.length-1, focusNote.getCommentIndex("相关概念：", true))
                       } else {
-                        // 黄绿色都没有
-                        targetParentNote.addChild(templateNote.note)
-                        templateNote.appendNoteLink(targetParentNote, "To")
-                        templateNote.moveComment(templateNote.note.comments.length-1, 1)
-                        templateNote.appendNoteLink(focusNote, "Both")
-                        templateNote.moveComment(templateNote.note.comments.length-1, templateNote.getCommentIndex("相关"+ targetType +"：", true))
-                        focusNote.moveComment(focusNote.note.comments.length-1, focusNote.getCommentIndex("相关概念：", true))
+                        if (match2) {
+                          // 找到绿色卡片
+                          targetParentNote.addChild(templateNote.note)
+                          targetParentNote.appendNoteLink(templateNote, "Both")
+                          templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                          templateNote.appendNoteLink(focusNote, "Both")
+                          templateNote.moveComment(templateNote.note.comments.length-1, 2)
+                          focusNote.moveComment(focusNote.note.comments.length-1, focusNote.getCommentIndex("相关概念：", true))
+                        } else {
+                          // 黄绿色都没有
+                          targetParentNote.addChild(templateNote.note)
+                          templateNote.appendNoteLink(targetParentNote, "To")
+                          templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                          templateNote.appendNoteLink(focusNote, "Both")
+                          templateNote.moveComment(templateNote.note.comments.length-1, templateNote.getCommentIndex("相关"+ targetType +"：", true))
+                          focusNote.moveComment(focusNote.note.comments.length-1, focusNote.getCommentIndex("相关概念：", true))
+                        }
                       }
-                    }
-                  })
-                  MNUtil.delay(0.8).then(()=>{
-                    templateNote.focusInMindMap()
-                  })
-                } catch (error) {
-                  MNUtil.showHUD(error);
+                    })
+                    MNUtil.delay(0.8).then(()=>{
+                      templateNote.focusInMindMap()
+                    })
+                  // } catch (error) {
+                  //   MNUtil.showHUD(error);
+                  // }
+                  }
                 }
-              }
-            )
+              )
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
             break;
           case 1:
             /* 往下增加模板 */
