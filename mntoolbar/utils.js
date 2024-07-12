@@ -321,12 +321,21 @@ class toolbarUtils {
                 focusNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote"
               ) {
                 // 去掉原来被链接的卡片里的链接
-                let oldLinkedNoteId = focusNote.comments[linkHtmlCommentIndex+1].text.match(/marginnote4app:\/\/note\/(.*)/)[1]
-                let oldLinkedNote = MNNote.new(oldLinkedNoteId)
-                let oldIndexInOldLinkedNote = oldLinkedNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
-                // MNUtil.showHUD(oldIndexInOldLinkedNote)
-                if (oldIndexInOldLinkedNote !== -1) {
-                  oldLinkedNote.removeCommentByIndex(oldIndexInOldLinkedNote)
+                // let oldLinkedNoteId = focusNote.comments[linkHtmlCommentIndex+1].text.match(/marginnote4app:\/\/note\/(.*)/)[1]
+                let oldLinkedNoteId = null; // 初始化旧链接笔记ID变量为null或默认值
+                let commentText = focusNote.comments[linkHtmlCommentIndex + 1].text; // 获取评论文本
+                let matchResult = commentText.match(/marginnote4app:\/\/note\/(.*)/); // 尝试匹配 marginnote4 的格式
+                if (!matchResult) { // 如果未匹配到，尝试匹配 marginnote3 的格式
+                  matchResult = commentText.match(/marginnote3app:\/\/note\/(.*)/);
+                }
+                if (matchResult && matchResult.length > 1) { // 确保匹配成功且匹配数组有第二个元素（即捕获到的内容）
+                  oldLinkedNoteId = matchResult[1]; // 获取旧链接笔记ID
+                  let oldLinkedNote = MNNote.new(oldLinkedNoteId)
+                  let oldIndexInOldLinkedNote = oldLinkedNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                  // MNUtil.showHUD(oldIndexInOldLinkedNote)
+                  if (oldIndexInOldLinkedNote !== -1) {
+                    oldLinkedNote.removeCommentByIndex(oldIndexInOldLinkedNote)
+                  }
                 }
                 focusNote.removeCommentByIndex(linkHtmlCommentIndex+1)
               }
@@ -2982,8 +2991,8 @@ static getActions() {
     "custom3":{name:"增加思考点",image:"custom3",description: this.template("addThought")},
     "custom9":{name:"移动摘录",image:"custom9",description: this.template("moveUpLinkNotes")},
     "custom10":{name:"更新证明",image:"custom10",description: this.template("renewProof")},
-    "custom7":{name:"更新旧卡片",image:"custom7",description: this.template("renewCards")},
     "custom6":{name:"修改子卡片前缀",image:"custom6",description: this.template("changePrefix")},
+    "custom7":{name:"更新旧卡片",image:"custom7",description: this.template("renewCards")},
     "custom4":{name:"保留摘录图片",image:"custom4",description: this.template("clearContentKeepExcerptAndImage")},
     "custom5":{name:"保留文本",image:"custom5",description: this.template("clearContentKeepText")},
     "custom8":{name:"存档",image:"custom8",description: this.template("achieveCards")},
