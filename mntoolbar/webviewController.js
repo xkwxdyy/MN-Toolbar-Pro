@@ -1144,6 +1144,7 @@ toolbarController.prototype.customAction = async function (actionName) {
                   MNUtil.showHUD(error)
                 }
               }
+              focusNote.refresh()
             })
           })
         } catch (error) {
