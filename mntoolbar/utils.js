@@ -1365,17 +1365,24 @@ class toolbarUtils {
     })
   }
 
-  static changePrefix(focusNote, focusNoteColorIndex) {
-    let prefix, postfix
+  static changePrefix(focusNote) {
+    let focusNoteColorIndex = focusNote.note.colorIndex
+    let prefix
     let type
-    const contentCardRegex = /【(.*?)：(.*?)(：.+)?】(.*)/;  // 注意前面的两个要加 ? 变成非贪婪模式
+    const contentCardRegex = /【(.*?)：(.*?)(：.*)?】(.*)/;  // 注意前面的两个要加 ? 变成非贪婪模式
     if (focusNoteColorIndex == 1) {
       // 淡绿色卡片
-      prefix = focusNote.noteTitle.match(/“(.+)”相关.*/)[1]
-      type = focusNote.noteTitle.match(/“(.+)”相关(.*)/)[2]
+      prefix = focusNote.noteTitle.match(/“(.*)”相关.*/)[1]
+      type = focusNote.noteTitle.match(/“.*”相关(.*)/)[1]
       focusNote.childNotes.forEach(childNote => {
         if (childNote.note.colorIndex == 0 || childNote.note.colorIndex == 4) {
-          childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
+          // childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
+          childNote.noteTitle = childNote.noteTitle.replace(/“(.*?)”：“(.*?)”相关(.*)/, function(match, p1, p2, p3) {
+            // 替换 yyy 中的 xxx 为 prefix
+            let newP2 = p2.replace(new RegExp(p1, "g"), prefix);
+            // 返回替换后的结果
+            return `“${prefix}”：“${newP2}”相关${p3}`;
+          });
 
           // 确保有双向链接了
           let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
@@ -1433,7 +1440,12 @@ class toolbarUtils {
         prefix = focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]
         focusNote.childNotes.forEach(childNote => {
           if (childNote.colorIndex == 0 || childNote.colorIndex == 4) {
-            childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
+            childNote.noteTitle = childNote.noteTitle.replace(/“(.*?)”：“(.*?)”相关(.*)/, function(match, p1, p2, p3) {
+              // 替换 yyy 中的 xxx 为 prefix
+              let newP2 = p2.replace(new RegExp(p1, "g"), prefix);
+              // 返回替换后的结果
+              return `“${prefix}”：“${newP2}”相关${p3}`;
+            });
             // 确保有双向链接了
             let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
             if (childNoteIdIndexInFocusNote == -1) {

@@ -999,7 +999,18 @@ toolbarController.prototype.customAction = async function (actionName) {
       case "changePrefix":
         try {
           MNUtil.undoGrouping(()=>{
-            toolbarUtils.changePrefix(focusNote, focusNoteColorIndex)
+            toolbarUtils.changePrefix(focusNote)
+            focusNote.descendantNodes.descendant.forEach(descendantNote => {
+              if ([0, 1, 4].includes(descendantNote.note.colorIndex)) {
+                try {
+                  // MNUtil.undoGrouping(()=>{
+                    toolbarUtils.changePrefix(descendantNote)
+                  // })
+                } catch (error) {
+                  MNUtil.showHUD(error);
+                }
+              }
+            })
           })
         } catch (error) {
           MNUtil.showHUD(error);
