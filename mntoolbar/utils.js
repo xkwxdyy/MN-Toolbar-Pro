@@ -459,10 +459,11 @@ class toolbarUtils {
           // }
 
           // [fixed] 无法移动手写的问题出在 PaintNote 的 text 是 undefined
-          if (comment.type == "PaintNote") {
+          if (comment.type == "PaintNote" || comment.type == "LinkNote") {
             nonLinkNoteCommentsIndex.push(index)
           } else {
             if (
+              comment.text &&
               !comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") 
             ) {
               nonLinkNoteCommentsIndex.push(index)
@@ -562,10 +563,13 @@ class toolbarUtils {
         // 最后为“应用：”
         focusNoteComments.forEach((comment, index) => {
           if (index > applicationHtmlCommentIndex) {
-            if (comment.type == "PaintNote") {
+            if (comment.type == "PaintNote" || comment.type == "LinkNote") {
               nonLinkNoteCommentsIndex.push(index)
             } else {
-              if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
+              if (
+                comment.text &&
+                !comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app")
+              ) {
                 nonLinkNoteCommentsIndex.push(index)
               }
             }
@@ -1440,8 +1444,8 @@ class toolbarUtils {
             childNote.moveComment(childNote.note.comments.length-1, 1)
           }
         } else {
-          childNote.noteTitle = childNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`)
-
+          // childNote.noteTitle = childNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`)
+          this.makeCardsAuxChangefocusNotePrefix(childNote, focusNote)
           // 确保有双向链接了
           let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
           if (childNoteIdIndexInFocusNote == -1) {
@@ -1504,7 +1508,8 @@ class toolbarUtils {
           } else {
             // 其余颜色的内容卡片
             try {
-              childNote.noteTitle = childNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`);
+              // childNote.noteTitle = childNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`);
+              this.makeCardsAuxChangefocusNotePrefix(childNote,focusNote)
               let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
               if (focusNoteIdIndexInChildNote == -1) {
                 // let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
