@@ -863,6 +863,7 @@ class toolbarUtils {
                 /* 向上增加模板 */
                 let parentNote = focusNote.parentNote
                 let parentNoteColorIndex = parentNote.note.colorIndex
+                let linkHtmlCommentIndex = Math.max(focusNote.getCommentIndex("相关链接：",true), focusNote.getCommentIndex("所属：",true))
                 if (parentNoteColorIndex == 1) {
                   // 淡绿色
                   MNUtil.undoGrouping(()=>{
@@ -870,7 +871,6 @@ class toolbarUtils {
                       // 把选中的变成淡黄色
                       focusNote.note.colorIndex = 0
                     }
-                    // parentNote 向下增加一个层级
                     type = parentNote.noteTitle.match(/“.+”相关(.*)/)[1]
                     // MNUtil.showHUD(type);
                     templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
@@ -885,8 +885,32 @@ class toolbarUtils {
                     // 修改标题
                     if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
                       focusNote.note.noteTitle = "“" + templateNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”相关" + type
+                      // 去掉原来被链接的卡片里的链接
+                      // let oldLinkedNoteId = focusNote.comments[linkHtmlCommentIndex+1].text.match(/marginnote4app:\/\/note\/(.*)/)[1]
+                      let oldLinkedNoteId
+                      let commentText = focusNote.comments[linkHtmlCommentIndex + 1].text; // 获取评论文本
+                      let matchResult = commentText.match(/marginnote4app:\/\/note\/(.*)/); // 尝试匹配 marginnote4 的格式
+                      if (!matchResult) { // 如果未匹配到，尝试匹配 marginnote3 的格式
+                        matchResult = commentText.match(/marginnote3app:\/\/note\/(.*)/);
+                      }
+                      if (matchResult) { // 确保匹配成功且匹配数组有第二个元素（即捕获到的内容）
+                        oldLinkedNoteId = matchResult[1]; // 获取旧链接笔记ID
+                        let oldLinkedNote = MNNote.new(oldLinkedNoteId)
+                        let oldIndexInOldLinkedNote = oldLinkedNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                        // MNUtil.showHUD(oldIndexInOldLinkedNote)
+                        if (oldIndexInOldLinkedNote !== -1) {
+                          oldLinkedNote.removeCommentByIndex(oldIndexInOldLinkedNote)
+                        }
+                      }
+                      focusNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+                      // 增加新的链接
+                      templateNote.appendNoteLink(focusNote, "Both")
+                      focusNote.moveComment(focusNote.note.comments.length-1, linkHtmlCommentIndex+1)
+                      focusNote.childNotes.forEach(childNote => {
+                        childNote.refresh()
+                      })
                     } else {
-                      let linkHtmlCommentIndex = Math.max(focusNote.getCommentIndex("相关链接：",true), focusNote.getCommentIndex("所属：",true))
+                      // 知识点卡片
                       if (
                         focusNote.comments[linkHtmlCommentIndex+1] &&
                         focusNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote"
@@ -923,7 +947,7 @@ class toolbarUtils {
                   })
                 } else {
                   if (parentNoteColorIndex == 0 || parentNoteColorIndex == 4) {
-                    // 淡黄色
+                    // 父卡片为黄色
                     MNUtil.undoGrouping(()=>{
                       if (focusNoteColorIndex == 4) {
                         // 把选中的变成淡黄色
@@ -944,6 +968,23 @@ class toolbarUtils {
                       // 删除原来的链接
                       if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
                         if (focusNote.comments[1] && focusNote.comments[1].type !== "HtmlNote") {
+                          // 去掉原来被链接的卡片里的链接
+                          // let oldLinkedNoteId = focusNote.comments[linkHtmlCommentIndex+1].text.match(/marginnote4app:\/\/note\/(.*)/)[1]
+                          let oldLinkedNoteId = null; // 初始化旧链接笔记ID变量为null或默认值
+                          let commentText = focusNote.comments[linkHtmlCommentIndex + 1].text; // 获取评论文本
+                          let matchResult = commentText.match(/marginnote4app:\/\/note\/(.*)/); // 尝试匹配 marginnote4 的格式
+                          if (!matchResult) { // 如果未匹配到，尝试匹配 marginnote3 的格式
+                            matchResult = commentText.match(/marginnote3app:\/\/note\/(.*)/);
+                          }
+                          if (matchResult) { // 确保匹配成功且匹配数组有第二个元素（即捕获到的内容）
+                            oldLinkedNoteId = matchResult[1]; // 获取旧链接笔记ID
+                            let oldLinkedNote = MNNote.new(oldLinkedNoteId)
+                            let oldIndexInOldLinkedNote = oldLinkedNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                            // MNUtil.showHUD(oldIndexInOldLinkedNote)
+                            if (oldIndexInOldLinkedNote !== -1) {
+                              oldLinkedNote.removeCommentByIndex(oldIndexInOldLinkedNote)
+                            }
+                          }
                           focusNote.removeCommentByIndex(1)
                         }
                         // 增加新的链接
@@ -951,8 +992,11 @@ class toolbarUtils {
                         focusNote.moveComment(focusNote.note.comments.length-1, 1)
                         // 修改标题
                         focusNote.note.noteTitle = "“" + templateNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”相关" + type
+                        focusNote.childNotes.forEach(childNote => {
+                          childNote.refresh()
+                        })
                       } else {
-                        let linkHtmlCommentIndex = Math.max(focusNote.getCommentIndex("相关链接：",true), focusNote.getCommentIndex("所属：",true))
+                        // focusNote 是知识点卡片
                         if (
                           focusNote.comments[linkHtmlCommentIndex+1] &&
                           focusNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote"
@@ -965,7 +1009,7 @@ class toolbarUtils {
                           if (!matchResult) { // 如果未匹配到，尝试匹配 marginnote3 的格式
                             matchResult = commentText.match(/marginnote3app:\/\/note\/(.*)/);
                           }
-                          if (matchResult && matchResult.length > 1) { // 确保匹配成功且匹配数组有第二个元素（即捕获到的内容）
+                          if (matchResult) { // 确保匹配成功且匹配数组有第二个元素（即捕获到的内容）
                             oldLinkedNoteId = matchResult[1]; // 获取旧链接笔记ID
                             let oldLinkedNote = MNNote.new(oldLinkedNoteId)
                             let oldIndexInOldLinkedNote = oldLinkedNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
@@ -3090,8 +3134,8 @@ static getActions() {
     "custom2":{name:"增加模板",image:"custom2",description: this.template("addTemplate")},
     "custom3":{name:"增加思考点",image:"custom3",description: this.template("addThought")},
     "custom9":{name:"移动摘录",image:"custom9",description: this.template("moveUpLinkNotes")},
-    "custom10":{name:"更新证明",image:"custom10",description: this.template("renewProof")},
     "custom6":{name:"修改子卡片前缀",image:"custom6",description: this.template("changePrefix")},
+    "custom10":{name:"更新证明",image:"custom10",description: this.template("renewProof")},
     "custom7":{name:"更新旧卡片",image:"custom7",description: this.template("renewCards")},
     "custom4":{name:"保留摘录图片",image:"custom4",description: this.template("clearContentKeepExcerptAndImage")},
     "custom5":{name:"保留文本",image:"custom5",description: this.template("clearContentKeepText")},
