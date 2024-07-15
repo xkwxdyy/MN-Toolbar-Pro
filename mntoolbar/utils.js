@@ -1411,6 +1411,7 @@ class toolbarUtils {
       } catch (error) {
         MNUtil.showHUD(error);
       }
+      focusNote.refresh()
     })
   }
 
@@ -3394,6 +3395,60 @@ static template(action) {
       config.title = "title"
       config.content = "{{clipboardText}}"
       break;
+    case "menu_study":
+      config.action = "menu"
+      config.menuItems = [
+        {
+          "action" : "addThought",
+          "menuTitle" : "增加思考点"
+        },
+        {
+          "action" : "moveUpLinkNotes",
+          "menuTitle" : "摘录⬆️"
+        },
+        {
+          "action" : "renewProof",
+          "menuTitle" : "更新证明"
+        }
+      ]
+      break;
+    case "menu_oldCards":
+      config.action = "menu"
+      config.menuItems = [
+        {
+          "action" : "renewCards",
+          "menuTitle" : "更新旧卡片"
+        },
+        {
+          "action" : "clearContentKeepExcerptAndImage",
+          "menuTitle" : "保留摘录、手写和图片"
+        },
+        {
+          "action" : "clearContentKeepText",
+          "menuTitle" : "保留 Markdown 文本"
+        },
+        {
+          "action" : "achieveCards",
+          "menuTitle" : "存档旧卡片"
+        }
+      ]
+      break;
+    case "menu_title":
+      config.action = "menu"
+      config.menuItems = [
+        {
+          "action" : "copyTitle",
+          "menuTitle" : "复制标题"
+        },
+        {
+          "action" : "pasteInTitle",
+          "menuTitle" : "粘贴到标题"
+        },
+        {
+          "action" : "extractTitle",
+          "menuTitle" : "提取标题"
+        }
+      ]
     default:
       break;
   }
@@ -3427,18 +3482,21 @@ static getActions() {
     // "color13":{name:"Set Color 14",image:"color13",description:JSON.stringify({fillPattern:-1},null,2)},
     // "color14":{name:"Set Color 15",image:"color14",description:JSON.stringify({fillPattern:-1},null,2)},
     // "color15":{name:"Set Color 16",image:"color15",description:JSON.stringify({fillPattern:-1},null,2)},
-    "custom1":{name:"制卡",image:"custom1",description: this.template("makeCards")},
-    "custom2":{name:"增加模板",image:"custom2",description: this.template("addTemplate")},
-    "custom3":{name:"增加思考点",image:"custom3",description: this.template("addThought")},
-    "custom9":{name:"移动摘录",image:"custom9",description: this.template("moveUpLinkNotes")},
-    "custom6":{name:"修改子卡片前缀",image:"custom6",description: this.template("changePrefix")},
-    "custom10":{name:"更新证明",image:"custom10",description: this.template("renewProof")},
-    "custom7":{name:"更新旧卡片",image:"custom7",description: this.template("renewCards")},
-    "custom4":{name:"保留摘录图片",image:"custom4",description: this.template("clearContentKeepExcerptAndImage")},
-    "custom5":{name:"保留文本",image:"custom5",description: this.template("clearContentKeepText")},
-    "pasteAsTitle":{name:"Paste As Title",image:"pasteAsTitle",description:"Paste As Title"},
-    "custom8":{name:"存档",image:"custom8",description: this.template("achieveCards")},
-    "custom11":{name:"隐藏插件栏",image:"custom11",description: this.template("hideAddonBar")},
+    "custom1":{name:"制卡",image:"makeCards",description: this.template("makeCards")},
+    "custom2":{name:"学习",image:"study",description: this.template("menu_study")},
+    "custom3":{name:"增加模板",image:"addTemplate",description: this.template("addTemplate")},
+    "custom4":{name:"修改子卡片前缀",image:"changePrefix",description: this.template("changePrefix")},
+    // "custom3":{name:"增加思考点",image:"addThought",description: this.template("addThought")},
+    // "custom9":{name:"移动摘录",image:"moveUpLinkNotes",description: this.template("moveUpLinkNotes")},
+    // "custom10":{name:"更新证明",image:"renewProof",description: this.template("renewProof")},
+    "custom5":{name:"标题",image:"title",description: this.template("menu_title")},
+    "custom6":{name:"旧卡片",image:"oldCards",description: this.template("menu_oldCards")},
+    // "custom5":{name:"更新旧卡片",image:"renewCards",description: this.template("renewCards")},
+    // "custom6":{name:"保留摘录图片",image:"clearContentKeepExcerptAndImage",description: this.template("clearContentKeepExcerptAndImage")},
+    // "custom7":{name:"保留文本",image:"clearContentKeepText",description: this.template("clearContentKeepText")},
+    // "custom6":{name:"粘贴到卡片标题",image:"pasteAsTitle",description: this.template("pasteInTitle")},
+    // "custom8":{name:"存档",image:"achieveCards",description: this.template("achieveCards")},
+    "custom7":{name:"隐藏插件栏",image:"hideAddonBar",description: this.template("hideAddonBar")},
     "execute":{name:"execute",image:"execute",description:"let focusNote = MNNote.getFocusNote()\nMNUtil.showHUD(focusNote.noteTitle)"},
     "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
     "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})},
