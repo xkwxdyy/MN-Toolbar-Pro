@@ -314,8 +314,7 @@ viewWillLayoutSubviews: function() {
   configSaveTapped: async function (params) {
     // MNUtil.copy(self.selectedItem)
     let selected = self.selectedItem
-    if (!selected.includes("custom") && !selected.includes("color") && selected !== "ocr" && selected !== "edit" && selected !== "execute") {
-      MNUtil.showHUD("Only available for Custom Action!")
+    if (!toolbarConfig.checkCouldSave(selected)) {
       return
     }
     try {
@@ -356,24 +355,25 @@ viewWillLayoutSubviews: function() {
   configRunTapped: async function (params) {
   try {
     let selected = self.selectedItem
-    if (selected.includes("custom")  || selected.includes("color") || selected === "ocr" || selected === "execute") {
-      let input = await self.getWebviewContent()
-      // toolbarUtils.copy(selected)
-      if (self.selectedItem === "execute" || MNUtil.isValidJSON(input)) {
-        if (!toolbarConfig.actions[selected]) {
-          toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
-        }
-        toolbarConfig.actions[selected].description = input
-        toolbarConfig.actions[selected].name = self.titleInput.text
-        self.toolbarController.actions = toolbarConfig.actions
-        if (self.toolbarController.dynamicToolbar) {
-          self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
-        }
-        toolbarConfig.save("MNToolbar_actionConfig")
-      }else{
-        MNUtil.showHUD("Invalid JSON format!")
-        return
+    if (!toolbarConfig.checkCouldSave(selected)) {
+      return
+    }
+    let input = await self.getWebviewContent()
+    // toolbarUtils.copy(selected)
+    if (self.selectedItem === "execute" || MNUtil.isValidJSON(input)) {
+      if (!toolbarConfig.actions[selected]) {
+        toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
       }
+      toolbarConfig.actions[selected].description = input
+      toolbarConfig.actions[selected].name = self.titleInput.text
+      self.toolbarController.actions = toolbarConfig.actions
+      if (self.toolbarController.dynamicToolbar) {
+        self.toolbarController.dynamicToolbar.actions = toolbarConfig.actions
+      }
+      toolbarConfig.save("MNToolbar_actionConfig")
+    }else{
+      MNUtil.showHUD("Invalid JSON format!")
+      return
     }
     if (selected.includes("custom")) {
       self.toolbarController.customAction(selected)
@@ -401,6 +401,9 @@ viewWillLayoutSubviews: function() {
   }
   },
   toggleSelected:function (sender) {
+    if (self.selectedItem === sender.id) {
+      return
+    }
     sender.isSelected = !sender.isSelected
     let title = sender.id
     self.selectedItem = title

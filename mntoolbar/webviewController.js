@@ -190,8 +190,33 @@ try {
   customAction: async function (button) {
     // eval("MNUtil.showHUD('123')")
     // return
-    let actionName = toolbarConfig.action[button.index]
-    self.customAction(actionName)
+    let actionName = toolbarConfig.action[button.index]//这个是key
+    let des = toolbarConfig.getDescriptionByName(actionName)
+    if (des.action === "menu") {
+      self.onClick = true
+      if ("autoClose" in des) {
+        self.onClick = !des.autoClose
+      }
+      let menuItems = des.menuItems
+      if (menuItems.length) {
+        var commandTable = menuItems.map(item=>{
+          let title = item.menuTitle ?? item.action
+          return {title:title,object:self,selector:'customActionByMenu:',param:item}
+        })
+        self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,4)
+      }
+      return
+    }
+    self.customActionByDes(des)
+    // self.customAction(actionName)
+  },
+  customActionByMenu: async function (des) {
+    if (self.dynamicWindow && (!("autoClose" in des) || des.autoClose)) {
+      self.checkPopoverController()
+      self.hideAfterDelay(0.1)
+    }
+    // MNUtil.copyJSON(des)
+    self.customActionByDes(des)
   },
   imagePickerControllerDidFinishPickingMediaWithInfo:async function (UIImagePickerController,info) {
     try {
@@ -308,23 +333,52 @@ try {
   },
 
   searchInEudic:function () {
+  try {
     self.onClick = true
     let textSelected = MNUtil.selectionText
     if (!textSelected) {
       let focusNote = MNNote.getFocusNote()
-      if (focusNote.excerptText && !focusNote.excerptPic) {
-        textSelected = focusNote.excerptText
-      }else if (focusNote.noteTitle) {
-        textSelected = focusNote.noteTitle
-      }else{
-        let firstComment = focusNote.comments.filter(comment=>comment.type === "TextNote")[0]
-        if (firstComment) {
-          textSelected = firstComment.text
+      if (focusNote) {
+        if (focusNote.excerptText) {
+          textSelected = focusNote.excerptText
+        }else if (focusNote.noteTitle) {
+          textSelected = focusNote.noteTitle
+        }else{
+          let firstComment = focusNote.comments.filter(comment=>comment.type === "TextNote")[0]
+          if (firstComment) {
+            textSelected = firstComment.text
+          }
         }
       }
     }
     if (textSelected) {
-      let url = "eudic://dict/"+encodeURIComponent(textSelected)
+      let textEncoded = encodeURIComponent(textSelected)
+      let url = "eudic://dict/"+textEncoded
+      // let des = toolbarConfig.getDescriptionByName("searchInEudic")
+      // if (des && des.source) {
+      //   // MNUtil.copyJSON(des)
+      //   switch (des.source) {
+      //     case "eudic":
+      //       //donothing
+      //       break;
+      //     case "yddict":
+      //       MNUtil.copy(textSelected)
+      //       url = "yddict://"
+      //       break;
+      //     case "iciba":
+      //       url = "iciba://word="+textEncoded
+      //       break;
+      //     case "sogodict":
+      //       url = "bingdict://"+textEncoded
+      //       break;
+      //     case "bingdict":
+      //       url = "sogodict://"+textEncoded
+      //       break;
+      //     default:
+      //       MNUtil.showHUD("Invalid source")
+      //       return
+      //   }
+      // }
       // showHUD(url)
       MNUtil.openURL(url)
     }else{
@@ -333,6 +387,10 @@ try {
     if (self.dynamicWindow) {
       self.hideAfterDelay()
     }
+    
+  } catch (error) {
+    toolbarUtils.addErrorLog(error, "searchInEudic")
+  }
   },
   switchTitleorExcerpt() {
     self.onClick = true
@@ -772,12 +830,12 @@ toolbarController.prototype.hide = function (frame) {
 /**
  * @this {toolbarController}
  */
-toolbarController.prototype.hideAfterDelay = function (frame) {
+toolbarController.prototype.hideAfterDelay = function (delay = 2) {
   let dynamicController = this
     if (dynamicController.notifyTimer) {
       dynamicController.notifyTimer.invalidate()
     }
-    dynamicController.notifyTimer = NSTimer.scheduledTimerWithTimeInterval(2, false, function () {
+    dynamicController.notifyTimer = NSTimer.scheduledTimerWithTimeInterval(delay, false, function () {
       dynamicController.hide()
       // dynamicController.view.hidden = true
       dynamicController.notifyTimer.invalidate()
@@ -879,7 +937,7 @@ toolbarController.prototype.setToolbarLayout = function () {
 toolbarController.prototype.checkPopoverController = function () {
   if (this.view.popoverController) {this.view.popoverController.dismissPopoverAnimated(true);}
 }
-toolbarController.prototype.customAction = async function (actionName) {
+toolbarController.prototype.customAction = async function (actionName) {//这里actionName指的是key
   try {
     if (!toolbarUtils.checkSubscribe(true)) {
       return
@@ -1561,16 +1619,18 @@ toolbarController.prototype.customAction = async function (actionName) {
         }
         break
       case "setButtonImage":
+        MNUtil.showHUD("setButtonImage")
+        await MNUtil.delay(0.01)
         if ("imageConfig" in des) {
           let config = des.imageConfig
           let keys = Object.keys(config)
-          let asyncActions = keys.map(key=>{
-            let url = config[key].url
-            let scale = config[key].scale??3
-            return toolbarConfig.setImageByURL(key, url,true,scale)
-          })
+          for (let i = 0; i < keys.length; i++) {
+            let url = config[keys[i]].url
+            let scale = config[keys[i]].scale??3
+            toolbarConfig.setImageByURL(keys[i], url,false,scale)
+          }
           // await Promise.all(asyncActions)
-          // MNUtil.postNotification("refreshToolbarButton", {})
+          MNUtil.postNotification("refreshToolbarButton", {})
         }else{
           MNUtil.showHUD("Missing imageConfig")
         }

@@ -1,3 +1,4 @@
+
 // 获取UITextView实例的所有属性
 function getAllProperties(obj) {
     var props = [];
@@ -2495,7 +2496,7 @@ try {
     }
   
   }
-  static html(content){
+  static htmlDev(content){
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2505,6 +2506,7 @@ try {
     <style>
         body{
             background-color: lightgray;
+            font-size:1.1em;
         }
         .editor {
             width: 100%;
@@ -2516,16 +2518,17 @@ try {
             outline: none; /* Removes the default focus outline */
         }
         .key {
-            color: red;
+            color: rgb(181, 0, 0);
+            font-weight: bold;
         }
         .string {
             color: green;
         }
         .number {
-            color: blue;
+            color: rgb(201, 77, 0);
         }
         .boolean {
-            color: magenta;
+            color: rgb(204, 0, 204);
         }
         .null {
             color: gray;
@@ -2537,6 +2540,57 @@ try {
 <div id="editor" class="editor" contenteditable>${content}</div>
 
 <script>
+  let isComposing = false;
+function getCaretPosition(element) {
+    const selection = window.getSelection();
+    let caretOffset = 0;
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        caretOffset = preCaretRange.toString().length;
+    }
+    return caretOffset;
+}
+
+function setCaretPosition(element, offset) {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    let currentOffset = 0;
+    let found = false;
+
+    function traverseNodes(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const nodeLength = node.textContent.length;
+            if (currentOffset + nodeLength >= offset) {
+                range.setStart(node, offset - currentOffset);
+                range.collapse(true);
+                found = true;
+                return;
+            } else {
+                currentOffset += nodeLength;
+            }
+        } else {
+            for (let i = 0; i < node.childNodes.length; i++) {
+                traverseNodes(node.childNodes[i]);
+                if (found) return;
+            }
+        }
+    }
+
+    traverseNodes(element);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+    function updateContentWithoutBlur() {
+        if (isComposing) return;
+        const editor = document.getElementById('editor');
+        const caretPosition = getCaretPosition(editor);
+        const json = editor.innerText;
+        editor.innerHTML = syntaxHighlight(json);
+        setCaretPosition(editor, caretPosition);
+    }
     function updateContent() {
         const editor = document.getElementById('editor');
         const json = editor.innerText;
@@ -2551,11 +2605,12 @@ try {
 
     function syntaxHighlight(json) {
         json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        json = json.replace(/("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*")|(\b-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?\b)|(\btrue\b|\bfalse\b|\bnull\b)/g, function (match) {
+        return json.replace(/("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(?:\\s*:)?|\\b-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?\\b|\\btrue\\b|\\bfalse\\b|\\bnull\\b)/g, function (match) {
             let cls = 'number';
             if (/^"/.test(match)) {
                 if (/:$/.test(match)) {
                     cls = 'key';
+                    match = match.slice(0, -1) + '</span>:';
                 } else {
                     cls = 'string';
                 }
@@ -2566,19 +2621,23 @@ try {
             }
             return '<span class="' + cls + '">' + match + '</span>';
         });
-        return json;
     }
 
-    // const editor = document.getElementById('editor');
-    // editor.addEventListener('input', updateContent);
+  document.getElementById('editor').addEventListener('input', updateContentWithoutBlur);
+  document.getElementById('editor').addEventListener('compositionstart', () => {
+      isComposing = true;
+  });
 
-    // Set initial content and format it
-    // editor.textContent = '{"name": "John", "age": 30, "city": "New York", "isEmployed": true, "projects": ["alpha", "beta"], "salary": null}';
-    updateContent();
+  document.getElementById('editor').addEventListener('compositionend', () => {
+      isComposing = false;
+      updateContentWithoutBlur();
+  });
+  updateContent();
 </script>
 
 </body>
 </html>
+
 `
   }
   static JShtml(content){
@@ -2592,7 +2651,8 @@ try {
     <style>
         body{
           margin: 0;
-            background-color: lightgray;
+          background-color: lightgray;
+          font-size:1.1em;
         }
         pre{
           margin: 0;
@@ -2600,7 +2660,7 @@ try {
         }
         code{
             background-color: lightgray !important;
-            height: calc(100vh - 25px);
+            height: calc(100vh - 30px);
             white-space: pre-wrap; /* 保留空格和换行符，并自动换行 */
             word-wrap: break-word; /* 针对长单词进行换行 */
         }
@@ -2622,9 +2682,9 @@ try {
         .number {
             color: blue;
         }
-        .boolean {
-            color: magenta;
-        }
+    .hljs-literal {
+        color: rgb(204, 0, 204);
+    }
         .null {
             color: gray;
         }
@@ -2636,6 +2696,10 @@ try {
     }
     .hljs-string {
         color: #429904; /* 自定义内置类颜色 */
+    }
+    .hljs-built_in {
+        font-weight: bold;
+        color: #dd6b00; /* 自定义内置类颜色 */
     }
     </style>
 </head>
@@ -2674,17 +2738,70 @@ hljs.registerLanguage('javascript', function(hljs) {
     ]
   };
 });
+let isComposing = false;
+function getCaretPosition(element) {
+    const selection = window.getSelection();
+    let caretOffset = 0;
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        caretOffset = preCaretRange.toString().length;
+    }
+    return caretOffset;
+}
+
+function setCaretPosition(element, offset) {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    let currentOffset = 0;
+    let found = false;
+
+    function traverseNodes(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const nodeLength = node.textContent.length;
+            if (currentOffset + nodeLength >= offset) {
+                range.setStart(node, offset - currentOffset);
+                range.collapse(true);
+                found = true;
+                return;
+            } else {
+                currentOffset += nodeLength;
+            }
+        } else {
+            for (let i = 0; i < node.childNodes.length; i++) {
+                traverseNodes(node.childNodes[i]);
+                if (found) return;
+            }
+        }
+    }
+
+    traverseNodes(element);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
     function updateContent() {
         const editor = document.getElementById('code-block');
         hljs.highlightElement(editor);
-        // editor.innerHTML = editor.innerHTML
-                          // .replace(/MNUtil\\b/g, '<span class="hljs-built_in">MNUtil</span>')
-                          // .replace(/MNNote\\b/g, '<span class="hljs-built_in">MNNote</span>')
-                          // .replace(/toolbarConfig\\b/g, '<span class="hljs-built_in">toolbarConfig</span>')
-                          // .replace(/toolbarUtil\\b/g, '<span class="hljs-built_in">toolbarUtil</span>');
         editor.blur();
     }
-    
+    function updateContentWithoutBlur() {
+      if (isComposing) return;
+      const editor = document.getElementById('code-block');
+      const caretPosition = getCaretPosition(editor);
+      hljs.highlightElement(editor);
+      setCaretPosition(editor, caretPosition);
+    }
+document.getElementById('code-block').addEventListener('input', updateContentWithoutBlur);
+document.getElementById('code-block').addEventListener('compositionstart', () => {
+    isComposing = true;
+});
+
+document.getElementById('code-block').addEventListener('compositionend', () => {
+    isComposing = false;
+    updateContentWithoutBlur();
+});
     updateContent();
 </script>
 
@@ -2692,7 +2809,158 @@ hljs.registerLanguage('javascript', function(hljs) {
 </html>
 `
   }
+  static html(content){
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0,minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JSON Editor with Highlighting</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css" rel="stylesheet">
+    <style>
+        body{
+          margin: 0;
+          background-color: lightgray;
+          font-size:1.1em;
+        }
+        pre{
+          margin: 0;
+          padding: 0;
+        }
+        code{
+            padding: 0 !important;
+            background-color: lightgray !important;
+            height: 100vh;
+            white-space: pre-wrap; /* 保留空格和换行符，并自动换行 */
+            word-wrap: break-word; /* 针对长单词进行换行 */
+        }
+        .editor {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow: auto;
+            outline: none; /* Removes the default focus outline */
+        }
+        .key {
+            color: red;
+        }
+        .string {
+            color: green;
+        }
+        .hljs-number {
+            color: rgb(253, 99, 4);
+        }
+    .hljs-literal {
+        color: rgb(204, 0, 204);
+    }
+        .null {
+            color: gray;
+        }
+    .hljs-attr {
+            color: rgb(181, 0, 0);
+            font-weight: bold;
+    }
+    .hljs-function {
+        color: #8f21d8; /* 自定义内置类颜色 */
+    }
+    .hljs-string {
+        color: #429904; /* 自定义内置类颜色 */
+    }
+    .hljs-built_in {
+        font-weight: bold;
+        color: #dd6b00; /* 自定义内置类颜色 */
+    }
+    </style>
+</head>
+<body>
+<pre><code class="json" id="code-block" contenteditable>${content}</code></pre>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/languages/javascript.min.js"></script>
+<script>
 
+let isComposing = false;
+function getCaretPosition(element) {
+    const selection = window.getSelection();
+    let caretOffset = 0;
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        caretOffset = preCaretRange.toString().length;
+    }
+    return caretOffset;
+}
+
+function setCaretPosition(element, offset) {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    let currentOffset = 0;
+    let found = false;
+
+    function traverseNodes(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const nodeLength = node.textContent.length;
+            if (currentOffset + nodeLength >= offset) {
+                range.setStart(node, offset - currentOffset);
+                range.collapse(true);
+                found = true;
+                return;
+            } else {
+                currentOffset += nodeLength;
+            }
+        } else {
+            for (let i = 0; i < node.childNodes.length; i++) {
+                traverseNodes(node.childNodes[i]);
+                if (found) return;
+            }
+        }
+    }
+
+    traverseNodes(element);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+    function updateContent() {
+        const editor = document.getElementById('code-block');
+        const json = editor.innerText;
+
+        try {
+            const parsedJson = JSON.parse(json);
+            editor.innerHTML = JSON.stringify(parsedJson, null, 4);
+            hljs.highlightElement(editor);
+        } catch (e) {
+            console.error("Invalid JSON:", e.message);
+        }
+        editor.blur();
+    }
+    function updateContentWithoutBlur() {
+      if (isComposing) return;
+      const editor = document.getElementById('code-block');
+      const caretPosition = getCaretPosition(editor);
+      const json = editor.innerText.replace('”,','\",').replace('“,','\",');
+      editor.innerHTML = json
+      hljs.highlightElement(editor);
+      setCaretPosition(editor, caretPosition);
+    }
+document.getElementById('code-block').addEventListener('input', updateContentWithoutBlur);
+document.getElementById('code-block').addEventListener('compositionstart', () => {
+    isComposing = true;
+});
+
+document.getElementById('code-block').addEventListener('compositionend', () => {
+    isComposing = false;
+    updateContentWithoutBlur();
+});
+    updateContent();
+</script>
+
+</body>
+</html>
+`
+  }
   /**
    * count为true代表本次check会消耗一次免费额度（如果当天未订阅），如果为false则表示只要当天免费额度没用完，check就会返回true
    * 开启ignoreFree则代表本次check只会看是否订阅，不管是否还有免费额度
@@ -2720,7 +2988,6 @@ hljs.registerLanguage('javascript', function(hljs) {
       }
       return false
     }
-  
   }
   /**
    * 
@@ -2955,6 +3222,7 @@ class toolbarConfig {
       }
       return a
     })
+    
     this.actions = this.getByDefault("MNToolbar_actionConfig", this.getActions())
     if ("excute" in this.actions) {
       let action = this.actions["excute"]
@@ -2967,7 +3235,6 @@ class toolbarConfig {
         this.actions["execute"].image = "execute"
       }
     }
-
     this.buttonConfig = this.getByDefault("MNToolbar_buttonConfig", this.defalutButtonConfig)
     this.highlightColor = UIColor.blendedColor(
       UIColor.colorWithHexString("#2c4d81").colorWithAlphaComponent(0.8),
@@ -2984,7 +3251,8 @@ class toolbarConfig {
       // toolbarUtils.addErrorLog(error, "init")
     }
     this.initImage()
-
+    this.buttonImageFolder = MNUtil.dbFolder+"/buttonImage"
+    NSFileManager.defaultManager().createDirectoryAtPathAttributes(this.buttonImageFolder, undefined)
   }
   static initImage(){
     try {
@@ -3006,16 +3274,40 @@ class toolbarConfig {
   //     MNUtil.postNotification("refreshToolbarButton", {})
   //   }
   // }
-  static async setImageByURL(action,url,refresh = false,scale = 3) {
-    return new Promise((resolve, reject) => {
-      MNUtil.delay(0.01).then(()=>{
-        this.imageConfigs[action] = toolbarUtils.getOnlineImage(url,scale)
+  static setImageByURL(action,url,refresh = false,scale = 3) {
+    let md5 = MNUtil.MD5(url)
+    let localPath = this.buttonImageFolder+md5+".png"
+    if (MNUtil.isfileExists(localPath)) {
+      this.imageConfigs[action] = MNUtil.getImage(localPath,scale)
+    }else{
+      let image
+      let imageData
+      if (/^marginnote\dapp:\/\/note\//.test(url)) {
+        let note = MNNote.new(url)
+        imageData = MNNote.getImageFromNote(note)
+        if (imageData) {
+          image = UIImage.imageWithDataScale(imageData, scale)
+          imageData.writeToFileAtomically(localPath, false)
+          this.imageConfigs[action] = image
+          if (refresh) {
+            MNUtil.postNotification("refreshToolbarButton", {})
+          }
+        }
+        return
+      }
+      if (/^https?:\/\//.test(url)) {
+        image = toolbarUtils.getOnlineImage(url,scale)
+        this.imageConfigs[action] = image
+        image.pngData().writeToFileAtomically(localPath, false)
         if (refresh) {
           MNUtil.postNotification("refreshToolbarButton", {})
         }
-      })
-      resolve()
-    })
+        return
+      }
+    }
+    if (refresh) {
+      MNUtil.postNotification("refreshToolbarButton", {})
+    }
   }
   static getAllActions(){
     let allActions = this.action.concat(this.getDefaultActionKeys().slice(this.action.length))
@@ -3238,11 +3530,30 @@ static getExecuteCode(){
   }
 }
 static getDescriptionByName(actionName){
+  let des
   if (actionName in toolbarConfig.actions) {
-    return JSON.parse(toolbarConfig.actions[actionName].description)
+    des = toolbarConfig.actions[actionName].description
   }else{
-    return JSON.parse(toolbarConfig.getActions()[actionName].description)
+    des = toolbarConfig.getActions()[actionName].description
   }
+  if (MNUtil.isValidJSON(des)) {
+    return JSON.parse(des)
+  }
+  return undefined
+}
+static checkCouldSave(actionName){
+  if (actionName.includes("custom")) {
+    return true
+  }
+  if (actionName.includes("color")) {
+    return true
+  }
+  let whiteNamelist = ["ocr","edit","execute","searchInEudic"]
+  if (whiteNamelist.includes(actionName)) {
+    return true
+  }
+  MNUtil.showHUD("Only available for Custom Action!")
+  return false
 }
 }
 class toolbarSandbox{
@@ -3253,6 +3564,13 @@ class toolbarSandbox{
     }
     try {
       eval(code)
+      // MNUtil.studyView.bringSubviewToFront(MNUtil.mindmapView)
+      // MNUtil.notebookController.view.hidden = true
+      // MNUtil.mindmapView.setZoomScaleAnimated(10.0,true)
+      // MNUtil.mindmapView.zoomScale = 0.1;
+      // MNUtil.mindmapView.hidden = true
+      // MNUtil.showHUD("message"+MNUtil.mindmapView.minimumZoomScale)
+      // MNUtil.copyJSON(getAllProperties(MNUtil.mindmapView))
     } catch (error) {
       toolbarUtils.addErrorLog(error, "executeInSandbox",code)
     }

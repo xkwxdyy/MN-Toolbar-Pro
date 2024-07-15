@@ -8,15 +8,18 @@
     <style>
         body{
           margin: 0;
-            background-color: lightgray;
+          background-color: lightgray;
+          font-size:1.1em;
         }
         pre{
           margin: 0;
           padding: 0;
         }
         code{
+            margin: 0 !important;
+            padding: 0 !important;
             background-color: lightgray !important;
-            height: calc(100vh - 25px);
+            height: calc(100vh - 30px);
             white-space: pre-wrap; /* 保留空格和换行符，并自动换行 */
             word-wrap: break-word; /* 针对长单词进行换行 */
         }
@@ -35,61 +38,129 @@
         .string {
             color: green;
         }
-        .number {
-            color: blue;
+        .hljs-number {
+            color: rgb(253, 99, 4);
         }
-        .boolean {
-            color: magenta;
-        }
+    .hljs-literal {
+        color: rgb(204, 0, 204);
+    }
         .null {
             color: gray;
         }
-
+    .hljs-attr {
+            color: rgb(181, 0, 0);
+            font-weight: bold;
+    }
+    .hljs-function {
+        color: #8f21d8; /* 自定义内置类颜色 */
+    }
+    .hljs-string {
+        color: #429904; /* 自定义内置类颜色 */
+    }
+    .hljs-built_in {
+        font-weight: bold;
+        color: #dd6b00; /* 自定义内置类颜色 */
+    }
     </style>
 </head>
 <body>
-<pre><code class="javascript" id="code-block" contenteditable>let note = MNNote.getFocusNote()
-MNUtil.showHUD(note.noteTitle)</code></pre>
+<pre><code class="json" id="code-block" contenteditable>
+{
+    "action": "menu",
+    "menuItems": [
+        {
+            "action": "copy",
+            "menuTitle": "123"
+        },
+        {
+            "action": "toggleView",
+            "targets": [
+                "mindmapToolbar",
+                "addonBar"
+            ],
+            "autoClose": false,
+            "menuTitle": "🉑toggle"
+        }
+    ]
+}</code></pre>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/languages/javascript.min.js"></script>
 <script>
-// hljs.registerLanguage('javascript', function(hljs) {
-//   var KEYWORDS = 'in if for while finally var new function do return void else break catch ' +
-//                  'instanceof with throw case default try this switch continue typeof delete ' +
-//                  'let yield const export super debugger as await static import from as async await';
-//   var LITERALS = 'true false null undefined NaN Infinity';
-//   var TYPES = 'Object Function Boolean Symbol MNUtil';
 
-//   return {
-//     keywords: {
-//       keyword: KEYWORDS,
-//       literal: LITERALS,
-//       built_in: TYPES
-//     },
-//     contains: [
-//       hljs.APOS_STRING_MODE,
-//       hljs.QUOTE_STRING_MODE,
-//       hljs.C_LINE_COMMENT_MODE,
-//       hljs.C_BLOCK_COMMENT_MODE,
-//       hljs.C_NUMBER_MODE,
-//       {
-//         className: 'property',
-//         begin: '\\.\\w+'
-//       }
-//     ]
-//   };
-// });
+let isComposing = false;
+function getCaretPosition(element) {
+    const selection = window.getSelection();
+    let caretOffset = 0;
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        caretOffset = preCaretRange.toString().length;
+    }
+    return caretOffset;
+}
+
+function setCaretPosition(element, offset) {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    let currentOffset = 0;
+    let found = false;
+
+    function traverseNodes(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const nodeLength = node.textContent.length;
+            if (currentOffset + nodeLength >= offset) {
+                range.setStart(node, offset - currentOffset);
+                range.collapse(true);
+                found = true;
+                return;
+            } else {
+                currentOffset += nodeLength;
+            }
+        } else {
+            for (let i = 0; i < node.childNodes.length; i++) {
+                traverseNodes(node.childNodes[i]);
+                if (found) return;
+            }
+        }
+    }
+
+    traverseNodes(element);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
     function updateContent() {
         const editor = document.getElementById('code-block');
-        hljs.highlightElement(editor);
-        // editor.innerHTML = editor.innerHTML
-                          // .replace(/MNUtil\\b/g, '<span class="hljs-built_in">MNUtil</span>')
-                          // .replace(/MNNote\\b/g, '<span class="hljs-built_in">MNNote</span>')
-                          // .replace(/toolbarConfig\\b/g, '<span class="hljs-built_in">toolbarConfig</span>')
-                          // .replace(/toolbarUtil\\b/g, '<span class="hljs-built_in">toolbarUtil</span>');
+        const json = editor.innerText.replace('”,','\",');
+
+        try {
+            const parsedJson = JSON.parse(json);
+            editor.innerHTML = JSON.stringify(parsedJson, null, 4);
+            hljs.highlightElement(editor);
+        } catch (e) {
+            console.error("Invalid JSON:", e.message);
+        }
         editor.blur();
     }
-    
+    function updateContentWithoutBlur() {
+      if (isComposing) return;
+      const editor = document.getElementById('code-block');
+      const caretPosition = getCaretPosition(editor);
+      const json = editor.innerText.replace('”,','\",').replace('“,','\",');
+      editor.innerHTML = json
+      hljs.highlightElement(editor);
+      setCaretPosition(editor, caretPosition);
+    }
+document.getElementById('code-block').addEventListener('input', updateContentWithoutBlur);
+document.getElementById('code-block').addEventListener('compositionstart', () => {
+    isComposing = true;
+});
+
+document.getElementById('code-block').addEventListener('compositionend', () => {
+    isComposing = false;
+    updateContentWithoutBlur();
+});
     updateContent();
 </script>
 
