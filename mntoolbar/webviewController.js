@@ -1203,6 +1203,15 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                 }
               }
               focusNote.refresh()
+              if (focusNotes.length == 1) {
+                try {
+                  // MNUtil.undoGrouping(()=>{
+                    focusNote.focusInMindMap()
+                  // })
+                } catch (error) {
+                  MNUtil.showHUD(error);
+                }
+              }
             })
           })
         } catch (error) {
@@ -1927,6 +1936,15 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 }
               }
               focusNote.refresh()
+              if (focusNotes.length == 1) {
+                try {
+                  // MNUtil.undoGrouping(()=>{
+                    focusNote.focusInMindMap()
+                  // })
+                } catch (error) {
+                  MNUtil.showHUD(error);
+                }
+              }
             })
           })
         } catch (error) {
