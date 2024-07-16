@@ -869,6 +869,7 @@ class toolbarUtils {
                 let parentNote = focusNote.parentNote
                 let parentNoteColorIndex = parentNote.note.colorIndex
                 let linkHtmlCommentIndex = Math.max(focusNote.getCommentIndex("相关链接：",true), focusNote.getCommentIndex("所属：",true))
+                let preContent, postContent
                 if (parentNoteColorIndex == 1) {
                   // 淡绿色
                   MNUtil.undoGrouping(()=>{
@@ -889,7 +890,17 @@ class toolbarUtils {
                     templateNote.addChild(focusNote.note)
                     // 修改标题
                     if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
-                      focusNote.note.noteTitle = "“" + templateNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”相关" + type
+                      preContent = templateNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]
+                      postContent = focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]
+                      let preContentBefore = focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[1]
+                      // 检查 postContent 是否以 preContentBefore 开头
+                      let isStartWithPreContentBefore = postContent.startsWith(preContentBefore);
+                      if (isStartWithPreContentBefore) {
+                        // 如果是的话，替换 postContent 中的 preContentBefore 部分为 preContent
+                        let replacedContent = postContent.replace(preContentBefore, preContent);
+                        postContent = replacedContent;
+                      }
+                      focusNote.note.noteTitle = "“" + preContent + "”：“" + postContent + "”相关" + type
                       // 去掉原来被链接的卡片里的链接
                       // let oldLinkedNoteId = focusNote.comments[linkHtmlCommentIndex+1].text.match(/marginnote4app:\/\/note\/(.*)/)[1]
                       let oldLinkedNoteId
@@ -996,7 +1007,18 @@ class toolbarUtils {
                         templateNote.appendNoteLink(focusNote, "Both")
                         focusNote.moveComment(focusNote.note.comments.length-1, 1)
                         // 修改标题
-                        focusNote.note.noteTitle = "“" + templateNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”相关" + type
+                        // focusNote.note.noteTitle = "“" + templateNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”：“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2] + "”相关" + type
+                        preContent = templateNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]
+                        postContent = focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]
+                        let preContentBefore = focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[1]
+                        // 检查 postContent 是否以 preContentBefore 开头
+                        let isStartWithPreContentBefore = postContent.startsWith(preContentBefore);
+                        if (isStartWithPreContentBefore) {
+                          // 如果是的话，替换 postContent 中的 preContentBefore 部分为 preContent
+                          let replacedContent = postContent.replace(preContentBefore, preContent);
+                          postContent = replacedContent;
+                        }
+                        focusNote.note.noteTitle = "“" + preContent + "”：“" + postContent + "”相关" + type
                         focusNote.childNotes.forEach(childNote => {
                           childNote.refresh()
                         })
