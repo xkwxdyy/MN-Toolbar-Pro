@@ -3427,7 +3427,7 @@ static template(action) {
       config.menuItems = [
         {
           "action" : "addThought",
-          "menuTitle" : "增加思考点"
+          "menuTitle" : "思考⬆️||➕思考点"
         },
         {
           "action" : "moveUpLinkNotes",
@@ -3436,6 +3436,14 @@ static template(action) {
         {
           "action" : "renewProof",
           "menuTitle" : "更新证明"
+        },
+        {
+          "action" : "moveLastLinkToProof",
+          "menuTitle" : "最后链接➡️证明"
+        },
+        {
+          "action" : "moveLastLinkToThought",
+          "menuTitle" : "最后链接➡️思考"
         }
       ]
       break;
