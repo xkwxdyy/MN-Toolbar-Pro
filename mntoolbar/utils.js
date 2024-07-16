@@ -503,9 +503,10 @@ class toolbarUtils {
     focusNotes.forEach(focusNote => {
       let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
       if (thoughtHtmlCommentIndex !== -1) {
-        let keywordsIHtmlCommentIndex = focusNote.getCommentIndex("关键词： ", true)
-        let keywordsIIHtmlCommentIndex = focusNote.getCommentIndex("关键词：", true)
-        let keywordsHtmlCommentIndex = Math.max(keywordsIHtmlCommentIndex, keywordsIIHtmlCommentIndex)  // 兼容两种“关键词：”
+        // let keywordsIHtmlCommentIndex = focusNote.getCommentIndex("关键词： ", true)
+        // let keywordsIIHtmlCommentIndex = focusNote.getCommentIndex("关键词：", true)
+        // let keywordsHtmlCommentIndex = Math.max(keywordsIHtmlCommentIndex, keywordsIIHtmlCommentIndex)  // 兼容两种“关键词：”
+        let keywordsHtmlCommentIndex = focusNote.getIncludingCommentIndex("关键词：", true)
         let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
         let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
         let focusNoteComments = focusNote.note.comments
