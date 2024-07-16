@@ -501,90 +501,94 @@ class toolbarUtils {
   // 增加思考
   static addThought(focusNotes) {
     focusNotes.forEach(focusNote => {
-      let keywordsIHtmlCommentIndex = focusNote.getCommentIndex("关键词： ", true)
-      let keywordsIIHtmlCommentIndex = focusNote.getCommentIndex("关键词：", true)
-      let keywordsHtmlCommentIndex = Math.max(keywordsIHtmlCommentIndex, keywordsIIHtmlCommentIndex)  // 兼容两种“关键词：”
-      let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
-      let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
-      let focusNoteComments = focusNote.note.comments
-      let focusNoteCommentLength = focusNoteComments.length
-      let nonLinkNoteCommentsIndex = []
-      let focusNoteColorIndex = focusNote.note.colorIndex
-      let focusNoteType
-      /* 确定卡片类型 */
-      switch (focusNoteColorIndex) {
-        case 2: // 淡蓝色：定义类
-          focusNoteType = "definition"
-          break;
-        case 3: // 淡粉色：反例
-          focusNoteType = "antiexample"
-          break;
-        case 9: // 深绿色：思想方法
-          focusNoteType = "method"
-          break;
-        case 10: // 深蓝色：定理命题
-          focusNoteType = "theorem"
-          break;
-        case 15: // 淡紫色：例子
-          focusNoteType = "example"
-          break;
-      }
-      // let afterApplicationHtmlContinuousLink = true
-      // switch (focusNoteType) {
-      //   case "method":
-      //     proofHtmlCommentIndex= focusNote.getCommentIndex("原理：", true)
-      //     break;
-      //   case "antiexample":
-      //     proofHtmlCommentIndex= focusNote.getCommentIndex("反例及证明：", true)
-      //     break;
-      //   default:
-      //     proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
-      //     break;
-      // }
-      // if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") { // 若“证明：”下面是 HtmlNote，则说明没有证明内容，就需要移动“证明：”
-        // 证明内容要么在最上方，要么在最下方，判断标准为“应用：”及链接后面有没有内容
-        // 要注意的是链接的判断要和证明内容的链接判断区分开，不能被证明内容的链接判断干扰
-      if (focusNoteType == "definition") {
-        // 最后为“相关概念：”
-        // focusNoteComments.forEach((comment, index) => {
-        //   if (index > definitionHtmlCommentIndex) {
-        //     if (comment.type == "PaintNote") {
-        //       nonLinkNoteCommentsIndex.push(index)
-        //     } else {
-        //       if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
-        //         nonLinkNoteCommentsIndex.push(index)
-        //       }
-        //     }
-        //   }
-        // })
-
-        // 由于定义类卡片的“相关概念：”下方不是只有链接，所以不能用链接判断，否则会把相关概念的部分也移动上去，所以就改成了直接增加
-        focusNote.appendMarkdownComment("- ", linkHtmlCommentIndex)
-      } else {
-        // 最后为“应用：”
-        focusNoteComments.forEach((comment, index) => {
-          if (index > applicationHtmlCommentIndex) {
-            if (comment.type == "PaintNote" || comment.type == "LinkNote") {
-              nonLinkNoteCommentsIndex.push(index)
-            } else {
-              if (
-                comment.text &&
-                !comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app")
-              ) {
+      let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+      if (thoughtHtmlCommentIndex !== -1) {
+        let keywordsIHtmlCommentIndex = focusNote.getCommentIndex("关键词： ", true)
+        let keywordsIIHtmlCommentIndex = focusNote.getCommentIndex("关键词：", true)
+        let keywordsHtmlCommentIndex = Math.max(keywordsIHtmlCommentIndex, keywordsIIHtmlCommentIndex)  // 兼容两种“关键词：”
+        let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
+        let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
+        let focusNoteComments = focusNote.note.comments
+        let focusNoteCommentLength = focusNoteComments.length
+        let nonLinkNoteCommentsIndex = []
+        let focusNoteColorIndex = focusNote.note.colorIndex
+        let focusNoteType
+        /* 确定卡片类型 */
+        switch (focusNoteColorIndex) {
+          case 2: // 淡蓝色：定义类
+            focusNoteType = "definition"
+            break;
+          case 3: // 淡粉色：反例
+            focusNoteType = "antiexample"
+            break;
+          case 9: // 深绿色：思想方法
+            focusNoteType = "method"
+            break;
+          case 10: // 深蓝色：定理命题
+            focusNoteType = "theorem"
+            break;
+          case 15: // 淡紫色：例子
+            focusNoteType = "example"
+            break;
+        }
+        // let afterApplicationHtmlContinuousLink = true
+        // switch (focusNoteType) {
+        //   case "method":
+        //     proofHtmlCommentIndex= focusNote.getCommentIndex("原理：", true)
+        //     break;
+        //   case "antiexample":
+        //     proofHtmlCommentIndex= focusNote.getCommentIndex("反例及证明：", true)
+        //     break;
+        //   default:
+        //     proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+        //     break;
+        // }
+        // if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") { // 若“证明：”下面是 HtmlNote，则说明没有证明内容，就需要移动“证明：”
+          // 证明内容要么在最上方，要么在最下方，判断标准为“应用：”及链接后面有没有内容
+          // 要注意的是链接的判断要和证明内容的链接判断区分开，不能被证明内容的链接判断干扰
+        if (focusNoteType == "definition") {
+          // 最后为“相关概念：”
+          // focusNoteComments.forEach((comment, index) => {
+          //   if (index > definitionHtmlCommentIndex) {
+          //     if (comment.type == "PaintNote") {
+          //       nonLinkNoteCommentsIndex.push(index)
+          //     } else {
+          //       if (!comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") ) {
+          //         nonLinkNoteCommentsIndex.push(index)
+          //       }
+          //     }
+          //   }
+          // })
+  
+          // 由于定义类卡片的“相关概念：”下方不是只有链接，所以不能用链接判断，否则会把相关概念的部分也移动上去，所以就改成了直接增加
+          focusNote.appendMarkdownComment("- ", linkHtmlCommentIndex)
+        } else {
+          // 最后为“应用：”
+          focusNoteComments.forEach((comment, index) => {
+            if (index > applicationHtmlCommentIndex) {
+              if (comment.type == "PaintNote" || comment.type == "LinkNote") {
                 nonLinkNoteCommentsIndex.push(index)
+              } else {
+                if (
+                  comment.text &&
+                  !comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app")
+                ) {
+                  nonLinkNoteCommentsIndex.push(index)
+                }
               }
             }
+          })
+  
+          if (nonLinkNoteCommentsIndex.length !== 0) {
+            for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, keywordsHtmlCommentIndex++) {
+              focusNote.moveComment(i, keywordsHtmlCommentIndex);
+            }
+          } else {
+            focusNote.appendMarkdownComment("- ", keywordsHtmlCommentIndex)
           }
-        })
-
-        if (nonLinkNoteCommentsIndex.length !== 0) {
-          for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, keywordsHtmlCommentIndex++) {
-            focusNote.moveComment(i, keywordsHtmlCommentIndex);
-          }
-        } else {
-          focusNote.appendMarkdownComment("- ", keywordsHtmlCommentIndex)
         }
       }
+      
     })
     
   }
