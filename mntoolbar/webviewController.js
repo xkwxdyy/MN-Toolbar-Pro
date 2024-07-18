@@ -953,6 +953,8 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
     let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
+      case "test":
+        break;
       case "convertNoteToNonexcerptVersion":
         MNUtil.showHUD("卡片转化为非摘录版本")
         try {
@@ -1671,6 +1673,27 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
+      case "findDuplicateTitles":
+        const repeatedTitles = toolbarUtils.findDuplicateTitles(focusNote.childNotes);
+        MNUtil.showHUD(repeatedTitles);
+        if (repeatedTitles.length > 0) {
+          MNUtil.copy(repeatedTitles[0]);
+        }
+        break;
+      case "moveLastLinkToProof":
+        let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+        MNUtil.undoGrouping(()=>{
+          focusNote.moveComment(focusNote.comments.length-1,thoughtHtmlCommentIndex)
+        })
+        break;
+      case "moveLastLinkToThought":
+        let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
+        let keywordsHtmlCommentIndex = focusNote.getIncludingCommentIndex("关键词：", true)
+        let finalIndex = (keywordsHtmlCommentIndex == -1)? linkHtmlCommentIndex : keywordsHtmlCommentIndex
+        MNUtil.undoGrouping(()=>{
+          focusNote.moveComment(focusNote.comments.length-1, finalIndex)
+        })
+        break;
       case "copyTitle":
         MNUtil.copy(focusNote.noteTitle)
         MNUtil.showHUD(focusNote.noteTitle)

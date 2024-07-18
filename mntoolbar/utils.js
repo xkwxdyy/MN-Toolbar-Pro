@@ -29,6 +29,26 @@ class toolbarUtils {
 
   // 夏大鱼羊自定义函数
 
+  // 寻找子卡片中重复的 "; xxx" 的 xxx
+  static findDuplicateTitles(childNotes) {
+    const seen = new Set();
+    const duplicates = [];
+  
+    childNotes.forEach(note => {
+      const parts = note.noteTitle.split(';').slice(1);
+      parts.forEach(part => {
+        const fragment = part.trim();
+        if (seen.has(fragment)) {
+          duplicates.push(fragment);
+        } else {
+          seen.add(fragment);
+        }
+      });
+    });
+  
+    return duplicates;
+  }
+
   // 将卡片变成非摘录版本
   // 需求：https://github.com/xkwxdyy/mnTextHandler/discussions/3
   /**
@@ -3427,7 +3447,7 @@ static template(action) {
       config.menuItems = [
         {
           "action" : "addThought",
-          "menuTitle" : "增加思考点"
+          "menuTitle" : "思考⬆️||➕思考点"
         },
         {
           "action" : "moveUpLinkNotes",
@@ -3436,6 +3456,14 @@ static template(action) {
         {
           "action" : "renewProof",
           "menuTitle" : "更新证明"
+        },
+        {
+          "action" : "moveLastLinkToProof",
+          "menuTitle" : "最后链接➡️证明"
+        },
+        {
+          "action" : "moveLastLinkToThought",
+          "menuTitle" : "最后链接➡️思考"
         }
       ]
       break;
@@ -3474,6 +3502,10 @@ static template(action) {
         {
           "action" : "extractTitle",
           "menuTitle" : "提取标题"
+        },
+        {
+          "action" : "findDuplicateTitles",
+          "menuTitle" : "子卡片标题查重"
         }
       ]
     default:
@@ -3497,6 +3529,7 @@ static getActions() {
     "custom6":{name:"旧卡片",image:"oldCards",description: this.template("menu_oldCards")},
     "custom7":{name:"隐藏插件栏",image:"hideAddonBar",description: this.template("hideAddonBar")},
     "execute":{name:"execute",image:"execute",description:"let focusNote = MNNote.getFocusNote()\nMNUtil.showHUD(focusNote.noteTitle)"},
+    "custom8":{name:"测试",image:"test",description: this.template("test")},
     "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
     "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})},
     "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
