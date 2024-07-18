@@ -1673,6 +1673,13 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
+      case "findDuplicateTitles":
+        const repeatedTitles = toolbarUtils.findDuplicateTitles(focusNote.childNotes);
+        MNUtil.showHUD(repeatedTitles);
+        if (repeatedTitles.length > 0) {
+          MNUtil.copy(repeatedTitles[0]);
+        }
+        break;
       case "moveLastLinkToProof":
         let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
         MNUtil.undoGrouping(()=>{

@@ -29,6 +29,26 @@ class toolbarUtils {
 
   // 夏大鱼羊自定义函数
 
+  // 寻找子卡片中重复的 "; xxx" 的 xxx
+  static findDuplicateTitles(childNotes) {
+    const seen = new Set();
+    const duplicates = [];
+  
+    childNotes.forEach(note => {
+      const parts = note.noteTitle.split(';').slice(1);
+      parts.forEach(part => {
+        const fragment = part.trim();
+        if (seen.has(fragment)) {
+          duplicates.push(fragment);
+        } else {
+          seen.add(fragment);
+        }
+      });
+    });
+  
+    return duplicates;
+  }
+
   // 将卡片变成非摘录版本
   // 需求：https://github.com/xkwxdyy/mnTextHandler/discussions/3
   /**
@@ -3482,6 +3502,10 @@ static template(action) {
         {
           "action" : "extractTitle",
           "menuTitle" : "提取标题"
+        },
+        {
+          "action" : "findDuplicateTitles",
+          "menuTitle" : "子卡片标题查重"
         }
       ]
     default:
