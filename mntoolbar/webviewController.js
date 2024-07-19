@@ -192,32 +192,66 @@ try {
     // return
     let actionName = toolbarConfig.action[button.index]//这个是key
     let des = toolbarConfig.getDescriptionByName(actionName)
+
     if (des.action === "menu") {
       self.onClick = true
       if ("autoClose" in des) {
         self.onClick = !des.autoClose
       }
       let menuItems = des.menuItems
+      let width = des.menuWidth??200
       if (menuItems.length) {
         var commandTable = menuItems.map(item=>{
-          let title = item.menuTitle ?? item.action
-          return {title:title,object:self,selector:'customActionByMenu:',param:item}
+          let title = (typeof item === "string")?item:(item.menuTitle ?? item.action)
+          return {title:title,object:self,selector:'customActionByMenu:',param:{des:item,button:button}}
         })
-        self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,4)
+        self.commandTables = [commandTable]
+        self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
       }
       return
     }
     self.customActionByDes(des)
     // self.customAction(actionName)
   },
-  customActionByMenu: async function (des) {
+  customActionByMenu: async function (param) {
+    let des = param.des
+    if (typeof des === "string" || !("action" in des)) {
+      return
+    }
+    let button = param.button
+    if (des.action === "menu") {
+      self.onClick = true
+      self.checkPopoverController()
+      if (self.dynamicWindow && (("autoClose" in des) && des.autoClose)) {
+        self.hideAfterDelay(0.1)
+      }
+      let menuItems = des.menuItems
+      let width = des.menuWidth??200
+      if (menuItems.length) {
+        var commandTable = menuItems.map(item=>{
+          let title = (typeof item === "string")?item:(item.menuTitle ?? item.action)
+          return {title:title,object:self,selector:'customActionByMenu:',param:{des:item,button:button}}
+        })
+        commandTable.unshift({title:toolbarUtils.emojiNumber(self.commandTables.length)+" 🔙",object:self,selector:'lastPopover:',param:button})
+        self.commandTables.push(commandTable)
+        self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+      }
+      return
+    }
     if (self.dynamicWindow && (!("autoClose" in des) || des.autoClose)) {
       self.checkPopoverController()
       self.hideAfterDelay(0.1)
     }
     // MNUtil.copyJSON(des)
+    self.commandTables = []
     self.customActionByDes(des)
   },
+lastPopover: function (button) {
+      self.checkPopoverController()
+      self.commandTables.pop()
+      let commandTable = self.commandTables.at(-1)
+      self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,4)
+},
   imagePickerControllerDidFinishPickingMediaWithInfo:async function (UIImagePickerController,info) {
     try {
       

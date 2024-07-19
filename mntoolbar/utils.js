@@ -2133,6 +2133,10 @@ class toolbarUtils {
                   .replace("{{alphabetIndex}}",alphabetIndices[index])
     return tem
   }
+  static emojiNumber(index){
+    let emojiIndices = ["0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟"]
+    return emojiIndices[index]
+  }
   /**
    * 
    * @param {MNNote} note 
@@ -3235,6 +3239,17 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
     }
     MNUtil.showHUD("Download failed")
     return undefined
+  }
+  static shortcut(name,des){
+    let url = "shortcuts://run-shortcut?name="+encodeURIComponent(name)
+    if (des && des.input) {
+      url = url+"&input="+encodeURIComponent(des.input)
+    }
+    if (des && des.text) {
+      let text = this.detectAndReplace(des.text)
+      url = url+"&text="+encodeURIComponent(text)
+    }
+    MNUtil.openURL(url)
   }
 }
 
