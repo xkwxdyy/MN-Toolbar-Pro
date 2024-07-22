@@ -14,7 +14,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.isLoading = false;
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
-    self.buttonNumber = 15  // 注意自定义时要改这里的数量！
+    self.buttonNumber = 14  // 注意自定义时要改这里的数量！
     if (self.dynamicWindow) {
       self.buttonNumber = 9
     }
@@ -987,8 +987,6 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
     let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
-      case "test":
-        break;
       case "convertNoteToNonexcerptVersion":
         MNUtil.showHUD("卡片转化为非摘录版本")
         try {
@@ -1705,8 +1703,573 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     let parentNote
     let focusNoteType
     let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
+    let copyTitlePart
+    let userInput
+    let clearContentArr = []
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
+      // case "":
+      //   break;
+      // case "":
+      //   UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+      //     "增加期刊",
+      //     "",
+      //     2,
+      //     "取消",
+      //     ["确定"],
+      //     (alert, buttonIndex) => {
+      //       try {
+      //         MNUtil.undoGrouping(()=>{
+            //     userInput = alert.textFieldAtIndex(0).text;
+            //       if (buttonIndex === 1) {
+                              
+            //       }
+            //   })
+            // } catch (error) {
+            //   MNUtil.showHUD(error);
+      //       }
+      //     }
+      //   )
+      //   break;
+      case "renewJournalNotes":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            focusNote.removeCommentByIndex(0)
+            focusNote.removeCommentByIndex(0)
+            focusNote.removeCommentByIndex(0)
+            focusNote.removeCommentByIndex(0)
+            focusNote.removeCommentByIndex(0)
+            cloneAndMerge(focusNote, "129EB4D6-D57A-4367-8087-5C89864D3595")
+            focusNote.moveComment(focusNote.comments.length-1,0)
+            focusNote.moveComment(focusNote.comments.length-1,0)
+            focusNote.moveComment(focusNote.comments.length-1,0)
+            focusNote.moveComment(focusNote.comments.length-1,0)
+          })
+        })
+        break;
+      case "renewPublisherNotes":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            focusNote.removeCommentByIndex(0)
+            focusNote.removeCommentByIndex(0)
+            focusNote.removeCommentByIndex(0)
+            focusNote.removeCommentByIndex(0)
+            focusNote.removeCommentByIndex(0)
+            cloneAndMerge(focusNote, "1E34F27B-DB2D-40BD-B0A3-9D47159E68E7")
+            focusNote.moveComment(focusNote.comments.length-1,0)
+            focusNote.moveComment(focusNote.comments.length-1,0)
+            focusNote.moveComment(focusNote.comments.length-1,0)
+            focusNote.moveComment(focusNote.comments.length-1,0)
+          })
+        })
+        break;
+      case "referenceInfoJournal":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "增加期刊",
+          "",
+          2,
+          "取消",
+          ["单份","整期/卷"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                journalName = alert.textFieldAtIndex(0).text;
+                let journalLibraryNote = MNNote.new("1D83F1FA-E54D-4E0E-9E74-930199F9838E")
+                let findJournal = false
+                let targetJournalNote
+                let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+                let focusNoteIndexInTargetJournalNote
+                let singleInfoIndexInTargetJournalNote
+                for (let i = 0; i <= journalLibraryNote.childNotes.length-1; i++) {
+                  if (journalLibraryNote.childNotes[i].noteTitle.includes(journalName)) {
+                    targetJournalNote = journalLibraryNote.childNotes[i]
+                    findJournal = true
+                    break;
+                  }
+                }
+                if (!findJournal) {
+                  targetJournalNote = MNNote.clone("129EB4D6-D57A-4367-8087-5C89864D3595")
+                  targetJournalNote.note.noteTitle = "【文献：期刊】; " + journalName
+                  journalLibraryNote.addChild(targetJournalNote.note)
+                }
+                let journalTextIndex = focusNote.getIncludingCommentIndex("- 期刊", true)
+                if (journalTextIndex == -1) {
+                  focusNote.appendMarkdownComment("- 期刊（Journal）：", thoughtHtmlCommentIndex)
+                  focusNote.appendNoteLink(targetJournalNote, "To")
+                  focusNote.moveComment(focusNote.comments.length-1,thoughtHtmlCommentIndex+1)
+                } else {
+                  // focusNote.appendNoteLink(targetJournalNote, "To")
+                  // focusNote.moveComment(focusNote.comments.length-1,journalTextIndex + 1)
+                  if (focusNote.getCommentIndex("marginnote4app://note/" + targetJournalNote.noteId) == -1) {
+                    focusNote.appendNoteLink(targetJournalNote, "To")
+                    focusNote.moveComment(focusNote.comments.length-1,journalTextIndex + 1)
+                  } else {
+                    focusNote.moveComment(focusNote.getCommentIndex("marginnote4app://note/" + targetJournalNote.noteId),journalTextIndex + 1)
+                  }
+                }
+                focusNoteIndexInTargetJournalNote = targetJournalNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                singleInfoIndexInTargetJournalNote = targetJournalNote.getIncludingCommentIndex("**单份**")
+                if (focusNoteIndexInTargetJournalNote == -1){
+                  targetJournalNote.appendNoteLink(focusNote, "To")
+                  if (buttonIndex !== 1) {
+                    // 非单份
+                    targetJournalNote.moveComment(targetJournalNote.comments.length-1, singleInfoIndexInTargetJournalNote)
+                  } 
+                } else {
+                  if (buttonIndex !== 1) {
+                    // 非单份
+                    targetJournalNote.moveComment(focusNoteIndexInTargetJournalNote, singleInfoIndexInTargetJournalNote)
+                  } else {
+                    targetJournalNote.moveComment(focusNoteIndexInTargetJournalNote, targetJournalNote.comments.length-1)
+                  }
+                }
+                // if (buttonIndex == 1) {
+                // }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceInfoPublisher":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "增加出版社",
+          "",
+          2,
+          "取消",
+          ["单份","系列"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                publisherName = alert.textFieldAtIndex(0).text;
+                let publisherLibraryNote = MNNote.new("9FC1044A-F9D2-4A75-912A-5BF3B02984E6")
+                let findPublisher = false
+                let targetPublisherNote
+                let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+                let focusNoteIndexInTargetPublisherNote
+                let singleInfoIndexInTargetPublisherNote
+                for (let i = 0; i <= publisherLibraryNote.childNotes.length-1; i++) {
+                  if (publisherLibraryNote.childNotes[i].noteTitle.includes(publisherName)) {
+                    targetPublisherNote = publisherLibraryNote.childNotes[i]
+                    findPublisher = true
+                    break;
+                  }
+                }
+                if (!findPublisher) {
+                  targetPublisherNote = MNNote.clone("1E34F27B-DB2D-40BD-B0A3-9D47159E68E7")
+                  targetPublisherNote.note.noteTitle = "【文献：出版社】; " + publisherName
+                  publisherLibraryNote.addChild(targetPublisherNote.note)
+                }
+                let publisherTextIndex = focusNote.getIncludingCommentIndex("- 出版社", true)
+                if (publisherTextIndex == -1) {
+                  focusNote.appendMarkdownComment("- 出版社（Publisher）：", thoughtHtmlCommentIndex)
+                  focusNote.appendNoteLink(targetPublisherNote, "To")
+                  focusNote.moveComment(focusNote.comments.length-1,thoughtHtmlCommentIndex+1)
+                } else {
+                  if (focusNote.getCommentIndex("marginnote4app://note/" + targetPublisherNote.noteId) == -1) {
+                    focusNote.appendNoteLink(targetPublisherNote, "To")
+                    focusNote.moveComment(focusNote.comments.length-1,publisherTextIndex + 1)
+                  } else {
+                    focusNote.moveComment(focusNote.getCommentIndex("marginnote4app://note/" + targetPublisherNote.noteId),publisherTextIndex + 1)
+                  }
+                }
+                focusNoteIndexInTargetPublisherNote = targetPublisherNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                singleInfoIndexInTargetPublisherNote = targetPublisherNote.getIncludingCommentIndex("**单份**")
+                if (focusNoteIndexInTargetPublisherNote == -1){
+                  targetPublisherNote.appendNoteLink(focusNote, "To")
+                  if (buttonIndex !== 1) {
+                    // 非单份
+                    targetPublisherNote.moveComment(targetPublisherNote.comments.length-1, singleInfoIndexInTargetPublisherNote)
+                  } 
+                } else {
+                  if (buttonIndex !== 1) {
+                    // 非单份
+                    targetPublisherNote.moveComment(focusNoteIndexInTargetPublisherNote, singleInfoIndexInTargetPublisherNote)
+                  } else {
+                    targetPublisherNote.moveComment(focusNoteIndexInTargetPublisherNote, targetPublisherNote.comments.length-1)
+                  }
+                }
+                // if (buttonIndex == 1) {
+                // }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceInfoKeywords":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "增加关键词",
+          "若多个关键词，用\n- 中文分号；\n- 英文逗号;\n- 中文逗号，\n- 英文逗号,\n之一隔开\n但要保持用一致的分隔符",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                userInput = alert.textFieldAtIndex(0).text;
+                let keywordArr = toolbarUtils.splitStringByFourSeparators(userInput)
+                let findKeyword = false
+                let targetKeywordNote
+                let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+                let focusNoteIndexInTargetKeywordNote
+                if (buttonIndex === 1) {
+                  let keywordLibraryNote = MNNote.new("3BA9E467-9443-4E5B-983A-CDC3F14D51DA")
+                  // MNUtil.showHUD(keywordArr)
+                  keywordArr.forEach(keyword=>{
+                    findKeyword = false
+                    for (let i = 0; i <= keywordLibraryNote.childNotes.length-1; i++) {
+                      if (
+                        keywordLibraryNote.childNotes[i].noteTitle.includes(keyword) ||
+                        keywordLibraryNote.childNotes[i].noteTitle.includes(keyword.toLowerCase())
+                      ) {
+                        targetKeywordNote = keywordLibraryNote.childNotes[i]
+                        findKeyword = true
+                        // MNUtil.showHUD("存在！" + targetKeywordNote.noteTitle)
+                        // MNUtil.delay(0.5).then(()=>{
+                        //   targetKeywordNote.focusInFloatMindMap()
+                        // })
+                        break;
+                      }
+                    }
+                    if (!findKeyword) {
+                      // 若不存在，则添加关键词卡片
+                      targetKeywordNote = MNNote.clone("D1EDF37C-7611-486A-86AF-5DBB2039D57D")
+                      if (keyword.toLowerCase() !== keyword) {
+                        targetKeywordNote.note.noteTitle += "; " + keyword + "; " + keyword.toLowerCase()
+                      } else {
+                        targetKeywordNote.note.noteTitle += "; " + keyword
+                      }
+                      keywordLibraryNote.addChild(targetKeywordNote.note)
+                    } else {
+                      if (targetKeywordNote.noteTitle.includes(keyword)) {
+                        if (!targetKeywordNote.noteTitle.includes(keyword.toLowerCase())) {
+                          targetKeywordNote.note.noteTitle += "; " + keyword.toLowerCase()
+                        }
+                      } else {
+                        // 存在小写版本，但没有非小写版本
+                        // 获取 noteTitle 中 【文献：关键词】部分后面的内容（假设这部分内容是固定的格式）
+                        let noteTitleAfterKeywordPrefixPart = targetKeywordNote.noteTitle.split('【文献：关键词】')[1]; // 这会获取到"; xxx; yyy"这部分内容
+
+                        // 在关键词后面添加新的关键词和对应的分号与空格
+                        let newKeywordPart = '; ' + keyword; // 添加分号和空格以及新的关键词
+
+                        // 重新组合字符串，把新的关键词部分放到原来位置
+                        let updatedNoteTitle = `【文献：关键词】${newKeywordPart}${noteTitleAfterKeywordPrefixPart}`; // 使用模板字符串拼接新的标题
+
+                        // 更新 targetKeywordNote 的 noteTitle 属性或者给新的变量赋值
+                        targetKeywordNote.note.noteTitle = updatedNoteTitle; // 如果 noteTitle 是对象的一个属性的话
+                      }
+                    }
+                    // MNUtil.delay(0.5).then(()=>{
+                    //   targetKeywordNote.focusInFloatMindMap()
+                    // })
+                    let keywordTextIndex = focusNote.getIncludingCommentIndex("- 关键词", true)
+                    if (keywordTextIndex == -1) {
+                      focusNote.appendMarkdownComment("- 关键词（Keywords）：", thoughtHtmlCommentIndex)
+                    }
+                    let keywordIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + targetKeywordNote.noteId)
+                    if (keywordIndexInFocusNote == -1) {
+                      // 关键词卡片还没链接过来
+                      focusNote.appendNoteLink(targetKeywordNote, "To")
+                      let keywordLinksArr = []
+                      focusNote.comments.forEach((comment,index)=>{
+                        if (
+                          comment.text && 
+                          (
+                            comment.text.includes("- 关键词") ||
+                            comment.text.includes("marginnote4app://note/") ||
+                            comment.text.includes("marginnote3app://note/")
+                          )
+                        ) {
+                          keywordLinksArr.push(index)
+                        }
+                      })
+                      keywordTextIndex = focusNote.getIncludingCommentIndex("- 关键词", true)
+                      let keywordContinuousLinksArr = toolbarUtils.getContinuousSequenceFromNum(keywordLinksArr, keywordTextIndex)
+                      focusNote.moveComment(focusNote.comments.length-1,keywordContinuousLinksArr[keywordContinuousLinksArr.length-1]+1)
+                    } else {
+                      // 已经有关键词链接
+                      let keywordLinksArr = []
+                      focusNote.comments.forEach((comment,index)=>{
+                        if (
+                          comment.text && 
+                          (
+                            comment.text.includes("- 关键词") ||
+                            comment.text.includes("marginnote4app://note/") ||
+                            comment.text.includes("marginnote3app://note/")
+                          )
+                        ) {
+                          keywordLinksArr.push(index)
+                        }
+                      })
+                      // MNUtil.showHUD(nextBarCommentIndex)
+                      keywordTextIndex = focusNote.getIncludingCommentIndex("- 关键词", true)
+                      let keywordContinuousLinksArr = toolbarUtils.getContinuousSequenceFromNum(keywordLinksArr, keywordTextIndex)
+                      focusNote.moveComment(keywordIndexInFocusNote,keywordContinuousLinksArr[keywordContinuousLinksArr.length-1])
+                    }
+
+                    // 处理关键词卡片
+                    focusNoteIndexInTargetKeywordNote = targetKeywordNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                    if (focusNoteIndexInTargetKeywordNote == -1){
+                      targetKeywordNote.appendNoteLink(focusNote, "To")
+                    }
+                  })
+
+                  targetKeywordNote.refresh()
+                  focusNote.refresh()
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceKeywordsAddRelatedKeywords":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "增加相关关键词",
+          "若多个关键词，用\n- 中文分号；\n- 英文逗号;\n- 中文逗号，\n- 英文逗号,\n之一隔开\n但要保持用一致的分隔符",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                userInput = alert.textFieldAtIndex(0).text;
+                let keywordArr = toolbarUtils.splitStringByFourSeparators(userInput)
+                let findKeyword = false
+                let targetKeywordNote
+                let relatedReferenceHtmlCommentIndex = focusNote.getCommentIndex("相关文献：", true)
+                let focusNoteIndexInTargetKeywordNote
+                if (buttonIndex === 1) {
+                  let keywordLibraryNote = MNNote.new("3BA9E467-9443-4E5B-983A-CDC3F14D51DA")
+                  // MNUtil.showHUD(keywordArr)
+                  keywordArr.forEach(keyword=>{
+                    findKeyword = false
+                    for (let i = 0; i <= keywordLibraryNote.childNotes.length-1; i++) {
+                      if (
+                        keywordLibraryNote.childNotes[i].noteTitle.includes(keyword) ||
+                        keywordLibraryNote.childNotes[i].noteTitle.includes(keyword.toLowerCase())
+                      ) {
+                        targetKeywordNote = keywordLibraryNote.childNotes[i]
+                        findKeyword = true
+                        // MNUtil.showHUD("存在！" + targetKeywordNote.noteTitle)
+                        // MNUtil.delay(0.5).then(()=>{
+                        //   targetKeywordNote.focusInFloatMindMap()
+                        // })
+                        break;
+                      }
+                    }
+                    if (!findKeyword) {
+                      // 若不存在，则添加关键词卡片
+                      targetKeywordNote = MNNote.clone("D1EDF37C-7611-486A-86AF-5DBB2039D57D")
+                      if (keyword.toLowerCase() !== keyword) {
+                        targetKeywordNote.note.noteTitle += "; " + keyword + "; " + keyword.toLowerCase()
+                      } else {
+                        targetKeywordNote.note.noteTitle += "; " + keyword
+                      }
+                      keywordLibraryNote.addChild(targetKeywordNote.note)
+                    } else {
+                      if (targetKeywordNote.noteTitle.includes(keyword)) {
+                        if (!targetKeywordNote.noteTitle.includes(keyword.toLowerCase())) {
+                          targetKeywordNote.note.noteTitle += "; " + keyword.toLowerCase()
+                        }
+                      } else {
+                        // 存在小写版本，但没有非小写版本
+                        // 获取 noteTitle 中 【文献：关键词】部分后面的内容（假设这部分内容是固定的格式）
+                        let noteTitleAfterKeywordPrefixPart = targetKeywordNote.noteTitle.split('【文献：关键词】')[1]; // 这会获取到"; xxx; yyy"这部分内容
+
+                        // 在关键词后面添加新的关键词和对应的分号与空格
+                        let newKeywordPart = '; ' + keyword; // 添加分号和空格以及新的关键词
+
+                        // 重新组合字符串，把新的关键词部分放到原来位置
+                        let updatedNoteTitle = `【文献：关键词】${newKeywordPart}${noteTitleAfterKeywordPrefixPart}`; // 使用模板字符串拼接新的标题
+
+                        // 更新 targetKeywordNote 的 noteTitle 属性或者给新的变量赋值
+                        targetKeywordNote.note.noteTitle = updatedNoteTitle; // 如果 noteTitle 是对象的一个属性的话
+                      }
+                    }
+                    let keywordIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + targetKeywordNote.noteId)
+                    if (keywordIndexInFocusNote == -1) {
+                      // 关键词卡片还没链接过来
+                      focusNote.appendNoteLink(targetKeywordNote, "To")
+                      let keywordLinksArr = []
+                      focusNote.comments.forEach((comment,index)=>{
+                        if (
+                          comment.text && 
+                          (
+                            comment.text.includes("相关关键词") ||
+                            comment.text.includes("marginnote4app://note/") ||
+                            comment.text.includes("marginnote3app://note/")
+                          )
+                        ) {
+                          keywordLinksArr.push(index)
+                        }
+                      })
+                      let keywordContinuousLinksArr = toolbarUtils.getContinuousSequenceFromNum(keywordLinksArr, 0)
+                      focusNote.moveComment(focusNote.comments.length-1,keywordContinuousLinksArr[keywordContinuousLinksArr.length-1]+1)
+                    } else {
+                      // 已经有关键词链接
+                      let keywordLinksArr = []
+                      focusNote.comments.forEach((comment,index)=>{
+                        if (
+                          comment.text && 
+                          (
+                            comment.text.includes("相关关键词") ||
+                            comment.text.includes("marginnote4app://note/") ||
+                            comment.text.includes("marginnote3app://note/")
+                          )
+                        ) {
+                          keywordLinksArr.push(index)
+                        }
+                      })
+                      // MNUtil.showHUD(nextBarCommentIndex)
+                      let keywordContinuousLinksArr = toolbarUtils.getContinuousSequenceFromNum(keywordLinksArr, 0)
+                      focusNote.moveComment(keywordIndexInFocusNote,keywordContinuousLinksArr[keywordContinuousLinksArr.length-1]+1)
+                    }
+
+                    // 处理关键词卡片
+                    focusNoteIndexInTargetKeywordNote = targetKeywordNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                    if (focusNoteIndexInTargetKeywordNote == -1){
+                      targetKeywordNote.appendNoteLink(focusNote, "To")
+                      targetKeywordNote.moveComment(targetKeywordNote.comments.length-1,targetKeywordNote.getCommentIndex("相关文献：", true))
+                    } else {
+                      targetKeywordNote.moveComment(focusNoteIndexInTargetKeywordNote,targetKeywordNote.getCommentIndex("相关文献：", true))
+                    }
+                  })
+                  targetKeywordNote.refresh()
+                  focusNote.refresh()
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceInfoAuthor":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "增加文献作者",
+          "若多个作者，用\n- 中文分号；\n- 英文逗号;\n- 中文逗号，\n之一隔开\n但要保持用一致的分隔符", // 因为有些作者是缩写，包含西文逗号，所以不适合用西文逗号隔开
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                userInput = alert.textFieldAtIndex(0).text;
+                let authorArr = toolbarUtils.splitStringByThreeSeparators(userInput)
+                let findAuthor = false
+                let targetAuthorNote
+                let referenceInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
+                let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+                let focusNoteIndexInTargetAuthorNote
+                let paperInfoIndexInTargetAuthorNote
+                if (buttonIndex === 1) {
+                  let authorLibraryNote = MNNote.new("A67469F8-FB6F-42C8-80A0-75EA1A93F746")
+                  // MNUtil.showHUD(authorArr)
+                  authorArr.forEach(author=>{
+                    findAuthor = false
+                    for (let i = 0; i <= authorLibraryNote.childNotes.length-1; i++) {
+                      if (authorLibraryNote.childNotes[i].noteTitle.includes(author)) {
+                        targetAuthorNote = authorLibraryNote.childNotes[i]
+                        findAuthor = true
+                        // MNUtil.showHUD("存在！" + targetAuthorNote.noteTitle)
+                        // MNUtil.delay(0.5).then(()=>{
+                        //   targetAuthorNote.focusInFloatMindMap()
+                        // })
+                        break;
+                      }
+                    }
+                    if (!findAuthor) {
+                      // 若不存在，则添加作者卡片
+                      targetAuthorNote = MNNote.clone("BBA8DDB0-1F74-4A84-9D8D-B04C5571E42A")
+                      targetAuthorNote.note.noteTitle += "; " + author
+                      authorLibraryNote.addChild(targetAuthorNote.note)
+                    }
+                    // MNUtil.delay(0.5).then(()=>{
+                    //   targetAuthorNote.focusInFloatMindMap()
+                    // })
+                    let authorTextIndex = focusNote.getIncludingCommentIndex("- 作者", true)
+                    if (authorTextIndex == -1) {
+                      // focusNote.appendNoteLink(targetAuthorNote, "To")
+                      // focusNote.moveComment(focusNote.comments.length-1,referenceInfoHtmlCommentIndex+1)
+                      focusNote.appendMarkdownComment("- 作者（Authors）：", referenceInfoHtmlCommentIndex + 1)
+                    }
+                    let authorIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + targetAuthorNote.noteId)
+                    if (authorIndexInFocusNote == -1) {
+                      // 作者卡片还没链接过来
+                      focusNote.appendNoteLink(targetAuthorNote, "To")
+                      let authorLinksArr = []
+                      focusNote.comments.forEach((comment,index)=>{
+                        if (
+                          comment.text && 
+                          (
+                            comment.text.includes("- 作者") ||
+                            comment.text.includes("marginnote4app://note/") ||
+                            comment.text.includes("marginnote3app://note/")
+                          )
+                        ) {
+                          authorLinksArr.push(index)
+                        }
+                      })
+                      let authorContinuousLinksArr = toolbarUtils.getContinuousSequenceFromNum(authorLinksArr, referenceInfoHtmlCommentIndex + 1)
+                      focusNote.moveComment(focusNote.comments.length-1,authorContinuousLinksArr[authorContinuousLinksArr.length-1]+1)
+                    } else {
+                      // focusNote.moveComment(authorTextIndex, referenceInfoHtmlCommentIndex + 1)
+                      let authorLinksArr = []
+                      focusNote.comments.forEach((comment,index)=>{
+                        if (
+                          comment.text && 
+                          (
+                            comment.text.includes("- 作者") ||
+                            comment.text.includes("marginnote4app://note/") ||
+                            comment.text.includes("marginnote3app://note/")
+                          )
+                        ) {
+                          authorLinksArr.push(index)
+                        }
+                      })
+                      // MNUtil.showHUD(nextBarCommentIndex)
+                      let authorContinuousLinksArr = toolbarUtils.getContinuousSequenceFromNum(authorLinksArr, referenceInfoHtmlCommentIndex + 1)
+                      focusNote.moveComment(authorIndexInFocusNote,authorContinuousLinksArr[authorContinuousLinksArr.length-1]+1)
+                    }
+
+                    // 处理作者卡片
+                    focusNoteIndexInTargetAuthorNote = targetAuthorNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                    paperInfoIndexInTargetAuthorNote = targetAuthorNote.getIncludingCommentIndex("**论文**")
+                    // let bookInfoIndexIntargetAuthorNote = targetAuthorNote.getIncludingCommentIndex("**书作**")
+                    if (focusNoteIndexInTargetAuthorNote == -1){
+                      targetAuthorNote.appendNoteLink(focusNote, "To")
+                      if (toolbarUtils.getReferenceNoteType(focusNote) == "book") {
+                        targetAuthorNote.moveComment(targetAuthorNote.comments.length-1, paperInfoIndexInTargetAuthorNote)
+                      }
+                    } else {
+                      if (toolbarUtils.getReferenceNoteType(focusNote) == "book") {
+                        if (focusNoteIndexInTargetAuthorNote > paperInfoIndexInTargetAuthorNote) {
+                          targetAuthorNote.moveComment(focusNoteIndexInTargetAuthorNote, paperInfoIndexInTargetAuthorNote)
+                        }
+                      }
+                    }
+                  })
+
+                  targetAuthorNote.refresh()
+                  focusNote.refresh()
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "cardCopyNoteId":
+        MNUtil.copy(focusNote.noteId)
+        MNUtil.showHUD(focusNote.noteId)
+        break;
       case "findDuplicateTitles":
         const repeatedTitles = toolbarUtils.findDuplicateTitles(focusNote.childNotes);
         MNUtil.showHUD(repeatedTitles);
@@ -1720,21 +2283,95 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           focusNote.moveComment(focusNote.comments.length-1,thoughtHtmlCommentIndex)
         })
         break;
-      case "moveLastLinkToThought":
-        let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
-        let keywordsHtmlCommentIndex = focusNote.getIncludingCommentIndex("关键词：", true)
-        let finalIndex = (keywordsHtmlCommentIndex == -1)? linkHtmlCommentIndex : keywordsHtmlCommentIndex
+      case "moveLastCommentToThought":
         MNUtil.undoGrouping(()=>{
-          focusNote.moveComment(focusNote.comments.length-1, finalIndex)
+          focusNotes.forEach(focusNote=>{
+            toolbarUtils.moveLastCommentToThought(focusNote)
+          })
         })
         break;
-      case "copyTitle":
-        MNUtil.copy(focusNote.noteTitle)
-        MNUtil.showHUD(focusNote.noteTitle)
+      case "moveLastTwoCommentsToThought":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            toolbarUtils.moveLastTwoCommentsToThought(focusNote)
+          })
+        })
+        break;
+      case "addThoughtPointAndMoveLastCommentToThought":
+        try {
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.addThoughtPoint(focusNote)
+              toolbarUtils.moveLastCommentToThought(focusNote)
+            })
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
+      case "copyWholeTitle":
+        copyTitlePart = focusNote.noteTitle
+        MNUtil.copy(copyTitlePart)
+        MNUtil.showHUD(copyTitlePart)
+        break;
+      case "copyTitleSecondPart":
+        if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
+          copyTitlePart = focusNote.noteTitle.match(/【.*】(.*)/)[1]
+          MNUtil.copy(copyTitlePart)
+          MNUtil.showHUD(copyTitlePart)
+        }
+        break;
+      case "copyTitleFirstKeyword":
+        if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
+          copyTitlePart = focusNote.noteTitle.match(/【.*】;\s*([^;]*?)(?:;|$)/)[1]
+          MNUtil.copy(copyTitlePart)
+          MNUtil.showHUD(copyTitlePart)
+        }
+        break;
+      case "copyTitleFirstQuoteContent":
+        if ([0,1,4].includes(focusNoteColorIndex)) {
+          if (focusNoteColorIndex == 1) {
+            copyTitlePart = focusNote.noteTitle.match(/“(.*)”相关.*/)[1]
+          } else {
+            copyTitlePart = focusNote.noteTitle.match(/“(.*)”：“.*”相关.*/)[1]
+          }
+          MNUtil.copy(copyTitlePart)
+          MNUtil.showHUD(copyTitlePart)
+        }
+        break;
+      case "copyTitleSecondQuoteContent":
+        if ([0,1,4].includes(focusNoteColorIndex)) {
+          if (focusNoteColorIndex == 1) {
+            copyTitlePart = focusNote.noteTitle.match(/“(.*)”相关.*/)[1]
+          } else {
+            copyTitlePart = focusNote.noteTitle.match(/“.*”：“(.*)”相关.*/)[1]
+          }
+          MNUtil.copy(copyTitlePart)
+          MNUtil.showHUD(copyTitlePart)
+        }
         break;
       case "pasteInTitle":
+        // MNUtil.undoGrouping(()=>{
+        //   focusNote.noteTitle = MNUtil.clipboardText
+        // })
+        // focusNote.refreshAll()
         MNUtil.undoGrouping(()=>{
-          focusNote.noteTitle = MNUtil.clipboardText
+          focusNotes.forEach(focusNote=>{
+            focusNote.noteTitle = MNUtil.clipboardText
+            focusNote.refreshAll()
+          })
+        })
+        break;
+      case "pasteAfterTitle":
+        // MNUtil.undoGrouping(()=>{
+        //   focusNote.noteTitle = focusNote.noteTitle + "; " + MNUtil.clipboardText
+        // })
+        // focusNote.refreshAll()
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            focusNote.noteTitle = focusNote.noteTitle + "; " + MNUtil.clipboardText
+            focusNote.refreshAll()
+          })
         })
         break;
       case "extractTitle":
@@ -1790,19 +2427,118 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           }
         })
         break;
-      case "clearContentKeepText":
+      case "addThoughtPoint":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.addThoughtPoint(focusNote)
+            })
+          } catch (error) {
+            MNUtil.showHUD(error)
+          }
+        })
+        break;
+      case "moveUpThoughtPoints":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.moveUpThoughtPoints(focusNote)
+            })
+          } catch (error) {
+            MNUtil.showHUD(error)
+          }
+        })
+        break;
+      case "clearContentKeepMarkdownText":
         try {
           MNUtil.undoGrouping(()=>{
-            toolbarUtils.clearContentKeepText(focusNote)
+            toolbarUtils.clearContentKeepMarkdownText(focusNote)
           })
         } catch (error) {
           MNUtil.showHUD(error)
         }
         break;
-      case "clearContentKeepExcerptAndImage":
+      case "clearContentKeepExcerptAndHandwritingAndImage":
         try {
           MNUtil.undoGrouping(()=>{
-            toolbarUtils.clearContentKeepExcerptAndImage(focusNote)
+            toolbarUtils.clearContentKeepExcerptAndHandwritingAndImage(focusNote)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "clearContentKeepExcerpt":
+        try {
+          MNUtil.undoGrouping(()=>{
+            MNUtil.copy(focusNote.noteTitle)
+            focusNote.noteTitle = ""
+            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+            for (let i = focusNoteCommentLength-1; i >= 0; i--) {
+              comment = focusNoteComments[i]
+              if (
+                (comment.type !== "LinkNote")
+              ) {
+                focusNote.removeCommentByIndex(i)
+              }
+            }
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "clearContentKeepHandwritingAndImage":
+        try {
+          MNUtil.undoGrouping(()=>{
+            MNUtil.copy(focusNote.noteTitle)
+            focusNote.noteTitle = ""
+            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+            for (let i = focusNoteCommentLength-1; i >= 0; i--) {
+              comment = focusNoteComments[i]
+              if (
+                (comment.type !== "PaintNote")
+              ) {
+                focusNote.removeCommentByIndex(i)
+              }
+            }
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "clearContentKeepHtmlText":
+        try {
+          MNUtil.undoGrouping(()=>{
+            MNUtil.copy(focusNote.noteTitle)
+            focusNote.noteTitle = ""
+            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+            for (let i = focusNoteCommentLength-1; i >= 0; i--) {
+              comment = focusNoteComments[i]
+              if (
+                (comment.type !== "HtmlNote")
+              ) {
+                focusNote.removeCommentByIndex(i)
+              }
+            }
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "clearContentKeepText":
+        try {
+          MNUtil.undoGrouping(()=>{
+            MNUtil.copy(focusNote.noteTitle)
+            focusNote.noteTitle = ""
+            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+            for (let i = focusNoteCommentLength-1; i >= 0; i--) {
+              comment = focusNoteComments[i]
+              if (
+                (comment.type !== "HtmlNote") &&
+                (comment.type !== "TextNote") 
+              ) {
+                focusNote.removeCommentByIndex(i)
+              }
+            }
           })
         } catch (error) {
           MNUtil.showHUD(error)
