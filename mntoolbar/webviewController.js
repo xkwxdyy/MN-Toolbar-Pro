@@ -14,7 +14,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.isLoading = false;
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
-    self.buttonNumber = 14  // 注意自定义时要改这里的数量！
+    self.buttonNumber = 15  // 注意自定义时要改这里的数量！
     if (self.dynamicWindow) {
       self.buttonNumber = 9
     }
@@ -987,6 +987,8 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
     let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
+      case "test":
+        break;
       case "convertNoteToNonexcerptVersion":
         MNUtil.showHUD("卡片转化为非摘录版本")
         try {
@@ -1705,7 +1707,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
     let copyTitlePart
     let userInput
-    let clearContentArr = []
+    let bibTextIndex, bibContent
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
       // case "":
@@ -1731,6 +1733,47 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "referenceBibInfoExport":
+        let bibContentArr = []
+        focusNotes.forEach(focusNote=>{
+          bibContentArr.push(toolbarUtils.extractBibFromReferenceNote(focusNote))
+        })
+        if (bibContentArr.length > 0) {
+          if (bibContentArr.length == 1) {
+            bibContent = bibContentArr[0]
+            MNUtil.copy(bibContent)
+            MNUtil.showHUD("已复制 1 条 .bib 条目到剪贴板")
+          } else {
+            if (bibContentArr.length > 1) {
+              bibContent = bibContentArr.join("\n\n")
+              MNUtil.copy(bibContent)
+              MNUtil.showHUD("已复制" + bibContentArr.length + "条 .bib 条目到剪贴板")
+            }
+          }
+          // 导出到 .bib 文件
+          let docPath = MNUtil.cacheFolder+"/exportBibItems.bib"
+          MNUtil.writeText(docPath, bibContent)
+          let UTI = ["public.bib"]
+          MNUtil.saveFile(docPath, UTI)
+        }
+        break;
+      case "referenceBibInfoInitialize":
+        break;
+      case "referenceBibInfoPasteFromClipboard":
+        MNUtil.undoGrouping(()=>{
+          bibTextIndex = focusNote.getIncludingCommentIndex("- `.bib`")
+          if (bibTextIndex !== -1) {
+            focusNote.removeCommentByIndex(bibTextIndex)
+          }
+          let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+          let bibContent = "- `.bib` 条目：\n  ```bib\n  ";
+          // 为MNUtil.clipboardText中的每一行增加四个空格的预处理
+          let processedClipboardText = MNUtil.clipboardText.replace(/\n/g, "\n  "); // 在每个换行符前添加四个空格
+          bibContent += processedClipboardText; // 将处理后的文本添加到bibContent中
+          bibContent += "\n  ```"; // 继续构建最终字符串
+          focusNote.appendMarkdownComment(bibContent, thoughtHtmlCommentIndex)
+        })
+        break;
       case "renewJournalNotes":
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{

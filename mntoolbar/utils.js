@@ -29,6 +29,40 @@ class toolbarUtils {
 
   // 夏大鱼羊自定义函数
 
+  // 提取文献卡片中的 bib 条目
+
+  static extractBibFromReferenceNote (focusNote) {
+    let findBibContent = false
+    let bibContent
+    for (let i = 0; i <= focusNote.comments.length-1; i++) {
+      if (
+        focusNote.comments[i].text &&
+        focusNote.comments[i].text.includes("- `.bib`")
+      ) {
+        bibContent = focusNote.comments[i].text
+        findBibContent = true
+        break;
+      }
+    }
+    if (findBibContent) {
+      // 定义匹配bib内容的正则表达式，调整换行符处理
+      const bibPattern = /```bib\s*\n([\s\S]*?)\n\s*```/;
+      // 使用正则表达式提取bib内容
+      let bibContentMatch = bibPattern.exec(bibContent);
+
+      // 检查是否匹配到内容
+      if (bibContentMatch) {
+        // MNUtil.copy(
+        return bibContentMatch[1].split('\n').map(line => line.startsWith('  ') ? line.slice(2) : line).join('\n')
+        // )
+      } else {
+        MNUtil.showHUD("No bib content found"); // 如果未找到匹配内容，则抛出错误
+      }
+    } else {
+      MNUtil.showHUD("No '- `bib`' found")
+    }
+  }
+
   // 将字符串分割为数组
 
   static splitStringByThreeSeparators(string) {
@@ -3675,6 +3709,24 @@ static template(action) {
                   "action": "referenceInfoKeywords",
                   "menuTitle": "📌 关键词",
                 },
+                {
+                  "action": "menu",
+                  "menuTitle": "➡️ .bib 信息",
+                  "menuItems": [
+                    {
+                      "action": "referenceBibInfoPasteFromClipboard",
+                      "menuTitle": "从剪切板粘贴"
+                    },
+                    {
+                      "action": "referenceBibInfoInitialize",
+                      "menuTitle": "初始化 .bib 信息"
+                    },
+                    {
+                      "action": "referenceBibInfoExport",
+                      "menuTitle": "导出 .bib 信息",
+                    }
+                  ]
+                }
             ]
           },
           {
@@ -3817,8 +3869,8 @@ static getActions() {
     // "custom4":{name:"修改子卡片前缀",image:"changePrefix",description: this.template("changePrefix")},
     "custom5":{name:"文献",image:"reference",description: this.template("menu_reference")},
     // "custom6":{name:"标题",image:"title",description: this.template("menu_title")},
-    // "custom7":{name:"旧卡片",image:"oldCards",description: this.template("menu_oldCards")},
     "custom6":{name:"隐藏插件栏",image:"hideAddonBar",description: this.template("hideAddonBar")},
+    "custom7":{name:"测试",image:"test",description: this.template("test")},
     "execute":{name:"execute",image:"execute",description:"let focusNote = MNNote.getFocusNote()\nMNUtil.showHUD(focusNote.noteTitle)"},
     "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
     "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})},
