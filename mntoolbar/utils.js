@@ -3730,21 +3730,8 @@ static template(action) {
       config.action = "menu"
       config.menuItems = [
         {
-          "action": "menu",
-          "menuTitle": "️️➡️ 文献制卡",
-          "menuItems": [
-            // {
-            //   "menuTitle": "🔽 "
-            // },
-            {
-              "action": "referencePaperMakeCards",
-              "menuTitle": "📄 论文制卡"
-            },
-            {
-              "action": "referenceBookMakeCards",
-              "menuTitle": "📚 书作制卡"
-            }
-          ]
+          "action": "renewAuthorNotes",
+          "menuTitle": "作者卡片更新",
         },
         {
           "action": "menu",
@@ -3802,6 +3789,33 @@ static template(action) {
                   }
                 ]
               }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "️️➡️ 文献制卡",
+          "menuItems": [
+            // {
+            //   "menuTitle": "🔽 "
+            // },
+            {
+              "action": "referencePaperMakeCards",
+              "menuTitle": "📄 论文制卡"
+            },
+            {
+              "action": "referenceBookMakeCards",
+              "menuTitle": "📚 书作制卡"
+            }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 文献作者",
+          "menuItems": [
+            {
+              "action": "referenceAuthorInfoFromClipboard",
+              "menuTitle": "粘贴个人信息"
+            }
           ]
         },
         {

@@ -1737,6 +1737,35 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "referenceAuthorInfoFromClipboard":
+        MNUtil.undoGrouping(()=>{
+          // let infoHtmlCommentIndex = focusNote.getCommentIndex("个人信息：", true)
+          let referenceHtmlCommentIndex = focusNote.getCommentIndex("文献：", true)
+          focusNote.appendMarkdownComment(
+            MNUtil.clipboardText, referenceHtmlCommentIndex
+          )
+        })
+        break;
+      case "renewAuthorNotes":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            for (let i = focusNote.comments.length-1; i >= 0; i--) {
+              let comment = focusNote.comments[i]
+              if (
+                !comment.text ||
+                !comment.text.includes("marginnote")
+              ) {
+                focusNote.removeCommentByIndex(i)
+              }
+            }
+            cloneAndMerge(focusNote, "782A91F4-421E-456B-80E6-2B34D402911A")
+            focusNote.moveComment(focusNote.comments.length-1,0)
+            focusNote.moveComment(focusNote.comments.length-1,0)
+            focusNote.moveComment(focusNote.comments.length-1,0)
+            focusNote.moveComment(focusNote.comments.length-1,0)
+          })
+        })
+        break 
       case "referencePaperMakeCards":
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{
