@@ -1740,8 +1740,13 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             if (focusNote.excerptText) {
               toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
             }
-            focusNote.noteTitle = "【文献：论文】; " + focusNote.noteTitle
-            cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
+            if (!focusNote.noteTitle.includes("【文献：论文】")) {
+              focusNote.noteTitle = "【文献：论文】; " + focusNote.noteTitle
+            }
+            let referenceInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
+            if (referenceInfoHtmlCommentIndex == -1) {
+              cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
+            }
             let paperLibraryNote = MNNote.new("785225AC-5A2A-41BA-8760-3FEF10CF4AE0")
             paperLibraryNote.addChild(focusNote.note)
             MNUtil.delay(0.5).then(()=>{
@@ -1756,8 +1761,13 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             if (focusNote.excerptText) {
               toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
             }
-            focusNote.noteTitle = "【文献：书作】; " + focusNote.noteTitle
-            cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
+            if (!focusNote.noteTitle.includes("【文献：书作】")) {
+              focusNote.noteTitle = "【文献：书作】; " + focusNote.noteTitle
+            }
+            let referenceInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
+            if (referenceInfoHtmlCommentIndex == -1) {
+              cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
+            }
             let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
             bookLibraryNote.addChild(focusNote.note)
             MNUtil.delay(0.5).then(()=>{
