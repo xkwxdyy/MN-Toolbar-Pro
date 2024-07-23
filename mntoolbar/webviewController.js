@@ -1806,6 +1806,52 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           })
         })
         break;
+      case "referenceInfoDoiFromClipboard":
+        try {
+          MNUtil.undoGrouping(()=>{
+            const doiRegex = /(?<=doi:|DOI:|Doi:)\s*(\S+)/i; // 正则表达式匹配以 "doi:" 开头的内容，后面可能有空格或其他字符
+            const doiMatch = MNUtil.clipboardText.match(doiRegex); // 使用正则表达式进行匹配
+            let doi = doiMatch ? doiMatch[1] : MNUtil.clipboardText.trim(); // 如果匹配成功，取出匹配的内容，否则取出原始输入的内容
+            let doiTextIndex = focusNote.getIncludingCommentIndex("- DOI", true)
+            if (doiTextIndex !== -1) {
+              focusNote.removeCommentByIndex(doiTextIndex)
+            }
+            let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+            focusNote.appendMarkdownComment("- DOI（Digital Object Identifier）："+doi, thoughtHtmlCommentIndex)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
+      case "referenceInfoDoiFromTyping":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "增加 Doi",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                userInput = alert.textFieldAtIndex(0).text;
+                const doiRegex = /(?<=doi:|DOI:|Doi:)\s*(\S+)/i; // 正则表达式匹配以 "doi:" 开头的内容，后面可能有空格或其他字符
+                const doiMatch = userInput.match(doiRegex); // 使用正则表达式进行匹配
+                let doi = doiMatch ? doiMatch[1] : userInput.trim(); // 如果匹配成功，取出匹配的内容，否则取出原始输入的内容
+                  if (buttonIndex === 1) {
+                    let doiTextIndex = focusNote.getIncludingCommentIndex("- DOI", true)
+                    if (doiTextIndex !== -1) {
+                      focusNote.removeCommentByIndex(doiTextIndex)
+                    }
+                    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+                    focusNote.appendMarkdownComment("- DOI（Digital Object Identifier）："+doi, thoughtHtmlCommentIndex)
+                  }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
       case "referenceInfoJournal":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "增加期刊",
