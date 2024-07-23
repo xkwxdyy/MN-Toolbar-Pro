@@ -3653,68 +3653,99 @@ static template(action) {
     case "menu_reference":
       config.action = "menu"
       config.menuItems = [
-          // {
-          //   "action": "renewPublisherNotes",
-          //   "menuTitle": "更新出版社",
-          // },
-          {
-            "action": "menu",
-            "menuTitle": "➡️ 文献信息 🗂️",
-            "menuItems": [
-                {
-                  "action": "referenceInfoAuthor",
-                  "menuTitle": "👨‍🎓 作者"
-                },
-                {
-                  "action": "referenceInfoJournal",
-                  "menuTitle": "📄 期刊",
-                },
-                {
-                  "action": "referenceInfoPublisher",
-                  "menuTitle": "📚 出版社",
-                },
-                {
-                  "action": "referenceInfoKeywords",
-                  "menuTitle": "📌 关键词",
-                },
-                {
-                  "action": "menu",
-                  "menuTitle": "➡️ .bib 信息",
-                  "menuItems": [
-                    {
-                      "action": "referenceBibInfoPasteFromClipboard",
-                      "menuTitle": "从剪切板粘贴"
-                    },
-                    {
-                      "action": "referenceBibInfoInitialize",
-                      "menuTitle": "初始化 .bib 信息"
-                    },
-                    {
-                      "action": "referenceBibInfoExport",
-                      "menuTitle": "导出 .bib 信息",
-                    }
-                  ]
-                }
-            ]
-          },
-          {
-            "action": "menu",
-            "menuTitle": "➡️ 关键词 📌",
-            "menuItems": [
-              // {
-              //   "menuTitle": "🔽 "
-              // },
+        {
+          "action": "menu",
+          "menuTitle": "️️➡️ 文献制卡",
+          "menuItems": [
+            // {
+            //   "menuTitle": "🔽 "
+            // },
+            {
+              "action": "referencePaperMakeCards",
+              "menuTitle": "📄 论文制卡"
+            },
+            {
+              "action": "referenceBookMakeCards",
+              "menuTitle": "📚 书作制卡"
+            }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 文献信息 🗂️",
+          "menuItems": [
               {
-                "action": "referenceKeywordsAddRelatedKeywords",
-                "menuTitle": "➕相关关键词"
+                "action": "referenceInfoAuthor",
+                "menuTitle": "👨‍🎓 作者"
+              },
+              {
+                "action": "referenceInfoJournal",
+                "menuTitle": "📄 期刊",
+              },
+              {
+                "action": "referenceInfoPublisher",
+                "menuTitle": "📚 出版社",
+              },
+              {
+                "action": "referenceInfoKeywords",
+                "menuTitle": "📌 关键词",
+              },
+              {
+                "action": "referenceInfoDoiFromClipboard",
+                "menuTitle": "🔢 DOI",
               },
               // {
-              //   "action": "",
-              //   "menuTitle": ""
-              // }
-            ]
-          },
-        ]
+              //   "action": "menu",
+              //   "menuTitle": "➡️ DOI 🔢",
+              //   "menuItems": [
+              //     {
+              //       "action": "referenceInfoDoiFromTyping",
+              //       "menuTitle": "⌨️ 手动输入",
+              //     },
+              //     {
+              //       "action": "referenceInfoDoiFromClipboard",
+              //       "menuTitle": "🔗 从剪切板粘贴",
+              //     }
+              //   ]
+              // },
+              {
+                "action": "menu",
+                "menuTitle": "➡️ .bib 信息",
+                "menuItems": [
+                  {
+                    "action": "referenceBibInfoPasteFromClipboard",
+                    "menuTitle": "从剪切板粘贴 .bib 信息"
+                  },
+                  {
+                    "action": "referenceBibInfoCopy",
+                    "menuTitle": "复制 .bib 信息"
+                  },
+                  {
+                    "action": "referenceBibInfoExport",
+                    "menuTitle": "导出 .bib 信息",
+                  }
+                ]
+              }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 关键词 📌",
+          "menuItems": [
+            // {
+            //   "menuTitle": "🔽 "
+            // },
+            {
+              "action": "referenceKeywordsAddRelatedKeywords",
+              "menuTitle": "➕相关关键词"
+            },
+            // {
+            //   "action": "",
+            //   "menuTitle": ""
+            // }
+          ]
+        },
+      ]
       break;
     case "menu_card":
       config.action = "menu"

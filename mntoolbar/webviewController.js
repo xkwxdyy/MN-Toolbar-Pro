@@ -1708,6 +1708,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     let copyTitlePart
     let userInput
     let bibTextIndex, bibContent
+    let bibContentArr = []
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
       // case "":
@@ -1733,8 +1734,40 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
-      case "referenceBibInfoExport":
-        let bibContentArr = []
+      case "referencePaperMakeCards":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            if (focusNote.excerptText) {
+              toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+            }
+            focusNote.noteTitle = "【文献：论文】; " + focusNote.noteTitle
+            cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
+            let paperLibraryNote = MNNote.new("785225AC-5A2A-41BA-8760-3FEF10CF4AE0")
+            paperLibraryNote.addChild(focusNote.note)
+            MNUtil.delay(0.5).then(()=>{
+              focusNote.focusInMindMap()
+            })
+          })
+        })
+        break;
+      case "referenceBookMakeCards":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            if (focusNote.excerptText) {
+              toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+            }
+            focusNote.noteTitle = "【文献：书作】; " + focusNote.noteTitle
+            cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
+            let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
+            bookLibraryNote.addChild(focusNote.note)
+            MNUtil.delay(0.5).then(()=>{
+              focusNote.focusInMindMap()
+            })
+          })
+        })
+        break;
+      case "referenceBibInfoCopy":
+        bibContentArr = []
         focusNotes.forEach(focusNote=>{
           bibContentArr.push(toolbarUtils.extractBibFromReferenceNote(focusNote))
         })
@@ -1748,6 +1781,25 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
               bibContent = bibContentArr.join("\n\n")
               MNUtil.copy(bibContent)
               MNUtil.showHUD("已复制" + bibContentArr.length + "条 .bib 条目到剪贴板")
+            }
+          }
+        }
+        break;
+      case "referenceBibInfoExport":
+        bibContentArr = []
+        focusNotes.forEach(focusNote=>{
+          bibContentArr.push(toolbarUtils.extractBibFromReferenceNote(focusNote))
+        })
+        if (bibContentArr.length > 0) {
+          if (bibContentArr.length == 1) {
+            bibContent = bibContentArr[0]
+            MNUtil.copy(bibContent)
+            // MNUtil.showHUD("已复制 1 条 .bib 条目到剪贴板")
+          } else {
+            if (bibContentArr.length > 1) {
+              bibContent = bibContentArr.join("\n\n")
+              MNUtil.copy(bibContent)
+              // MNUtil.showHUD("已复制" + bibContentArr.length + "条 .bib 条目到剪贴板")
             }
           }
           // 导出到 .bib 文件
