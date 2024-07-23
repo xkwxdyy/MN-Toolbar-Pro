@@ -29,6 +29,82 @@ class toolbarUtils {
 
   // 夏大鱼羊自定义函数
 
+  static languageOfString(input) {
+    const chineseRegex = /[\u4e00-\u9fa5]/; // 匹配中文字符的范围
+    const englishRegex = /^[A-Za-z0-9\s,.!?]+$/; // 匹配英文字符和常见标点
+  
+    if (chineseRegex.test(input)) {
+      return 'Chinese';
+    } else if (englishRegex.test(input)) {
+      return 'English';
+    } else {
+      return ;
+    }
+  }
+
+  // 人名的缩写版本
+
+  // static getPinyin(chineseString) {
+  //   return pinyin(chineseString, {
+  //     style: pinyin.STYLE_NORMAL, // 普通拼音
+  //     heteronym: false // 不考虑多音字
+  //   });
+  // }
+
+  static getAbbreviationsOfName(name) {
+    let languageOfName = this.languageOfString(name)
+    let Name = {}
+    if (languageOfName == "Chinese") {
+      Name.language = "Chinese"
+      Name.original = name
+      return Name
+    } else {
+      if (languageOfName == "English") {
+        let namePartsArr = name.split(" ")
+        let namePartsNum = namePartsArr.length
+        let firstPart = namePartsArr[0]
+        let lastPart = namePartsArr[namePartsNum - 1]
+        let middlePart = namePartsArr.slice(1, namePartsNum - 1).join(" ")
+        switch (namePartsNum) {
+          case 1:
+            Name.language = "English"
+            Name.original = name
+            break;
+          case 2:
+            // 以 Kangwei Xia 为例
+            Name.language = "English"
+            Name.original = name
+            Name.reverse = lastPart + ", " + firstPart // Xia, Kangwei
+            Name.abbreviateFirstpart = firstPart[0] + ". " + lastPart // K. Xia
+            Name.abbreviateFirstpartAndReverseAddCommaAndDot =  lastPart + ", " + firstPart[0] + "." // Xia, K.
+            Name.abbreviateFirstpartAndReverseAddDot =  lastPart + " " + firstPart[0] + "." // Xia K.
+            Name.abbreviateFirstpartAndReverse =  lastPart + ", " + firstPart[0] // Xia, K
+            break;
+          case 3:
+            // 以 Louis de Branges 为例
+            Name.language = "English"
+            Name.original = name
+            Name.removeFirstpart = middlePart + " " + lastPart // de Branges
+            Name.removeMiddlepart = firstPart + " " + lastPart // Louis Branges
+            Name.abbreviateFirstpart = firstPart[0] + ". " + middlePart + " " + lastPart // L. de Branges
+            Name.abbreviateFirstpartAndReverseAddComma = middlePart + " " + lastPart + ", " + firstPart[0]// de Branges, L
+            Name.abbreviateFirstpartAndReverseAddCommaAndDot = middlePart + " " + lastPart + ", " + firstPart[0] + "." // de Branges, L.
+            Name.abbreviateFirstpartAndLastpartAddDots = firstPart[0] + ". " + middlePart + " " + lastPart[0] + "." // L. de B.
+            Name.abbreviateFirstpartAndMiddlepartAddDots = firstPart[0] + ". " + middlePart[0] + ". " + lastPart // L. d. Branges
+            Name.abbreviateFirstpartAddDotAndRemoveMiddlepart = firstPart[0] + ". " + lastPart // L. Branges
+            Name.abbreviateFirstpartRemoveMiddlepartAndReverseAddCommaAndDot = lastPart + ", " + firstPart[0] + "." // Branges, L.
+            Name.abbreviateFirstpartAndMiddlepartAndReverseAddDots = lastPart + " " + middlePart[0] + ". " + firstPart[0] + "." // Branges d. L.
+            break;
+          default:
+            Name.language = "English"
+            Name.original = name
+            break;
+        }
+        return Name
+      }
+    }
+  }
+
   // 提取文献卡片中的 bib 条目
 
   static extractBibFromReferenceNote (focusNote) {

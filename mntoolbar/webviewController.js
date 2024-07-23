@@ -987,8 +987,6 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
     let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
-      case "test":
-        break;
       case "convertNoteToNonexcerptVersion":
         MNUtil.showHUD("卡片转化为非摘录版本")
         try {
@@ -1711,6 +1709,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     let bibContentArr = []
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
+      case "test":
+        const name = "Kehe Zhu";
+        let nameObj = toolbarUtils.getAbbreviationsOfName(name)
+        MNUtil.showHUD(Object.values(nameObj))
+        break;
       // case "":
       //   break;
       // case "":
@@ -2311,7 +2314,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           (alert, buttonIndex) => {
             try {
               MNUtil.undoGrouping(()=>{
-                userInput = alert.textFieldAtIndex(0).text;
+                let userInput = alert.textFieldAtIndex(0).text;
                 let authorArr = toolbarUtils.splitStringByThreeSeparators(userInput)
                 let findAuthor = false
                 let targetAuthorNote
@@ -2324,22 +2327,42 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                   // MNUtil.showHUD(authorArr)
                   authorArr.forEach(author=>{
                     findAuthor = false
+                    let possibleAuthorFormatArr = [...new Set(
+                      Object.values(toolbarUtils.getAbbreviationsOfName(author)).filter(value => value !== "Chinese" && value !== "English")
+                    )];
                     for (let i = 0; i <= authorLibraryNote.childNotes.length-1; i++) {
-                      if (authorLibraryNote.childNotes[i].noteTitle.includes(author)) {
+                      // if (authorLibraryNote.childNotes[i].noteTitle.includes(author)) {
+                      //   targetAuthorNote = authorLibraryNote.childNotes[i]
+                      //   findAuthor = true
+                      //   // MNUtil.showHUD("存在！" + targetAuthorNote.noteTitle)
+                      //   // MNUtil.delay(0.5).then(()=>{
+                      //   //   targetAuthorNote.focusInFloatMindMap()
+                      //   // })
+                      //   break;
+                      // }
+                      let findPossibleAuthor = possibleAuthorFormatArr.some(
+                        possibleAuthor => authorLibraryNote.childNotes[i].noteTitle.includes(possibleAuthor)
+                      )
+                      if (findPossibleAuthor) {
                         targetAuthorNote = authorLibraryNote.childNotes[i]
                         findAuthor = true
-                        // MNUtil.showHUD("存在！" + targetAuthorNote.noteTitle)
-                        // MNUtil.delay(0.5).then(()=>{
-                        //   targetAuthorNote.focusInFloatMindMap()
-                        // })
                         break;
                       }
                     }
                     if (!findAuthor) {
                       // 若不存在，则添加作者卡片
                       targetAuthorNote = MNNote.clone("BBA8DDB0-1F74-4A84-9D8D-B04C5571E42A")
-                      targetAuthorNote.note.noteTitle += "; " + author
+                      possibleAuthorFormatArr.forEach(possibleAuthor=>{
+                        targetAuthorNote.note.noteTitle += "; " + possibleAuthor
+                      })
                       authorLibraryNote.addChild(targetAuthorNote.note)
+                    } else {
+                      // 如果有的话就把 possibleAuthorFormatArr 里面 targetAuthorNote 的 noteTitle 里没有的加进去
+                      for (let possibleAuthor of possibleAuthorFormatArr) {
+                        if (!targetAuthorNote.note.noteTitle.includes(possibleAuthor)) {
+                          targetAuthorNote.note.noteTitle += "; " + possibleAuthor
+                        }
+                      }
                     }
                     // MNUtil.delay(0.5).then(()=>{
                     //   targetAuthorNote.focusInFloatMindMap()
@@ -2386,7 +2409,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                       })
                       // MNUtil.showHUD(nextBarCommentIndex)
                       let authorContinuousLinksArr = toolbarUtils.getContinuousSequenceFromNum(authorLinksArr, referenceInfoHtmlCommentIndex + 1)
-                      focusNote.moveComment(authorIndexInFocusNote,authorContinuousLinksArr[authorContinuousLinksArr.length-1]+1)
+                      focusNote.moveComment(authorIndexInFocusNote,authorContinuousLinksArr[authorContinuousLinksArr.length-1])
                     }
 
                     // 处理作者卡片
