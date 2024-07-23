@@ -2504,7 +2504,19 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "clearContentKeepExcerptAndHandwritingAndImage":
         try {
           MNUtil.undoGrouping(()=>{
-            toolbarUtils.clearContentKeepExcerptAndHandwritingAndImage(focusNote)
+            MNUtil.copy(focusNote.noteTitle)
+            focusNote.noteTitle = ""
+            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+            for (let i = focusNote.comments.length-1; i >= 0; i--) {
+              let comment = focusNote.comments[i]
+              if (
+                (comment.type == "TextNote")
+                ||
+                (comment.type == "HtmlNote")
+              ) {
+                focusNote.removeCommentByIndex(i)
+              }
+            }
           })
         } catch (error) {
           MNUtil.showHUD(error)
@@ -2516,8 +2528,8 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             MNUtil.copy(focusNote.noteTitle)
             focusNote.noteTitle = ""
             // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-            for (let i = focusNoteCommentLength-1; i >= 0; i--) {
-              comment = focusNoteComments[i]
+            for (let i = focusNote.comments.length-1; i >= 0; i--) {
+              let comment = focusNote.comments[i]
               if (
                 (comment.type !== "LinkNote")
               ) {
@@ -2535,8 +2547,8 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             MNUtil.copy(focusNote.noteTitle)
             focusNote.noteTitle = ""
             // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-            for (let i = focusNoteCommentLength-1; i >= 0; i--) {
-              comment = focusNoteComments[i]
+            for (let i = focusNote.comments.length-1; i >= 0; i--) {
+              let comment = focusNote.comments[i]
               if (
                 (comment.type !== "PaintNote")
               ) {
@@ -2554,8 +2566,8 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             MNUtil.copy(focusNote.noteTitle)
             focusNote.noteTitle = ""
             // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-            for (let i = focusNoteCommentLength-1; i >= 0; i--) {
-              comment = focusNoteComments[i]
+            for (let i = focusNote.comments.length-1; i >= 0; i--) {
+              let comment = focusNote.comments[i]
               if (
                 (comment.type !== "HtmlNote")
               ) {
@@ -2573,8 +2585,8 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             MNUtil.copy(focusNote.noteTitle)
             focusNote.noteTitle = ""
             // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-            for (let i = focusNoteCommentLength-1; i >= 0; i--) {
-              comment = focusNoteComments[i]
+            for (let i = focusNote.comments.length-1; i >= 0; i--) {
+              let comment = focusNote.comments[i]
               if (
                 (comment.type !== "HtmlNote") &&
                 (comment.type !== "TextNote") 

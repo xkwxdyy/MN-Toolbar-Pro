@@ -846,38 +846,6 @@ class toolbarUtils {
     )
   }
 
-  static clearContentKeepExcerptAndHandwritingAndImage(focusNote) {
-    let focusNoteComments = focusNote.note.comments
-    let focusNoteCommentLength = focusNoteComments.length
-    let comment
-    UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
-      "请确认",
-      "只保留摘录、手写和图片吗？",
-      0,
-      "点错了",
-      ["确定"],
-      (alert, buttonIndex) => {
-        if (buttonIndex == 1) {
-          MNUtil.undoGrouping(()=>{
-            MNUtil.copy(focusNote.noteTitle)
-            focusNote.noteTitle = ""
-            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-            for (let i = focusNoteCommentLength-1; i >= 0; i--) {
-              comment = focusNoteComments[i]
-              if (
-                (comment.type == "TextNote")
-                ||
-                (comment.type == "HtmlNote")
-              ) {
-                focusNote.removeCommentByIndex(i)
-              }
-            }
-          })
-        }
-      }
-    )
-  }
-
   // 把卡片中的 HtmlNote 的内容转化为 Markdown 语法
   static convetHtmlToMarkdown(focusNote){
     let focusNoteComments = focusNote.note.comments
@@ -3839,7 +3807,7 @@ static template(action) {
             },
             {
               "action" : "clearContentKeepText",
-              "menuTitle" : "✅ Markdown 文本、HTML 文本"
+              "menuTitle" : "✅ Markdown & HTML 文本"
             },
             {
               "action" : "achieveCards",
