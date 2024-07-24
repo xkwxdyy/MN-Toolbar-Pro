@@ -1726,9 +1726,9 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     (alert, buttonIndex) => {
       //       try {
       //         MNUtil.undoGrouping(()=>{
-            //     userInput = alert.textFieldAtIndex(0).text;
-            //       if (buttonIndex === 1) {
-                              
+            //     let userInput = alert.textFieldAtIndex(0).text;
+            //       if (buttonIndex == 1) {
+                        
             //       }
             //   })
             // } catch (error) {
@@ -1781,9 +1781,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             }
             let paperLibraryNote = MNNote.new("785225AC-5A2A-41BA-8760-3FEF10CF4AE0")
             paperLibraryNote.addChild(focusNote.note)
-            MNUtil.delay(0.5).then(()=>{
-              focusNote.focusInMindMap()
-            })
+            focusNote.focusInMindMap(0.5)
           })
         })
         break;
@@ -2800,6 +2798,25 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 (comment.type == "TextNote")
                 ||
                 (comment.type == "HtmlNote")
+              ) {
+                focusNote.removeCommentByIndex(i)
+              }
+            }
+          })
+        } catch (error) {
+          MNUtil.showHUD(error)
+        }
+        break;
+      case "clearContentKeepExcerptWithTitle":
+        try {
+          MNUtil.undoGrouping(()=>{
+            // MNUtil.copy(focusNote.noteTitle)
+            // focusNote.noteTitle = ""
+            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+            for (let i = focusNote.comments.length-1; i >= 0; i--) {
+              let comment = focusNote.comments[i]
+              if (
+                (comment.type !== "LinkNote")
               ) {
                 focusNote.removeCommentByIndex(i)
               }

@@ -3921,8 +3921,8 @@ static template(action) {
       config.action = "menu"
       config.menuItems = [
         // {
-        //   "action": "renewAuthorNotes",
-        //   "menuTitle": "作者卡片更新",
+        //   "action": "renewBookSeriesNotes",
+        //   "menuTitle": "书作系列卡片更新",
         // },
         {
           "action": "menu",
@@ -4096,34 +4096,39 @@ static template(action) {
         {
           "action": "menu",
           "menuTitle": "➡️ 处理旧卡片",
+          "menuWidth":250,
           "menuItems": [
             {
               "action" : "renewCards",
               "menuTitle" : "🔄 更新旧卡片"
             },
             {
+              "action": "clearContentKeepExcerptWithTitle",
+              "menuTitle": "✅ 摘录 ✅ 标题",
+            },
+            {
               "action": "clearContentKeepExcerpt",
-              "menuTitle": "✅ 摘录",
+              "menuTitle": "✅ 摘录 ❌ 标题",
             },
             {
               "action": "clearContentKeepHandwritingAndImage",
-              "menuTitle": "✅ 手写、图片",
+              "menuTitle": "✅ 手写、图片 ❌ 标题",
             },
             {
               "action" : "clearContentKeepExcerptAndHandwritingAndImage",
-              "menuTitle" : "✅ 摘录、手写和图片"
+              "menuTitle" : "✅ 摘录、手写和图片 ❌ 标题",
             },
             {
               "action" : "clearContentKeepMarkdownText",
-              "menuTitle" : "✅ Markdown 文本"
+              "menuTitle" : "✅ Markdown 文本 ❌ 标题"
             },
             {
               "action" : "clearContentKeepHtmlText",
-              "menuTitle" : "✅ HTML 文本"
+              "menuTitle" : "✅ HTML 文本 ❌ 标题"
             },
             {
               "action" : "clearContentKeepText",
-              "menuTitle" : "✅ Markdown & HTML 文本"
+              "menuTitle" : "✅ MD & HTML 文本 ❌ 标题"
             },
             {
               "action" : "achieveCards",
