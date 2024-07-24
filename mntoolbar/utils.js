@@ -29,6 +29,93 @@ class toolbarUtils {
 
   // 夏大鱼羊自定义函数
 
+  static getVolNumFromTitle(title) {
+    let match = title.match(/【.*?Vol.\s(\d+)】/)[1]
+    return match? parseInt(match) : 0
+  }
+
+  static getVolNumFromLink(link) {
+    let note = MNNote.new(link)
+    let title = note.noteTitle
+    return this.getVolNumFromTitle(title)
+  }
+
+
+  // 链接按照 vol 的数值排序
+  // startIndex 表示开始排序的评论索引
+  static sortNoteByVolNum(note, startIndex) {
+    let commentsLength = note.comments.length;
+    let initialIndexArr = Array.from({ length: commentsLength }, (_, i) => i);
+    let initialSliceArr = initialIndexArr.slice(startIndex)
+    let initialSliceVolnumArrAux = initialSliceArr.map(
+      index => this.getVolNumFromLink(note.comments[index].text)
+    )
+    // MNUtil.showHUD(initialSliceVolnumArr)
+    let initialSliceVolnumArr = [...initialSliceVolnumArrAux]
+    let sortedVolnumArr = initialSliceVolnumArrAux.sort((a, b) => a - b)
+    // MNUtil.showHUD(sortedVolnumArr)
+    let targetSliceArr = []
+    initialSliceVolnumArr.forEach(
+      volnum => {
+        targetSliceArr.push(sortedVolnumArr.indexOf(volnum) + startIndex)
+      }
+    )
+    // MNUtil.showHUD(targetSliceArr)
+    let targetArr = [
+      ...initialIndexArr.slice(0, startIndex),
+      ...targetSliceArr
+    ]
+    note.sortCommentsByNewIndices(targetArr)
+    // MNUtil.showHUD(targetArr)
+  }
+
+
+
+    // MNUtil.showHUD(sortArr)
+    // let sortedSliceArr = initialSliceArr.sort((a, b) => { a-b })
+    // let sortedIndexArr = [...initialIndexArr.slice(0, startIndex), ...sortedSliceArr]
+    // let targerArr = [...initialIndexArr.slice(0, startIndex)]
+    // sortedSliceArr.forEach(
+    //   (num, index) => {
+
+    //   }
+    // )
+    // let indexedCommentsArr = []
+    // beginSortArr.forEach(index => {
+    //   indexedCommentsArr.push({
+    //     volnum: this.getVolNumFromLink(note.comments[index].text),
+    //     index: index
+    //   })
+    // })
+    // // 删掉 indexedCommentsArr 的第一个元素（因为 note 的第一个评论是 html 评论）
+    // indexedCommentsArr.sort(
+    //   (a, b) => a.volnum - b.volnum
+    // )
+    // MNUtil.showHUD(indexedCommentsArr.map(item => item.volnum))
+    // let sortIndexArr = indexedCommentsArr.map(item => item.index)
+    // MNUtil.showHUD(sortIndexArr)
+    // let EndSortArr = [...indexArr.slice(0, startIndex), ...sortIndexArr]
+    // MNUtil.showHUD(EndSortArr)
+
+
+  // 【xxx】yyy; zzz; => yyy || 【xxx】; zzz => zzz
+  static getFirstKeywordFromTitle(title) {
+    // const regex = /【.*?】(.*?); (.*?)(;.*)?/;
+    const regex = /【.*】(.*?);\s*([^;]*?)(?:;|$)/;
+    const matches = title.match(regex);
+  
+    if (matches) {
+      const firstPart = matches[1].trim(); // 提取分号前的内容
+      const secondPart = matches[2].trim(); // 提取第一个分号后的内容
+  
+      // 根据第一部分是否为空选择返回内容
+      return firstPart === '' ? secondPart : firstPart;
+    }
+  
+    // 如果没有匹配，返回 null 或者空字符串
+    return null;
+  }
+
   static languageOfString(input) {
     const chineseRegex = /[\u4e00-\u9fa5]/; // 匹配中文字符的范围
     const englishRegex = /^[A-Za-z0-9\s,.!?]+$/; // 匹配英文字符和常见标点
@@ -3909,7 +3996,11 @@ static template(action) {
             {
               "action": "referenceBookMakeCards",
               "menuTitle": "📚 书作制卡"
-            }
+            },
+            {
+              "action": "referenceSeriesBookMakeCards",
+              "menuTitle": "📚 系列书作制卡"
+            },
           ]
         },
         {

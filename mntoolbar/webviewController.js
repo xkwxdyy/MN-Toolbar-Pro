@@ -1802,9 +1802,114 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             }
             let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
             bookLibraryNote.addChild(focusNote.note)
-            MNUtil.delay(0.5).then(()=>{
-              focusNote.focusInMindMap()
-            })
+            focusNote.focusInMindMap(0.5)
+          })
+        })
+        break;
+      case "referenceSeriesBookMakeCards":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            let seriesNum
+            let seriesName
+            if (focusNote.excerptText) {
+              toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+            } else {
+              UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+                "系列书作",
+                "输入系列名",
+                2,
+                "取消",
+                ["确定"],
+                (alert, buttonIndex) => {
+                  try {
+                    MNUtil.undoGrouping(()=>{
+                      seriesName = alert.textFieldAtIndex(0).text;
+                      if (buttonIndex === 1) {
+                        let seriesLibraryNote = MNNote.new("4DBABA2A-F4EB-4B35-90AB-A192B79411FD")
+                        let findSeries = false
+                        let targetSeriesNote
+                        let focusNoteIndexInTargetSeriesNote
+                        for (let i = 0; i <= seriesLibraryNote.childNotes.length-1; i++) {
+                          if (seriesLibraryNote.childNotes[i].noteTitle.includes(seriesName)) {
+                            targetSeriesNote = seriesLibraryNote.childNotes[i]
+                            seriesName = toolbarUtils.getFirstKeywordFromTitle(targetSeriesNote.noteTitle)
+                            findSeries = true
+                            break;
+                          }
+                        }
+                        if (!findSeries) {
+                          targetSeriesNote = MNNote.clone("5CDABCEC-8824-4E9F-93E1-574EA7811FB4")
+                          targetSeriesNote.note.noteTitle = "【文献：书作系列】; " + seriesName
+                          seriesLibraryNote.addChild(targetSeriesNote.note)
+                        }
+                        let referenceInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
+                        if (referenceInfoHtmlCommentIndex == -1) {
+                          cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
+                        }
+                        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+                          "系列号",
+                          "",
+                          2,
+                          "取消",
+                          ["确定"],
+                          (alertI, buttonIndex) => {
+                            if (buttonIndex == 1) {
+                              seriesNum = alertI.textFieldAtIndex(0).text;
+                              let seriesTextIndex = focusNote.getIncludingCommentIndex("- 系列", true)
+                              let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+                              if (focusNote.noteTitle.includes("【文献：书作】")) {
+                                focusNote.noteTitle = focusNote.noteTitle.replace("【文献：书作】", "【文献：书作："+ seriesName + " - Vol. "+ seriesNum + "】")
+                              } else {
+                                try {
+                                  if (focusNote.noteTitle.startsWith("【文献：书作：")) {
+                                    // 把  focusNote.noteTitle 开头的【.*】 删掉
+                                    let reg = new RegExp("^【.*】")
+                                    focusNote.noteTitle = focusNote.noteTitle.replace(reg, "【文献：书作："+seriesName + " - Vol. "+ seriesNum + "】")
+                                  } else {
+                                    focusNote.noteTitle = "【文献：书作："+seriesName + " - Vol. "+ seriesNum + "】; " + focusNote.noteTitle
+                                  }
+                                } catch (error) {
+                                  MNUtil.showHUD(error);
+                                }
+                              }
+                              if (seriesTextIndex == -1) {
+                                focusNote.appendMarkdownComment("- 系列：Vol. " + seriesNum, thoughtHtmlCommentIndex)
+                                focusNote.appendNoteLink(targetSeriesNote, "To")
+                                focusNote.moveComment(focusNote.comments.length-1,thoughtHtmlCommentIndex+1)
+                              } else {
+                                // focusNote.appendNoteLink(targetSeriesNote, "To")
+                                // focusNote.moveComment(focusNote.comments.length-1,seriesTextIndex + 1)
+                                focusNote.removeCommentByIndex(seriesTextIndex)
+                                focusNote.appendMarkdownComment("- 系列：Vol. " + seriesNum, seriesTextIndex)
+                                if (focusNote.getCommentIndex("marginnote4app://note/" + targetSeriesNote.noteId) == -1) {
+                                  focusNote.appendNoteLink(targetSeriesNote, "To")
+                                  focusNote.moveComment(focusNote.comments.length-1,seriesTextIndex + 1)
+                                } else {
+                                  focusNote.moveComment(focusNote.getCommentIndex("marginnote4app://note/" + targetSeriesNote.noteId),seriesTextIndex + 1)
+                                }
+                              }
+                              focusNoteIndexInTargetSeriesNote = targetSeriesNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                              if (focusNoteIndexInTargetSeriesNote == -1){
+                                targetSeriesNote.appendNoteLink(focusNote, "To")
+                              }
+                              toolbarUtils.sortNoteByVolNum(targetSeriesNote, 1)
+                              let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
+                              MNUtil.undoGrouping(()=>{
+                                bookLibraryNote.addChild(focusNote.note)
+                                focusNote.focusInMindMap(0.5)
+                              })
+                            }
+                          }
+                        )
+                        
+                      }
+                    })
+                  } catch (error) {
+                    MNUtil.showHUD(error);
+                  }
+                }
+              )
+            }
           })
         })
         break;
@@ -1896,6 +2001,15 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             focusNote.moveComment(focusNote.comments.length-1,0)
             focusNote.moveComment(focusNote.comments.length-1,0)
             focusNote.moveComment(focusNote.comments.length-1,0)
+            focusNote.moveComment(focusNote.comments.length-1,0)
+          })
+        })
+        break;
+      case "renewBookSeriesNotes":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            focusNote.removeCommentByIndex(0)
+            cloneAndMerge(focusNote, "FAD11540-DF81-4E31-9748-34806CDE1D64")
             focusNote.moveComment(focusNote.comments.length-1,0)
           })
         })
