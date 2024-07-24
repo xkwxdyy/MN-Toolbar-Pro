@@ -1710,9 +1710,9 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
       case "test":
-        const name = "Kehe Zhu";
-        let nameObj = toolbarUtils.getAbbreviationsOfName(name)
-        MNUtil.showHUD(Object.values(nameObj))
+        const name = "鱼羊";
+        // MNUtil.showHUD(Pinyin.pinyin(name))
+        MNUtil.showHUD(toolbarUtils.getAbbreviationsOfName("Kangwei Xia"))
         break;
       // case "":
       //   break;
@@ -2356,9 +2356,21 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                   // MNUtil.showHUD(authorArr)
                   authorArr.forEach(author=>{
                     findAuthor = false
-                    let possibleAuthorFormatArr = [...new Set(
-                      Object.values(toolbarUtils.getAbbreviationsOfName(author)).filter(value => value !== "Chinese" && value !== "English")
-                    )];
+                    // let possibleAuthorFormatArr = [...new Set(
+                    //   Object.values(toolbarUtils.getAbbreviationsOfName(author)).filter(value => value !== "Chinese" && value !== "English")
+                    // )];
+                    // try {
+                      let possibleAuthorFormatArr = [
+                        ...new Set(
+                          Object.values(
+                            toolbarUtils.getAbbreviationsOfName(author)
+                          )
+                        )
+                      ]
+                      // MNUtil.showHUD(possibleAuthorFormatArr)
+                    // } catch (error) {
+                    //   MNUtil.showHUD(error);
+                    // }
                     for (let i = 0; i <= authorLibraryNote.childNotes.length-1; i++) {
                       // if (authorLibraryNote.childNotes[i].noteTitle.includes(author)) {
                       //   targetAuthorNote = authorLibraryNote.childNotes[i]
@@ -2379,6 +2391,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                       }
                     }
                     if (!findAuthor) {
+                      // MNUtil.showHUD(possibleAuthorFormatArr)
                       // 若不存在，则添加作者卡片
                       targetAuthorNote = MNNote.clone("BBA8DDB0-1F74-4A84-9D8D-B04C5571E42A")
                       possibleAuthorFormatArr.forEach(possibleAuthor=>{

@@ -51,57 +51,161 @@ class toolbarUtils {
   //   });
   // }
 
+  static camelizeString(string) {
+    return string[0].toUpperCase() + string.slice(1)
+  }
+
+  static moveStringPropertyToSecondPosition(obj, stringProp) {
+    // 检查对象是否含有指定的属性
+    if (!obj || !obj.hasOwnProperty(stringProp)) {
+      return "对象中没有名为 '" + stringProp + "' 的属性";
+    }
+  
+    // 获取对象的所有属性键
+    const keys = Object.keys(obj);
+    
+    // 确保键的数量足够进行移动
+    if (keys.length < 2) {
+      return "对象中属性数量不足，无法进行移动操作";
+    }
+    
+    // 先保存关联值
+    const stringValue = obj[stringProp];
+  
+    // 创建一个新的对象来重新排序属性
+    const newObj = {};
+    
+    // 将第一个属性放入新对象
+    newObj[keys[0]] = obj[keys[0]];
+    
+    // 将目标属性放到第二个位置
+    newObj[stringProp] = stringValue;
+  
+    // 将剩余的属性放入新对象
+    for (let i = 1; i < keys.length; i++) {
+      if (keys[i] !== stringProp) {
+        newObj[keys[i]] = obj[keys[i]];
+      }
+    }
+  
+    return newObj;
+  }
+
+  static getAbbreviationsOfEnglishName(name) {
+    let languageOfName = this.languageOfString(name)
+    let Name = {}
+    if (languageOfName == "English") {
+      let namePartsArr = name.split(" ")
+      let namePartsNum = namePartsArr.length
+      let firstPart = namePartsArr[0]
+      let lastPart = namePartsArr[namePartsNum - 1]
+      let middlePart = namePartsArr.slice(1, namePartsNum - 1).join(" ")
+      switch (namePartsNum) {
+        case 1:
+          // Name.language = "English"
+          Name.original = name
+          break;
+        case 2:
+          // 以 Kangwei Xia 为例
+          // Name.language = "English"
+          Name.original = name
+          Name.reverse = lastPart + ", " + firstPart // Xia, Kangwei
+          Name.abbreviateFirstpart = firstPart[0] + ". " + lastPart // K. Xia
+          Name.abbreviateFirstpartAndReverseAddCommaAndDot =  lastPart + ", " + firstPart[0] + "." // Xia, K.
+          Name.abbreviateFirstpartAndReverseAddDot =  lastPart + " " + firstPart[0] + "." // Xia K.
+          Name.abbreviateFirstpartAndReverse =  lastPart + ", " + firstPart[0] // Xia, K
+          break;
+        case 3:
+          // 以 Louis de Branges 为例
+          // Name.language = "English"
+          Name.original = name
+          Name.removeFirstpart = middlePart + " " + lastPart // de Branges
+          Name.removeMiddlepart = firstPart + " " + lastPart // Louis Branges
+          Name.abbreviateFirstpart = firstPart[0] + ". " + middlePart + " " + lastPart // L. de Branges
+          Name.abbreviateFirstpartAndReverseAddComma = middlePart + " " + lastPart + ", " + firstPart[0]// de Branges, L
+          Name.abbreviateFirstpartAndReverseAddCommaAndDot = middlePart + " " + lastPart + ", " + firstPart[0] + "." // de Branges, L.
+          Name.abbreviateFirstpartAndLastpartAddDots = firstPart[0] + ". " + middlePart + " " + lastPart[0] + "." // L. de B.
+          Name.abbreviateFirstpartAndMiddlepartAddDots = firstPart[0] + ". " + middlePart[0] + ". " + lastPart // L. d. Branges
+          Name.abbreviateFirstpartAddDotAndRemoveMiddlepart = firstPart[0] + ". " + lastPart // L. Branges
+          Name.abbreviateFirstpartRemoveMiddlepartAndReverseAddCommaAndDot = lastPart + ", " + firstPart[0] + "." // Branges, L.
+          Name.abbreviateFirstpartAndMiddlepartAndReverseAddDots = lastPart + " " + middlePart[0] + ". " + firstPart[0] + "." // Branges d. L.
+          break;
+        default:
+          // Name.language = "English"
+          Name.original = name
+          break;
+      }
+      return Name
+    }
+  }
+
   static getAbbreviationsOfName(name) {
     let languageOfName = this.languageOfString(name)
     let Name = {}
+    let pinyinStandard
     if (languageOfName == "Chinese") {
-      Name.language = "Chinese"
-      Name.original = name
+      let namePinyinArr = pinyin.pinyin(
+        name, 
+        {
+          style: "normal",
+          mode: "surname"
+        }
+      )
+      let firstPart = namePinyinArr[0].toString()
+      let lastPart = namePinyinArr[namePinyinArr.length - 1].toString()
+      let middlePart = namePinyinArr[1].toString()
+      if (namePinyinArr.length == 2) {
+        // 以 lu xun 为例
+
+        // Xun Lu
+        pinyinStandard = this.camelizeString(lastPart) + " " + this.camelizeString(firstPart) 
+        // MNUtil.showHUD(pinyinStandard)
+        Name = this.getAbbreviationsOfEnglishName(pinyinStandard)
+        Name.originalChineseName = name
+        // Name.language = "Chinese"
+        // Lu Xun
+        Name.pinyinStandardAndReverse =  this.camelizeString(firstPart) + " " + this.camelizeString(lastPart)
+
+        Name = this.moveStringPropertyToSecondPosition(Name, "originalChineseName")
+
+        
+        // // Lu Xun
+        // Name.pinyinStandardAndReverse = this.camelizeString(firstPart) + " " + this.camelizeString(lastPart)
+        // // luxun
+        // Name.pinyinNoSpace = firstPart + lastPart
+        // // lu xun
+        // Name.pinyinWithSpace = firstPart + " " + lastPart
+        // // Lu xun
+        // Name.pinyinCamelizeFirstpartWithSpace = this.camelizeString(firstPart) + " " + lastPart 
+        // // Luxun
+        // Name.pinyinCamelizeFirstpartNoSpace = this.camelizeString(firstPart) + lastPart 
+        // // xun, Lu
+        // Name.pinyinCamelizeFirstpartAndReverseWithComma = lastPart + ", " + this.camelizeString(firstPart)
+        // // LuXun
+        // Name.pinyinCamelizeNoSpace = this.camelizeString(firstPart) +  this.camelizeString(lastPart)
+        // // xun Lu
+        // Name.pinyinCamelizeFirstpartAndReverseWithSpace = lastPart + " " + this.camelizeString(firstPart)
+        // // xunLu
+        // Name.pinyinCamelizeFirstpartAndReverseNoSpace = lastPart  + this.camelizeString(firstPart)
+        // // Xun, Lu
+        // Name.pinyinStandardWithComma = this.camelizeString(lastPart) + " " + this.camelizeString(firstPart) 
+      } else {
+        if (namePinyinArr.length == 3) {
+          // 以 xia kang wei 为例
+
+          // Kangwei Xia
+          pinyinStandard = this.camelizeString(middlePart) + lastPart + " " + this.camelizeString(firstPart)
+          Name = this.getAbbreviationsOfEnglishName(pinyinStandard)
+          Name.originalChineseName = name
+          // Name.language = "Chinese"
+          // Xia Kangwei
+          Name.pinyinStandardAndReverse =  this.camelizeString(firstPart) + " " + this.camelizeString(middlePart) + lastPart
+          Name = this.moveStringPropertyToSecondPosition(Name, "originalChineseName")
+        }
+      }
       return Name
     } else {
-      if (languageOfName == "English") {
-        let namePartsArr = name.split(" ")
-        let namePartsNum = namePartsArr.length
-        let firstPart = namePartsArr[0]
-        let lastPart = namePartsArr[namePartsNum - 1]
-        let middlePart = namePartsArr.slice(1, namePartsNum - 1).join(" ")
-        switch (namePartsNum) {
-          case 1:
-            Name.language = "English"
-            Name.original = name
-            break;
-          case 2:
-            // 以 Kangwei Xia 为例
-            Name.language = "English"
-            Name.original = name
-            Name.reverse = lastPart + ", " + firstPart // Xia, Kangwei
-            Name.abbreviateFirstpart = firstPart[0] + ". " + lastPart // K. Xia
-            Name.abbreviateFirstpartAndReverseAddCommaAndDot =  lastPart + ", " + firstPart[0] + "." // Xia, K.
-            Name.abbreviateFirstpartAndReverseAddDot =  lastPart + " " + firstPart[0] + "." // Xia K.
-            Name.abbreviateFirstpartAndReverse =  lastPart + ", " + firstPart[0] // Xia, K
-            break;
-          case 3:
-            // 以 Louis de Branges 为例
-            Name.language = "English"
-            Name.original = name
-            Name.removeFirstpart = middlePart + " " + lastPart // de Branges
-            Name.removeMiddlepart = firstPart + " " + lastPart // Louis Branges
-            Name.abbreviateFirstpart = firstPart[0] + ". " + middlePart + " " + lastPart // L. de Branges
-            Name.abbreviateFirstpartAndReverseAddComma = middlePart + " " + lastPart + ", " + firstPart[0]// de Branges, L
-            Name.abbreviateFirstpartAndReverseAddCommaAndDot = middlePart + " " + lastPart + ", " + firstPart[0] + "." // de Branges, L.
-            Name.abbreviateFirstpartAndLastpartAddDots = firstPart[0] + ". " + middlePart + " " + lastPart[0] + "." // L. de B.
-            Name.abbreviateFirstpartAndMiddlepartAddDots = firstPart[0] + ". " + middlePart[0] + ". " + lastPart // L. d. Branges
-            Name.abbreviateFirstpartAddDotAndRemoveMiddlepart = firstPart[0] + ". " + lastPart // L. Branges
-            Name.abbreviateFirstpartRemoveMiddlepartAndReverseAddCommaAndDot = lastPart + ", " + firstPart[0] + "." // Branges, L.
-            Name.abbreviateFirstpartAndMiddlepartAndReverseAddDots = lastPart + " " + middlePart[0] + ". " + firstPart[0] + "." // Branges d. L.
-            break;
-          default:
-            Name.language = "English"
-            Name.original = name
-            break;
-        }
-        return Name
-      }
+        return this.getAbbreviationsOfEnglishName(name)
     }
   }
 
@@ -3729,10 +3833,10 @@ static template(action) {
     case "menu_reference":
       config.action = "menu"
       config.menuItems = [
-        {
-          "action": "renewAuthorNotes",
-          "menuTitle": "作者卡片更新",
-        },
+        // {
+        //   "action": "renewAuthorNotes",
+        //   "menuTitle": "作者卡片更新",
+        // },
         {
           "action": "menu",
           "menuTitle": "➡️ 文献信息 🗂️",

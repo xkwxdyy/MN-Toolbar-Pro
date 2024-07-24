@@ -1,6 +1,7 @@
 
 JSB.newAddon = function (mainPath) {
   JSB.require('utils')
+  JSB.require('pinyin')
   if (!toolbarUtils.checkMNUtilsFolder(mainPath)) {
     Application.sharedInstance().showHUD("MN Toolbar: Please install 'MN Utils' first!",Application.sharedInstance().focusWindow,5)
     return undefined
