@@ -1707,6 +1707,9 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     let userInput
     let bibTextIndex, bibContent
     let bibContentArr = []
+    let currentDocmd5
+    let path, UTI
+    let referenceIdsJSON
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
       case "test":
@@ -1737,6 +1740,155 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "referenceStoreOneIdForCurrentDocByFocusNote":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入文献号",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                if (buttonIndex == 1) {
+                  let refNum = alert.textFieldAtIndex(0).text
+                  let refId = focusNote.noteId
+                  let currentDocmd5 = MNUtil.currentDocmd5
+                  if (referenceIds.hasOwnProperty(currentDocmd5)) {
+                    referenceIds[currentDocmd5][refNum] = refId
+                  } else {
+                    referenceIds[currentDocmd5] = {}
+                    referenceIds[currentDocmd5][refNum] = refId
+                  }
+                  MNUtil.showHUD("Save: [" + refNum + "] -> " + refId);
+                  toolbarConfig.save("MNToolbar_referenceIds")
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceStoreOneIdForCurrentDoc":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "绑定参考文献号和对应文献卡片 ID",
+          "格式：num@ID\n比如：1@11-22--33",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let input = alert.textFieldAtIndex(0).text
+                if (buttonIndex == 1) {
+                  toolbarUtils.referenceStoreOneIdForCurrentDoc(input)
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceStoreIdsForCurrentDoc":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "绑定参考文献号和对应文献卡片 ID",
+          "格式：num@ID\n比如：1@11-22--33\n\n多个 ID 之间用\n- 中文分号；\n- 英文分号;\n- 中文逗号，\n- 英文逗号,\n之一隔开",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let idsArr = toolbarUtils.splitStringByFourSeparators(alert.textFieldAtIndex(0).text)
+                if (buttonIndex == 1) {
+                  idsArr.forEach(id=>{
+                    toolbarUtils.referenceStoreOneIdForCurrentDoc(id)
+                  })
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceStoreIdsForCurrentDocFromClipboard":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "确定要从剪切板导入所有参考文献 ID 吗？",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            if (buttonIndex == 1) {
+              try {
+                MNUtil.undoGrouping(()=>{
+                  let idsArr = toolbarUtils.splitStringByFourSeparators(MNUtil.clipboardText)
+                  idsArr.forEach(id=>{
+                    toolbarUtils.referenceStoreOneIdForCurrentDoc(id)
+                  })
+                })
+              } catch (error) {
+                MNUtil.showHUD(error);
+              }
+            }
+          }
+        )
+        break;
+      case "referenceExportReferenceIdsToClipboard":
+        MNUtil.copy(
+          JSON.stringify(referenceIds, null, 2)
+        )
+        MNUtil.showHUD("Copy successfully!")
+        break;
+      case "referenceExportReferenceIdsToFile":
+        // 导出到 .JSON 文件
+        path = MNUtil.cacheFolder+"/exportReferenceIds.json"
+        MNUtil.writeText(path, JSON.stringify(referenceIds, null, 2))
+        UTI = ["public.json"]
+        MNUtil.saveFile(path, UTI)
+        break;
+      case "referenceInputReferenceIdsFromClipboard":
+        // MNUtil.copy(
+        //   JSON.stringify(referenceIds, null, 2)
+        // )
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "确定要从剪切板导入所有参考文献 ID 吗？",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            if (buttonIndex == 1) {
+              try {
+                MNUtil.undoGrouping(()=>{
+                  referenceIds = JSON.parse(MNUtil.clipboardText)
+                  toolbarConfig.save("MNToolbar_referenceIds")
+                })
+              } catch (error) {
+                MNUtil.showHUD(error);
+              }
+            }
+          }
+        )
+        break;
+      case "referenceInputReferenceIdsFromFile":
+        try {
+          // MNUtil.undoGrouping(()=>{
+            UTI = ["public.json"]
+            path = await MNUtil.importFile(UTI)
+            referenceIds = MNUtil.readJSON(path)
+            toolbarConfig.save("MNToolbar_referenceIds")
+          // })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        // MNUtil.copy(
+        //   JSON.stringify(referenceIds, null, 2)
+        // )
+        break;
       case "referenceAuthorInfoFromClipboard":
         MNUtil.undoGrouping(()=>{
           // let infoHtmlCommentIndex = focusNote.getCommentIndex("个人信息：", true)
@@ -1772,7 +1924,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             if (focusNote.excerptText) {
               toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
             }
-            if (!focusNote.noteTitle.includes("【文献：论文】")) {
+            if (focusNote.noteTitle.startsWith("【文献：")) {
+              // 把  focusNote.noteTitle 开头的【.*】 删掉
+              let reg = new RegExp("^【.*】")
+              focusNote.noteTitle = focusNote.noteTitle.replace(reg, "【文献：论文】")
+            } else {
               focusNote.noteTitle = "【文献：论文】; " + focusNote.noteTitle
             }
             let referenceInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
@@ -1791,7 +1947,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             if (focusNote.excerptText) {
               toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
             }
-            if (!focusNote.noteTitle.includes("【文献：书作】")) {
+            if (focusNote.noteTitle.startsWith("【文献：")) {
+              // 把  focusNote.noteTitle 开头的【.*】 删掉
+              let reg = new RegExp("^【.*】")
+              focusNote.noteTitle = focusNote.noteTitle.replace(reg, "【文献：书作】")
+            } else {
               focusNote.noteTitle = "【文献：书作】; " + focusNote.noteTitle
             }
             let referenceInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
@@ -1891,6 +2051,116 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                                 targetSeriesNote.appendNoteLink(focusNote, "To")
                               }
                               toolbarUtils.sortNoteByVolNum(targetSeriesNote, 1)
+                              let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
+                              MNUtil.undoGrouping(()=>{
+                                bookLibraryNote.addChild(focusNote.note)
+                                focusNote.focusInMindMap(0.5)
+                              })
+                            }
+                          }
+                        )
+                        
+                      }
+                    })
+                  } catch (error) {
+                    MNUtil.showHUD(error);
+                  }
+                }
+              )
+            }
+          })
+        })
+        break;
+      case "referenceOneVolumeJournalMakeCards":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            let journalVolNum
+            let journalName
+            if (focusNote.excerptText) {
+              toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+            } else {
+              UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+                "整卷期刊",
+                "输入期刊名",
+                2,
+                "取消",
+                ["确定"],
+                (alert, buttonIndex) => {
+                  try {
+                    MNUtil.undoGrouping(()=>{
+                      journalName = alert.textFieldAtIndex(0).text;
+                      if (buttonIndex === 1) {
+                        let journalLibraryNote = MNNote.new("1D83F1FA-E54D-4E0E-9E74-930199F9838E")
+                        let findJournal = false
+                        let targetJournalNote
+                        let focusNoteIndexInTargetJournalNote
+                        for (let i = 0; i <= journalLibraryNote.childNotes.length-1; i++) {
+                          if (journalLibraryNote.childNotes[i].noteTitle.includes(journalName)) {
+                            targetJournalNote = journalLibraryNote.childNotes[i]
+                            journalName = toolbarUtils.getFirstKeywordFromTitle(targetJournalNote.noteTitle)
+                            findJournal = true
+                            break;
+                          }
+                        }
+                        if (!findJournal) {
+                          targetJournalNote = MNNote.clone("129EB4D6-D57A-4367-8087-5C89864D3595")
+                          targetJournalNote.note.noteTitle = "【文献：期刊】; " + journalName
+                          journalLibraryNote.addChild(targetJournalNote.note)
+                        }
+                        let journalInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
+                        if (journalInfoHtmlCommentIndex == -1) {
+                          cloneAndMerge(focusNote, "1C976BDD-A04D-46D0-8790-34CE0F6671A4")
+                        }
+                        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+                          "卷号",
+                          "",
+                          2,
+                          "取消",
+                          ["确定"],
+                          (alertI, buttonIndex) => {
+                            if (buttonIndex == 1) {
+                              journalVolNum = alertI.textFieldAtIndex(0).text;
+                              let journalTextIndex = focusNote.getIncludingCommentIndex("- 整卷期刊：", true)
+                              // let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+                              let includingHtmlCommentIndex = focusNote.getCommentIndex("包含：", true)
+                              if (focusNote.noteTitle.includes("【文献：期刊】")) {
+                                focusNote.noteTitle = focusNote.noteTitle.replace("【文献：期刊】", "【文献：整卷期刊："+ journalName + " - Vol. "+ journalVolNum + "】")
+                              } else {
+                                try {
+                                  if (focusNote.noteTitle.startsWith("【文献：整卷")) {
+                                    // 把  focusNote.noteTitle 开头的【.*】 删掉
+                                    let reg = new RegExp("^【.*】")
+                                    focusNote.noteTitle = focusNote.noteTitle.replace(reg, "【文献：整卷期刊："+journalName + " - Vol. "+ journalVolNum + "】")
+                                  } else {
+                                    focusNote.noteTitle = "【文献：整卷期刊："+journalName + " - Vol. "+ journalVolNum + "】; " + focusNote.noteTitle
+                                  }
+                                } catch (error) {
+                                  MNUtil.showHUD(error);
+                                }
+                              }
+                              if (journalTextIndex == -1) {
+                                focusNote.appendMarkdownComment("- 整卷期刊：Vol. " + journalVolNum, includingHtmlCommentIndex)
+                                focusNote.appendNoteLink(targetJournalNote, "To")
+                                focusNote.moveComment(focusNote.comments.length-1,includingHtmlCommentIndex+1)
+                              } else {
+                                // focusNote.appendNoteLink(targetJournalNote, "To")
+                                // focusNote.moveComment(focusNote.comments.length-1,journalTextIndex + 1)
+                                focusNote.removeCommentByIndex(journalTextIndex)
+                                focusNote.appendMarkdownComment("- 整卷期刊：Vol. " + journalVolNum, journalTextIndex)
+                                if (focusNote.getCommentIndex("marginnote4app://note/" + targetJournalNote.noteId) == -1) {
+                                  focusNote.appendNoteLink(targetJournalNote, "To")
+                                  focusNote.moveComment(focusNote.comments.length-1,journalTextIndex + 1)
+                                }
+                              }
+                              focusNoteIndexInTargetJournalNote = targetJournalNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                              let singleInfoIndexInTargetJournalNote = targetJournalNote.getIncludingCommentIndex("**单份**")
+                              if (focusNoteIndexInTargetJournalNote == -1){
+                                targetJournalNote.appendNoteLink(focusNote, "To")
+                                targetJournalNote.moveComment(targetJournalNote.comments.length-1,singleInfoIndexInTargetJournalNote)
+                              } else {
+                                targetJournalNote.moveComment(focusNoteIndexInTargetJournalNote,singleInfoIndexInTargetJournalNote)
+                              }
+                              // toolbarUtils.sortNoteByVolNum(targetJournalNote, 1)
                               let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
                               MNUtil.undoGrouping(()=>{
                                 bookLibraryNote.addChild(focusNote.note)
@@ -2197,7 +2467,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "referenceInfoKeywords":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "增加关键词",
-          "若多个关键词，用\n- 中文分号；\n- 英文逗号;\n- 中文逗号，\n- 英文逗号,\n之一隔开\n但要保持用一致的分隔符",
+          "若多个关键词，用\n- 中文分号；\n- 英文分号;\n- 中文逗号，\n- 英文逗号,\n之一隔开",
           2,
           "取消",
           ["确定"],
@@ -2326,7 +2596,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "referenceKeywordsAddRelatedKeywords":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "增加相关关键词",
-          "若多个关键词，用\n- 中文分号；\n- 英文逗号;\n- 中文逗号，\n- 英文逗号,\n之一隔开\n但要保持用一致的分隔符",
+          "若多个关键词，用\n- 中文分号；\n- 英文分号;\n- 中文逗号，\n- 英文逗号,\n之一隔开",
           2,
           "取消",
           ["确定"],
@@ -2448,7 +2718,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "referenceInfoAuthor":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "增加文献作者",
-          "若多个作者，用\n- 中文分号；\n- 英文逗号;\n- 中文逗号，\n之一隔开\n但要保持用一致的分隔符", // 因为有些作者是缩写，包含西文逗号，所以不适合用西文逗号隔开
+          "若多个作者，用\n- 中文分号；\n- 英文分号;\n- 中文逗号，\n之一隔开", // 因为有些作者是缩写，包含西文逗号，所以不适合用西文逗号隔开
           2,
           "取消",
           ["确定"],

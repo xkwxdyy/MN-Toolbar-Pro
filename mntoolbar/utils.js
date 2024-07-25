@@ -29,6 +29,29 @@ class toolbarUtils {
 
   // 夏大鱼羊自定义函数
 
+  static referenceStoreOneIdForCurrentDoc(input){
+    let refNum = input.split('@')[0]
+    let refId = input.split('@')[1]
+    let currentDocmd5 = MNUtil.currentDocmd5
+    if (referenceIds.hasOwnProperty(currentDocmd5)) {
+      referenceIds[currentDocmd5][refNum] = refId
+    } else {
+      referenceIds[currentDocmd5] = {}
+      referenceIds[currentDocmd5][refNum] = refId
+    }
+    MNUtil.showHUD("Save: [" + refNum + "] -> " + refId);
+    toolbarConfig.save("MNToolbar_referenceIds")
+  }
+
+  static getRefIdByNum(num) {
+    let currentDocmd5 = MNUtil.currentDocmd5
+    if (referenceIds[currentDocmd5].hasOwnProperty(num)) {
+      return referenceIds[currentDocmd5][num]
+    } else {
+      MNUtil.showHUD("当前文档没有文献 [" + num + "] 的卡片 ID")
+      return ""
+    }
+  }
   static getVolNumFromTitle(title) {
     let match = title.match(/【.*?Vol.\s(\d+)】/)[1]
     return match? parseInt(match) : 0
@@ -3690,6 +3713,14 @@ class toolbarConfig {
   static init(mainPath){
     // this.config = this.getByDefault("MNToolbar_config",this.defaultConfig)
     this.mainPath = mainPath
+    /* 夏大鱼羊 - start */
+    referenceIds = this.getByDefault("MNToolbar_referenceIds",{})
+    if (JSON.stringify(referenceIds) === '{}') {
+      MNUtil.showHUD("referenceIds 是空的！")
+    } else {
+      MNUtil.showHUD(Object.keys(referenceIds).length)
+    }
+    /* 夏大鱼羊 - end */
     this.dynamic = this.getByDefault("MNToolbar_dynamic",false)
     this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})
     this.windowState = this.getByDefault("MNToolbar_windowState",this.defaultWindowState)
@@ -3877,6 +3908,23 @@ static template(action) {
       config.menuItems = [
         {
           "action": "menu",
+          "menuTitle": "➡️ 链接 🔗",
+          "menuItems": [
+            // {
+            //   "menuTitle": "🔽 "
+            // },
+            {
+              "action": "",
+              "menuTitle": "更新概念衍生知识点🔗"
+            },
+            // {
+            //   "action": "",
+            //   "menuTitle": ""
+            // }
+          ]
+        },
+        {
+          "action": "menu",
           "menuTitle": "➡️ 思考",
           "menuItems": [
             {
@@ -3901,20 +3949,30 @@ static template(action) {
             },
           ]
         },
-        "🔽 摘录",
         {
-          "action" : "moveUpLinkNotes",
-          "menuTitle" : "摘录⬆️"
+          "action": "menu",
+          "menuTitle": "➡️ 摘录",
+          "menuItems": [
+            {
+              "action" : "moveUpLinkNotes",
+              "menuTitle" : "摘录⬆️"
+            }
+          ]
         },
-        "🔽 证明",
         {
-          "action" : "renewProof",
-          "menuTitle" : "更新证明"
+          "action": "menu",
+          "menuTitle": "➡️ 证明",
+          "menuItems": [
+            {
+              "action" : "renewProof",
+              "menuTitle" : "更新证明"
+            },
+            {
+              "action" : "moveLastLinkToProof",
+              "menuTitle" : "最后🔗⬆️证明"
+            }
+          ]
         },
-        {
-          "action" : "moveLastLinkToProof",
-          "menuTitle" : "最后🔗⬆️证明"
-        }
       ]
       break;
     case "menu_reference":
@@ -3926,7 +3984,111 @@ static template(action) {
         // },
         {
           "action": "menu",
-          "menuTitle": "➡️ 文献信息 🗂️",
+          "menuTitle": "️️➡️ 文献制卡",
+          "menuItems": [
+            // {
+            //   "menuTitle": "🔽 "
+            // },
+            {
+              "action": "referencePaperMakeCards",
+              "menuTitle": "📄 论文制卡"
+            },
+            {
+              "action": "referenceBookMakeCards",
+              "menuTitle": "📚 书作制卡"
+            },
+            {
+              "action": "referenceSeriesBookMakeCards",
+              "menuTitle": "📚 系列书作制卡"
+            },
+            {
+              "action": "referenceOneVolumeJournalMakeCards",
+              "menuTitle": "📄 整卷期刊制卡"
+            },
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 文档的参考文献",
+          "menuItems": [
+            {
+              "action": "menu",
+              "menuTitle": "👉 当前文档",
+              "menuWidth": 350,
+              "menuItems": [
+                {
+                  "action": "referenceStoreOneIdForCurrentDocByFocusNote",
+                  "menuTitle": "当前文档：录入选中的卡片的🆔"
+                },
+                {
+                  "action": "referenceStoreOneIdForCurrentDoc",
+                  "menuTitle": "当前文档：手动录入 1 条参考文献卡片🆔"
+                },
+                {
+                  "action": "referenceStoreIdsForCurrentDoc",
+                  "menuTitle": "当前文档：录入多条参考文献卡片🆔"
+                },
+                {
+                  "action": "referenceStoreIdsForCurrentDocFromClipboard",
+                  "menuTitle": "当前文档：从剪切板录入参考文献卡片🆔"
+                }
+              ]
+            },
+            {
+              "action": "menu",
+              "menuTitle": "➡️ 导出",
+              "menuWidth": 250,
+              "menuItems": [
+                {
+                  "action": "referenceExportReferenceIdsToClipboard",
+                  "menuTitle": "导出参考文献卡片🆔到剪切板"
+                },
+                {
+                  "action": "referenceExportReferenceIdsToFile",
+                  "menuTitle": "导出参考文献卡片🆔到文件"
+                },
+              ]
+            },
+            {
+              "action": "menu",
+              "menuTitle": "⬅️ 导入",
+              "menuWidth": 250,
+              "menuItems": [
+                {
+                  "action": "referenceInputReferenceIdsFromClipboard",
+                  "menuTitle": "从剪切板导入参考文献卡片🆔"
+                },
+                {
+                  "action": "referenceInputReferenceIdsFromFile",
+                  "menuTitle": "从文件导入参考文献卡片🆔"
+                },
+              ]
+            }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 🧠文献学习",
+          "menuItems": [
+            {
+              "action": "menu",
+              "menuTitle": "➡️ 思考",
+              "menuItems": [
+                {
+                  "action": "",
+                  "menuTitle": "➕思考点",
+                },
+                // {
+                //   "action": "",
+                //   "menuTitle": "",
+                // }
+              ]
+            },
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 🗂️文献信息",
           "menuItems": [
               {
                 "action": "referenceInfoAuthor",
@@ -3948,20 +4110,6 @@ static template(action) {
                 "action": "referenceInfoDoiFromClipboard",
                 "menuTitle": "🔢 DOI",
               },
-              // {
-              //   "action": "menu",
-              //   "menuTitle": "➡️ DOI 🔢",
-              //   "menuItems": [
-              //     {
-              //       "action": "referenceInfoDoiFromTyping",
-              //       "menuTitle": "⌨️ 手动输入",
-              //     },
-              //     {
-              //       "action": "referenceInfoDoiFromClipboard",
-              //       "menuTitle": "🔗 从剪切板粘贴",
-              //     }
-              //   ]
-              // },
               {
                 "action": "menu",
                 "menuTitle": "➡️ .bib 信息",
@@ -3984,28 +4132,7 @@ static template(action) {
         },
         {
           "action": "menu",
-          "menuTitle": "️️➡️ 文献制卡",
-          "menuItems": [
-            // {
-            //   "menuTitle": "🔽 "
-            // },
-            {
-              "action": "referencePaperMakeCards",
-              "menuTitle": "📄 论文制卡"
-            },
-            {
-              "action": "referenceBookMakeCards",
-              "menuTitle": "📚 书作制卡"
-            },
-            {
-              "action": "referenceSeriesBookMakeCards",
-              "menuTitle": "📚 系列书作制卡"
-            },
-          ]
-        },
-        {
-          "action": "menu",
-          "menuTitle": "➡️ 文献作者",
+          "menuTitle": "➡️ 👨‍🎓作者卡片",
           "menuItems": [
             {
               "action": "referenceAuthorInfoFromClipboard",
@@ -4015,7 +4142,24 @@ static template(action) {
         },
         {
           "action": "menu",
-          "menuTitle": "➡️ 关键词 📌",
+          "menuTitle": "➡️ 📄期刊卡片",
+          "menuItems": [
+            // {
+            //   "menuTitle": "🔽 "
+            // },
+            {
+              "action": "",
+              "menuTitle": "➕出版社"
+            },
+            // {
+            //   "action": "",
+            //   "menuTitle": "修改整卷期刊前缀"
+            // }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 📌关键词卡片",
           "menuItems": [
             // {
             //   "menuTitle": "🔽 "
@@ -4203,6 +4347,10 @@ static save(key,value = undefined) {
         break;
       case "MNToolbar_buttonConfig":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.buttonConfig,key)
+        break;
+      case "MNToolbar_referenceIds":
+        // this.referenceIds = referenceIds
+        NSUserDefaults.standardUserDefaults().setObjectForKey(referenceIds,key)
         break;
       default:
         toolbarUtils.showHUD("Not supported")
