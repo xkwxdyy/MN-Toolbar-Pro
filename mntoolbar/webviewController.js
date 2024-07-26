@@ -1709,7 +1709,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     let bibContentArr = []
     let currentDocmd5
     let path, UTI
-    let referenceIdsJSON
+    let currentDocName
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
       case "test":
@@ -1729,13 +1729,13 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     (alert, buttonIndex) => {
       //       try {
       //         MNUtil.undoGrouping(()=>{
-            //     let userInput = alert.textFieldAtIndex(0).text;
-            //       if (buttonIndex == 1) {
-                        
-            //       }
-            //   })
-            // } catch (error) {
-            //   MNUtil.showHUD(error);
+      //           let userInput = alert.textFieldAtIndex(0).text;
+      //             if (buttonIndex == 1) {
+                    
+      //             }
+      //         })
+      //       } catch (error) {
+      //         MNUtil.showHUD(error);
       //       }
       //     }
       //   )
@@ -1880,6 +1880,45 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             UTI = ["public.json"]
             path = await MNUtil.importFile(UTI)
             referenceIds = MNUtil.readJSON(path)
+            toolbarConfig.save("MNToolbar_referenceIds")
+          // })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        // MNUtil.copy(
+        //   JSON.stringify(referenceIds, null, 2)
+        // )
+        break;
+      case "referenceClearIdsForCurrentDoc":
+        try {
+          // MNUtil.undoGrouping(()=>{
+            currentDocmd5 = MNUtil.currentDocmd5
+            currentDocName = MNUtil.currentDocController.document.docTitle
+            referenceIds[currentDocmd5] = {}
+            toolbarConfig.save("MNToolbar_referenceIds")
+            MNUtil.showHUD("已清空文档「"+currentDocName+"」的所有参考文献 ID");
+          // })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        // MNUtil.copy(
+        //   JSON.stringify(referenceIds, null, 2)
+        // )
+        break;
+      case "referenceStoreIdForCurrentDocByFocusNote":
+        try {
+          // MNUtil.undoGrouping(()=>{
+            let refNum = 0
+            let refId = focusNote.noteId
+            currentDocmd5 = MNUtil.currentDocmd5
+            currentDocName = MNUtil.currentDocController.document.docTitle
+            if (referenceIds.hasOwnProperty(currentDocmd5)) {
+              referenceIds[currentDocmd5][refNum] = refId
+            } else {
+              referenceIds[currentDocmd5] = {}
+              referenceIds[currentDocmd5][refNum] = refId
+            }
+            MNUtil.showHUD("文档「" +currentDocName+ "」与 "+refId + "绑定");
             toolbarConfig.save("MNToolbar_referenceIds")
           // })
         } catch (error) {
@@ -2863,6 +2902,85 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             }
           }
         )
+        break;
+      case "referenceInfoInputRef":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "增加引用样式",
+          "即文献的参考文献部分对该文献的具体引用样式",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let referenceContent = toolbarUtils.extractRefContentFromReference(alert.textFieldAtIndex(0).text)
+                referenceContent = toolbarUtils.formatEnglishStringPunctuation(referenceContent)
+                  if (buttonIndex == 1) {
+                    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+                    let refTextIndex = focusNote.getIncludingCommentIndex("- 引用样式", true)
+                    if (refTextIndex == -1) {
+                      focusNote.appendMarkdownComment("- 引用样式：", thoughtHtmlCommentIndex)
+                      focusNote.appendMarkdownComment(referenceContent, thoughtHtmlCommentIndex+1)
+                    } else {
+                      focusNote.appendMarkdownComment(referenceContent, refTextIndex+1)
+                    }
+                  }
+                }
+              )
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceInfoRefFromFocusNote":
+        try {
+          MNUtil.undoGrouping(()=>{
+            if (focusNote.noteTitle !== "") {
+              MNUtil.showHUD("选错卡片了！应该选参考文献引用的摘录卡片！")
+            } else {
+              let referenceContent = toolbarUtils.extractRefContentFromReference(focusNote.excerptText)
+              referenceContent = toolbarUtils.formatEnglishStringPunctuation(referenceContent)
+              let refNum = toolbarUtils.extractRefNumFromReference(focusNote.excerptText)
+              if (refNum == 0) {
+                MNUtil.showHUD("当前文档没有绑定卡片 ID")
+              } else {
+                currentDocmd5 = MNUtil.currentDocmd5
+                let targetNoteId = referenceIds[currentDocmd5]?referenceIds[currentDocmd5][refNum]:undefined
+                if (targetNoteId == undefined) {
+                  MNUtil.showHUD("卡片 ID 还没绑定")
+                } else {
+                  let targetNote = MNNote.new(targetNoteId)
+                  let thoughtHtmlCommentIndex = targetNote.getCommentIndex("相关思考：", true)
+                  let refTextIndex = targetNote.getCommentIndex("- 引用样式：", true)
+                  if (refTextIndex == -1) {
+                    targetNote.appendMarkdownComment("- 引用样式：", thoughtHtmlCommentIndex)
+                    targetNote.merge(focusNote)
+                    targetNote.appendMarkdownComment(referenceContent)
+                    targetNote.moveComment(targetNote.comments.length-1,thoughtHtmlCommentIndex+1)
+                    targetNote.moveComment(targetNote.comments.length-1,thoughtHtmlCommentIndex+2)
+                  } else {
+                    targetNote.merge(focusNote)
+                    targetNote.appendMarkdownComment(referenceContent)
+                    targetNote.moveComment(targetNote.comments.length-1,refTextIndex+1)
+                    targetNote.moveComment(targetNote.comments.length-1,refTextIndex+2)
+                  }
+                }
+              }
+              
+            }
+            
+            // if (referenceContent !== "") {
+            //   MNUtil.copy(referenceContent)
+            //   MNUtil.showHUD(referenceContent)
+            // } else {
+            //   MNUtil.copy(focusNote.excerptText)
+            //   MNUtil.showHUD(focusNote.excerptText)
+            // }
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
         break;
       case "cardCopyNoteId":
         MNUtil.copy(focusNote.noteId)

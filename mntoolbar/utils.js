@@ -29,6 +29,66 @@ class toolbarUtils {
 
   // 夏大鱼羊自定义函数
 
+  // 规范化字符串中的英文标点的前后空格
+  static formatEnglishStringPunctuation(string) {
+    // 将中文括号替换为西文括号
+    string = string.replace(/–/g, '-');
+    string = string.replace(/，/g, ',');
+    string = string.replace(/。/g, '.');
+    string = string.replace(/？/g, '?');
+    string = string.replace(/（/g, '(');
+    string = string.replace(/）/g, ')');
+    string = string.replace(/【/g, '[');
+    string = string.replace(/】/g, ']');
+    
+    // 处理常见标点符号前后的空格
+    string = string.replace(/ *, */g, ', ');
+    string = string.replace(/ *\. */g, '. ');
+    string = string.replace(/ *\? */g, '? ');
+    string = string.replace(/ *\- */g, '-');
+    string = string.replace(/ *\) */g, ') ');
+    string = string.replace(/ *\] */g, '] ');
+    
+    // 如果标点符号在句末，则去掉后面的空格
+    string = string.replace(/, $/g, ',');
+    string = string.replace(/\. $/g, '.');
+    string = string.replace(/\? $/g, '?');
+    string = string.replace(/\) $/g, ')');
+    string = string.replace(/\] $/g, ']');
+    
+    // 处理左括号类标点符号
+    string = string.replace(/ *\( */g, ' (');
+    string = string.replace(/ *\[ */g, ' [');
+
+    // 处理一些特殊情况
+    string = string.replace(/\. ,/g, '.,');  // 名字缩写的.和后面的,
+    
+    
+    return string;
+  }
+
+  // [1] xx => 1
+  static extractRefNumFromReference(text) {
+    // const regex = /^\s*\[\s*(\d{1,3})\s*\]\s*.+$/; 
+    const regex = /\[(\d*)\]/; 
+    const match = text.trim().match(regex); // 使用正则表达式进行匹配
+    if (match) {
+      return match[1].trim(); // 返回匹配到的文本，并去除前后的空格
+    } else {
+      return 0; // 如果没有找到匹配项，则返回原文本
+    }
+  }
+  // [1] xxx => xxx
+  static extractRefContentFromReference(text) {
+    const regex = /^\s*\[\s*\d{1,3}\s*\]\s*(.+)$/; // 以可选空格开头，匹配 [1-999] 后的部分
+    const match = text.trim().match(regex); // 使用正则表达式进行匹配
+    if (match) {
+      return match[1].trim(); // 返回匹配到的文本，并去除前后的空格
+    } else {
+      return text; // 如果没有找到匹配项，则返回原文本
+    }
+  }
+
   static referenceStoreOneIdForCurrentDoc(input){
     let refNum = input.split('@')[0]
     let refId = input.split('@')[1]
@@ -3715,11 +3775,11 @@ class toolbarConfig {
     this.mainPath = mainPath
     /* 夏大鱼羊 - start */
     referenceIds = this.getByDefault("MNToolbar_referenceIds",{})
-    if (JSON.stringify(referenceIds) === '{}') {
-      MNUtil.showHUD("referenceIds 是空的！")
-    } else {
-      MNUtil.showHUD(Object.keys(referenceIds).length)
-    }
+    // if (JSON.stringify(referenceIds) === '{}') {
+    //   MNUtil.showHUD("referenceIds 是空的！")
+    // } else {
+    //   MNUtil.showHUD(Object.keys(referenceIds).length)
+    // }
     /* 夏大鱼羊 - end */
     this.dynamic = this.getByDefault("MNToolbar_dynamic",false)
     this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})
@@ -4017,21 +4077,29 @@ static template(action) {
               "menuWidth": 350,
               "menuItems": [
                 {
-                  "action": "referenceStoreOneIdForCurrentDocByFocusNote",
-                  "menuTitle": "当前文档：录入选中的卡片的🆔"
+                  "action": "referenceStoreIdForCurrentDocByFocusNote",
+                  "menuTitle": "当前文档：与选中卡片的🆔绑定",
                 },
                 {
-                  "action": "referenceStoreOneIdForCurrentDoc",
-                  "menuTitle": "当前文档：手动录入 1 条参考文献卡片🆔"
+                  "action": "referenceStoreOneIdForCurrentDocByFocusNote",
+                  "menuTitle": "当前文档：录入「选中卡片」的🆔"
                 },
+                // {
+                //   "action": "referenceStoreOneIdForCurrentDoc",
+                //   "menuTitle": "当前文档：手动录入 1 条参考文献卡片🆔"
+                // },
                 {
                   "action": "referenceStoreIdsForCurrentDoc",
-                  "menuTitle": "当前文档：录入多条参考文献卡片🆔"
+                  "menuTitle": "当前文档：「手动录入」参考文献卡片🆔"
                 },
                 {
                   "action": "referenceStoreIdsForCurrentDocFromClipboard",
                   "menuTitle": "当前文档：从剪切板录入参考文献卡片🆔"
-                }
+                },
+                {
+                  "action": "referenceClearIdsForCurrentDoc",
+                  "menuTitle": "当前文档：清空卡片 ID",
+                },
               ]
             },
             {
@@ -4109,6 +4177,20 @@ static template(action) {
               {
                 "action": "referenceInfoDoiFromClipboard",
                 "menuTitle": "🔢 DOI",
+              },
+              {
+                "action": "menu",
+                "menuTitle": "➡️ 🔗 引用样式",
+                "menuItems": [
+                  {
+                    "action": "referenceInfoInputRef",
+                    "menuTitle": "手动输入引用样式"
+                  },
+                  {
+                    "action": "referenceInfoRefFromFocusNote",
+                    "menuTitle": "选中摘录自动录入引用样式"
+                  }
+                ]
               },
               {
                 "action": "menu",
