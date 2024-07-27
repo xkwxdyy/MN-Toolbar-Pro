@@ -2245,10 +2245,14 @@ class toolbarUtils {
   }
 
   static init(){
+  try {
     this.app = Application.sharedInstance()
     this.data = Database.sharedInstance()
     this.focusWindow = this.app.focusWindow
     this.version = this.appVersion()
+      } catch (error) {
+    this.addErrorLog(error, "init")
+  }
   }
   static showHUD(message,duration=2) {
     this.app.showHUD(message,this.focusWindow,2)
