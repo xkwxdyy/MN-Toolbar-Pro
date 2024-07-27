@@ -183,7 +183,8 @@ JSB.newAddon = function (mainPath) {
           MNUtil.studyView.addSubview(self.testController.view);
           lastFrame = self.addonController.view.frame
           let buttomNumber = toolbarConfig.getWindowState("dynamicButton")
-          lastFrame.height = toolbarUtils.checkHeight(lastFrame.height,buttomNumber)
+          lastFrame.height = 45*buttomNumber+15
+          // lastFrame.height = toolbarUtils.checkHeight(lastFrame.height,buttomNumber)
         }else{
           self.testController.refreshHeight()
           lastFrame = self.testController.view.frame
@@ -296,7 +297,7 @@ JSB.newAddon = function (mainPath) {
           if (currentFrame.y >= studyFrame.height) {
             currentFrame.y = studyFrame.height-20              
           }
-          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,self.addonController.buttonNumber)
+          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,self.addonController.maxButtonNumber)
           if (self.addonController.splitMode) {
             if (splitLine) {
               currentFrame.x = splitLine-20

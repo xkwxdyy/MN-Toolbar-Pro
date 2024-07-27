@@ -2782,7 +2782,7 @@ class toolbarUtils {
     let config = this.getVarInfoWithNote(text,note)
     return this.replacVar(text,config)
   }
-  static checkHeight(height,maxButtons = 9){
+  static checkHeight(height,maxButtons = 20){
     if (height > 420 && !this.isSubscribed(false)) {
       return 420
     }
@@ -3772,6 +3772,7 @@ class toolbarConfig {
   // static defaultConfig = {showEditorWhenEditingNote:false}
   static init(mainPath){
     // this.config = this.getByDefault("MNToolbar_config",this.defaultConfig)
+    try {
     this.mainPath = mainPath
     /* 夏大鱼羊 - start */
     referenceIds = this.getByDefault("MNToolbar_referenceIds",{})
@@ -3805,19 +3806,19 @@ class toolbarConfig {
       }
     }
     this.buttonConfig = this.getByDefault("MNToolbar_buttonConfig", this.defalutButtonConfig)
+    // MNUtil.copyJSON(this.buttonConfig)
     this.highlightColor = UIColor.blendedColor(
       UIColor.colorWithHexString("#2c4d81").colorWithAlphaComponent(0.8),
       toolbarUtils.app.defaultTextColor,
       0.8
     );
-    try {
       let editorConfig = this.getDescriptionByName("edit")
       if ("showOnNoteEdit" in editorConfig) {
         this.showEditorOnNoteEdit = editorConfig.showOnNoteEdit
       }
       
     } catch (error) {
-      // toolbarUtils.addErrorLog(error, "init")
+      toolbarUtils.addErrorLog(error, "init")
     }
     this.initImage()
     this.buttonImageFolder = MNUtil.dbFolder+"/buttonImage"

@@ -14,10 +14,21 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.isLoading = false;
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
-    self.buttonNumber = 15  // 注意自定义时要改这里的数量！
+    self.maxButtonNumber = 20
+    self.buttonNumber = 15
     if (self.dynamicWindow) {
-      self.buttonNumber = 9
+      // self.maxButtonNumber = 9
+      self.buttonNumber = toolbarConfig.getWindowState("dynamicButton");
+    }else{
+      let lastFrame = toolbarConfig.getWindowState("frame")
+      if (lastFrame) {
+        // MNUtil.copyJSON(lastFrame)
+        self.buttonNumber = Math.floor(lastFrame.height/45)
+  // MNUtil.copy("refreshHeight: "+Math.floor(lastFrame.height/45))
+  // MNUtil.copy("refreshHeight: "+self.buttonNumber)
+      }
     }
+
     // self.buttonNumber = 9
     self.mode = 0
     self.sideMode = toolbarConfig.getWindowState("sideMode")
@@ -36,6 +47,8 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
       toolbarConfig.action = toolbarConfig.action.concat(["custom1","custom2","custom3","custom4","custom5","custom6","custom7","custom8","custom9"])
     }
     self.setToolbarButton(toolbarConfig.action)
+  // MNUtil.copy("refreshHeight: "+self.buttonNumber)
+
     // >>> max button >>>
     self.maxButton = UIButton.buttonWithType(0);
     // self.setButtonLayout(self.maxButton,"maxButtonTapped:")
@@ -94,7 +107,7 @@ viewWillLayoutSubviews: function() {
 
     let initX = 0
     let initY = 0
-    for (let index = 0; index < self.buttonNumber; index++) {
+    for (let index = 0; index < self.maxButtonNumber; index++) {
       initX = 0
       self["ColorButton"+index].frame = {  x: xLeft+initX,  y: initY,  width: 40,  height: 40,};
       initY = initY+45
@@ -655,10 +668,10 @@ try {
     }
     if (self.custom) {
       self.customMode = "None"
-      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(self.lastFrame.height,self.buttonNumber)}
+      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(self.lastFrame.height,self.maxButtonNumber)}
       self.currentFrame  = self.view.frame
     }else{
-      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(frame.height,self.buttonNumber)}
+      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(frame.height,self.maxButtonNumber)}
       self.currentFrame  = self.view.frame
     }
     if (gesture.state === 3) {
@@ -687,7 +700,7 @@ try {
     if (frame.y + height > MNUtil.studyView.bounds.height) {
       height = MNUtil.studyView.bounds.height - frame.y
     }
-    height = toolbarUtils.checkHeight(height,self.buttonNumber)
+    height = toolbarUtils.checkHeight(height,self.maxButtonNumber)
     self.view.frame = {x:frame.x,y:frame.y,width:40,height:height}
     self.currentFrame  = self.view.frame
     if (gesture.state === 3) {
@@ -750,7 +763,7 @@ toolbarController.prototype.setColorButtonLayout = function (button,targetAction
 toolbarController.prototype.show = async function (frame) {
   let preFrame = this.view.frame
   preFrame.width = 40
-  preFrame.height = toolbarUtils.checkHeight(preFrame.height,this.buttonNumber)
+  preFrame.height = toolbarUtils.checkHeight(preFrame.height,this.maxButtonNumber)
   if (preFrame.x < 0) {
     preFrame.x = 0
   }
@@ -764,7 +777,7 @@ toolbarController.prototype.show = async function (frame) {
   this.view.layer.opacity = 0.2
   if (frame) {
     frame.width = 40
-    frame.height = toolbarUtils.checkHeight(frame.height,this.buttonNumber)
+    frame.height = toolbarUtils.checkHeight(frame.height,this.maxButtonNumber)
     this.view.frame = frame
     this.currentFrame = frame
   }
@@ -899,7 +912,7 @@ try {
   }
   // MNUtil.copyJSON(actionNames)
   // let activeActionNumbers = actionNames.length
-  for (let index = 0; index < this.buttonNumber; index++) {
+  for (let index = 0; index < this.maxButtonNumber; index++) {
     let actionName = actionNames[index]
     if (this["ColorButton"+index]) {
     }else{
@@ -927,6 +940,7 @@ try {
   if (this.dynamicToolbar) {
     this.dynamicToolbar.setToolbarButton(actionNames,newActions)
   }
+  this.refreshHeight()
 } catch (error) {
   MNUtil.showHUD("Error in setToolbarButton: "+error)
 }
@@ -937,13 +951,19 @@ try {
  * @this {toolbarController}
  */
 toolbarController.prototype.refreshHeight = function () {
-
-  let height = 40*this.buttonNumber+40
   let lastFrame = this.view.frame
-  if (lastFrame.height > height) {
-    lastFrame.height = height
+  let currentHeight = lastFrame.height
+  if (currentHeight > 420 && !toolbarUtils.isSubscribed(false)) {
+    lastFrame.height = 420
+    this.view.frame = lastFrame
+    return
   }
+  let height = 45*this.buttonNumber+15
+  // if (lastFrame.height > height) {
+    lastFrame.height = height
+  // }
   this.view.frame = lastFrame
+  this.currentFrame = lastFrame
   // showHUD("number:"+height)
 }
 

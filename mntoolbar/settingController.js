@@ -426,7 +426,6 @@ viewWillLayoutSubviews: function() {
       toolbarConfig.addonLogos[addonName] = !toolbarConfig.checkLogoStatus(addonName)
       button.setTitleForState(addonName+": "+(toolbarConfig.checkLogoStatus(addonName)?"✅":"❌"),0)
       MNButton.setColor(button, toolbarConfig.checkLogoStatus(addonName)?"#457bd3":"#9bb2d6",0.8)
-
       toolbarConfig.save("MNToolbar_addonLogos")
       MNUtil.refreshAddonCommands()
     }
