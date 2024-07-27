@@ -911,8 +911,9 @@ try {
     toolbarConfig.action = actionNames
   }
   // MNUtil.copyJSON(actionNames)
-  // let activeActionNumbers = actionNames.length
-  for (let index = 0; index < this.maxButtonNumber; index++) {
+  let activeActionNumbers = actionNames.length
+  // 遍历到 activeActionNumbers 而不是 maxButtonNumber
+  for (let index = 0; index < activeActionNumbers; index++) {
     let actionName = actionNames[index]
     if (this["ColorButton"+index]) {
     }else{
