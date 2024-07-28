@@ -3019,7 +3019,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           }
         )
         break;
-      case "referenceInfoRefFromRefNum":
+      case "referenceInfoRefFromInputRefNum":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "输入文献号",
           "",
