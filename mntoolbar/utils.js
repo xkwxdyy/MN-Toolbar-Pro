@@ -4296,6 +4296,14 @@ static template(action) {
       config.action = "menu"
       config.menuItems = [
         {
+          "action": "refreshNotes",
+          "menuTitle": "刷新卡片",
+        },
+        {
+          "action": "refreshCardsAndAncestorsAndDescendants",
+          "menuTitle": "刷新卡片及其所有父子卡片",
+        },
+        {
           "action": "changePrefix",
           "menuTitle": "✂️ 修改卡片前缀",
         },

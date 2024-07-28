@@ -1761,6 +1761,28 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "refreshNotes":
+        try {
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(focusNote=>{
+              focusNote.refresh()
+            })
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
+      case "refreshCardsAndAncestorsAndDescendants":
+        try {
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(focusNote=>{
+              focusNote.refreshAll()
+            })
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
       case "referenceTestIfIdInCurrentDoc":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "输入文献号",
@@ -3570,7 +3592,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                   }
                 }
               } else {
-                MNUtil.showHUD("不支持对此颜色的卡片进行制卡！")
+                MNUtil.showHUD("此卡片不支持制卡！")
                 return // 使用 return 来提前结束函数, 避免了在内部函数中使用 break 导致的语法错误。
               }
 
