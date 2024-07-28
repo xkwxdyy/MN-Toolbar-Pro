@@ -1761,6 +1761,36 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "referenceTestIfIdInCurrentDoc":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入文献号",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                if (buttonIndex == 1) {
+                  let refNum = alert.textFieldAtIndex(0).text
+                  let currentDocmd5 = MNUtil.currentDocmd5
+                  if (referenceIds.hasOwnProperty(currentDocmd5)) {
+                    if (referenceIds[currentDocmd5].hasOwnProperty(refNum)) {
+                      MNUtil.showHUD("["+refNum+"] 与「" + MNNote.new(referenceIds[currentDocmd5][refNum]).noteTitle + "」绑定")
+                    } else {
+                      MNUtil.showHUD("["+refNum+"] 未进行 ID 绑定")
+                    }
+                  } else {
+                    MNUtil.showHUD("当前文档并未开始绑定 ID")
+                  }
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
       case "referenceStoreOneIdForCurrentDocByFocusNote":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "输入文献号",
@@ -1955,6 +1985,21 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           let referenceHtmlCommentIndex = focusNote.getCommentIndex("文献：", true)
           focusNote.appendMarkdownComment(
             MNUtil.clipboardText, referenceHtmlCommentIndex
+          )
+        })
+        break;
+      case "referenceAuthorRenewAbbreviation":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(
+            focusNote => {
+              let authorName = toolbarUtils.getFirstKeywordFromTitle(focusNote.noteTitle)
+              let abbreviations = toolbarUtils.getAbbreviationsOfName(authorName)
+              abbreviations.forEach(abbreviation => {
+                if (!focusNote.noteTitle.includes(abbreviation)) {
+                  focusNote.noteTitle += "; " + abbreviation
+                }
+              })
+            }
           )
         })
         break;
@@ -2339,6 +2384,26 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             focusNote.removeCommentByIndex(0)
             cloneAndMerge(focusNote, "FAD11540-DF81-4E31-9748-34806CDE1D64")
             focusNote.moveComment(focusNote.comments.length-1,0)
+          })
+        })
+        break;
+      case "renewBookNotes":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            let htmlCommentsIndexArr = []
+            focusNote.comments.forEach(
+              (comment, index) => {
+                if (
+                  comment.type == "HtmlNote"
+                ) {
+                  htmlCommentsIndexArr.push(index)
+                }
+              }
+            )
+            for (let i = focusNote.comments.length-1; i >= htmlCommentsIndexArr[0]; i--) {
+              focusNote.removeCommentByIndex(i)
+            }
+            cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
           })
         })
         break;
@@ -2935,7 +3000,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             try {
               MNUtil.undoGrouping(()=>{
                 let referenceContent = toolbarUtils.extractRefContentFromReference(alert.textFieldAtIndex(0).text)
-                referenceContent = toolbarUtils.formatEnglishStringPunctuation(referenceContent)
+                referenceContent = toolbarUtils.formatEnglishStringPunctuationSpace(referenceContent)
                   if (buttonIndex == 1) {
                     let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
                     let refTextIndex = focusNote.getIncludingCommentIndex("- 引用样式", true)
@@ -2954,6 +3019,57 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           }
         )
         break;
+      case "referenceInfoRefFromRefNum":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入文献号",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                if (buttonIndex == 1) {
+                  if (focusNote.noteTitle !== "") {
+                    MNUtil.showHUD("选错卡片了！应该选参考文献引用的摘录卡片！")
+                  } else {
+                    let referenceContent = toolbarUtils.extractRefContentFromReference(focusNote.excerptText)
+                    referenceContent = toolbarUtils.formatEnglishStringPunctuationSpace(referenceContent)
+                    let refNum = alert.textFieldAtIndex(0).text
+                    if (refNum == 0) {
+                      MNUtil.showHUD("当前文档没有绑定卡片 ID")
+                    } else {
+                      currentDocmd5 = MNUtil.currentDocmd5
+                      let targetNoteId = referenceIds[currentDocmd5]?referenceIds[currentDocmd5][refNum]:undefined
+                      if (targetNoteId == undefined) {
+                        MNUtil.showHUD("卡片 ID 还没绑定")
+                      } else {
+                        let targetNote = MNNote.new(targetNoteId)
+                        let thoughtHtmlCommentIndex = targetNote.getCommentIndex("相关思考：", true)
+                        let refTextIndex = targetNote.getCommentIndex("- 引用样式：", true)
+                        if (refTextIndex == -1) {
+                          targetNote.appendMarkdownComment("- 引用样式：", thoughtHtmlCommentIndex)
+                          targetNote.merge(focusNote)
+                          targetNote.appendMarkdownComment(referenceContent)
+                          targetNote.moveComment(targetNote.comments.length-1,thoughtHtmlCommentIndex+1)
+                          targetNote.moveComment(targetNote.comments.length-1,thoughtHtmlCommentIndex+2)
+                        } else {
+                          targetNote.merge(focusNote)
+                          targetNote.appendMarkdownComment(referenceContent)
+                          targetNote.moveComment(targetNote.comments.length-1,refTextIndex+1)
+                          targetNote.moveComment(targetNote.comments.length-1,refTextIndex+2)
+                        }
+                      }
+                    }
+                  }
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
       case "referenceInfoRefFromFocusNote":
         try {
           MNUtil.undoGrouping(()=>{
@@ -2961,7 +3077,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
               MNUtil.showHUD("选错卡片了！应该选参考文献引用的摘录卡片！")
             } else {
               let referenceContent = toolbarUtils.extractRefContentFromReference(focusNote.excerptText)
-              referenceContent = toolbarUtils.formatEnglishStringPunctuation(referenceContent)
+              referenceContent = toolbarUtils.formatEnglishStringPunctuationSpace(referenceContent)
               let refNum = toolbarUtils.extractRefNumFromReference(focusNote.excerptText)
               if (refNum == 0) {
                 MNUtil.showHUD("当前文档没有绑定卡片 ID")
@@ -2988,16 +3104,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                   }
                 }
               }
-              
             }
-            
-            // if (referenceContent !== "") {
-            //   MNUtil.copy(referenceContent)
-            //   MNUtil.showHUD(referenceContent)
-            // } else {
-            //   MNUtil.copy(focusNote.excerptText)
-            //   MNUtil.showHUD(focusNote.excerptText)
-            // }
           })
         } catch (error) {
           MNUtil.showHUD(error);

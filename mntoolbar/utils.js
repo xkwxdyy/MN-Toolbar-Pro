@@ -29,8 +29,8 @@ class toolbarUtils {
 
   // 夏大鱼羊自定义函数
 
-  // 规范化字符串中的英文标点的前后空格
-  static formatEnglishStringPunctuation(string) {
+  // 替换英文标点
+  static formatPunctuationToEnglish(string) {
     // 将中文括号替换为西文括号
     string = string.replace(/–/g, '-');
     string = string.replace(/，/g, ',');
@@ -40,6 +40,19 @@ class toolbarUtils {
     string = string.replace(/）/g, ')');
     string = string.replace(/【/g, '[');
     string = string.replace(/】/g, ']');
+    string = string.replace(/「/g, '[');
+    string = string.replace(/」/g, ']');
+    
+    return string;
+  }
+
+  // 规范化字符串中的英文标点的前后空格
+  static formatEnglishStringPunctuationSpace(string) {
+    // 将中文括号替换为西文括号
+    string = this.formatPunctuationToEnglish(string)
+
+    // 去掉换行符
+    string = string.replace(/\n/g, ' ');
     
     // 处理常见标点符号前后的空格
     string = string.replace(/ *, */g, ', ');
@@ -69,8 +82,10 @@ class toolbarUtils {
 
   // [1] xx => 1
   static extractRefNumFromReference(text) {
+    text = this.formatPunctuationToEnglish(text)
+    text = text.replace(/\n/g, ' ');
     // const regex = /^\s*\[\s*(\d{1,3})\s*\]\s*.+$/; 
-    const regex = /\[(\d*)\]/; 
+    const regex = /^\s*\[\s*(.*?)\s*\]\s*.+$/; 
     const match = text.trim().match(regex); // 使用正则表达式进行匹配
     if (match) {
       return match[1].trim(); // 返回匹配到的文本，并去除前后的空格
@@ -80,7 +95,9 @@ class toolbarUtils {
   }
   // [1] xxx => xxx
   static extractRefContentFromReference(text) {
-    const regex = /^\s*\[\s*\d{1,3}\s*\]\s*(.+)$/; // 以可选空格开头，匹配 [1-999] 后的部分
+    text = this.formatPunctuationToEnglish(text)
+    text = text.replace(/\n/g, ' ');
+    const regex = /^\s*\[[^\]]*\]\s*(.+)$/;
     const match = text.trim().match(regex); // 使用正则表达式进行匹配
     if (match) {
       return match[1].trim(); // 返回匹配到的文本，并去除前后的空格
@@ -4082,12 +4099,16 @@ static template(action) {
               "menuWidth": 350,
               "menuItems": [
                 {
+                  "action": "referenceTestIfIdInCurrentDoc",
+                  "menuTitle": "检测文献号的🆔绑定情况",
+                },
+                {
                   "action": "referenceStoreIdForCurrentDocByFocusNote",
-                  "menuTitle": "当前文档：与选中卡片的🆔绑定",
+                  "menuTitle": "当前文档与选中卡片的🆔绑定",
                 },
                 {
                   "action": "referenceStoreOneIdForCurrentDocByFocusNote",
-                  "menuTitle": "当前文档：录入「选中卡片」的🆔"
+                  "menuTitle": "录入「选中卡片」的🆔"
                 },
                 // {
                 //   "action": "referenceStoreOneIdForCurrentDoc",
@@ -4095,15 +4116,15 @@ static template(action) {
                 // },
                 {
                   "action": "referenceStoreIdsForCurrentDoc",
-                  "menuTitle": "当前文档：「手动录入」参考文献卡片🆔"
+                  "menuTitle": "「手动录入」参考文献卡片🆔"
                 },
                 {
                   "action": "referenceStoreIdsForCurrentDocFromClipboard",
-                  "menuTitle": "当前文档：从剪切板录入参考文献卡片🆔"
+                  "menuTitle": "从剪切板录入当前文档的参考文献卡片🆔"
                 },
                 {
                   "action": "referenceClearIdsForCurrentDoc",
-                  "menuTitle": "当前文档：清空卡片 ID",
+                  "menuTitle": "清空当前文档卡片🆔",
                 },
               ]
             },
@@ -4188,12 +4209,16 @@ static template(action) {
                 "menuTitle": "➡️ 🔗 引用样式",
                 "menuItems": [
                   {
-                    "action": "referenceInfoInputRef",
-                    "menuTitle": "手动输入引用样式"
+                    "action": "referenceInfoRefFromInputRefNum",
+                    "menuTitle": "输入文献号录入引用样式"
                   },
                   {
                     "action": "referenceInfoRefFromFocusNote",
                     "menuTitle": "选中摘录自动录入引用样式"
+                  },
+                  {
+                    "action": "referenceInfoInputRef",
+                    "menuTitle": "手动输入引用样式"
                   }
                 ]
               },
@@ -4221,6 +4246,10 @@ static template(action) {
           "action": "menu",
           "menuTitle": "➡️ 👨‍🎓作者卡片",
           "menuItems": [
+            {
+              "action": "referenceAuthorRenewAbbreviation",
+              "menuTitle": "更新作者缩写",
+            },
             {
               "action": "referenceAuthorInfoFromClipboard",
               "menuTitle": "粘贴个人信息"
