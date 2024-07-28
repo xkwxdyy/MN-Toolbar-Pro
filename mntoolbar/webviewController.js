@@ -1761,6 +1761,37 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "referenceIfIdInCurrentDoc":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入文献号",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                if (buttonIndex == 1) {
+                  let refNum = alert.textFieldAtIndex(0).text
+                  let currentDocmd5 = MNUtil.currentDocmd5
+                  if (referenceIds.hasOwnProperty(currentDocmd5)) {
+                    if (referenceIds[currentDocmd5].hasOwnProperty(refNum)) {
+                      MNUtil.showHUD("[" + refNum + "] 与「" +  MNNote.new(referenceIds[currentDocmd5][refNum]).noteTitle + "」绑定")
+                    } else {
+                      MNUtil.showHUD("[" + refNum + "] 未绑定参考文献 ID")
+                    }
+                  } else {
+                    MNUtil.showHUD("当前文档未开始绑定参考文献！")
+                  }
+                  toolbarConfig.save("MNToolbar_referenceIds")
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
       case "referenceStoreOneIdForCurrentDocByFocusNote":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "输入文献号",

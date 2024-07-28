@@ -4082,12 +4082,16 @@ static template(action) {
               "menuWidth": 350,
               "menuItems": [
                 {
+                  "action": "referenceIfIdInCurrentDoc",
+                  "menuTitle": "检测文献号的🆔绑定情况",
+                },
+                {
                   "action": "referenceStoreIdForCurrentDocByFocusNote",
-                  "menuTitle": "当前文档：与选中卡片的🆔绑定",
+                  "menuTitle": "当前文档与选中卡片的🆔绑定",
                 },
                 {
                   "action": "referenceStoreOneIdForCurrentDocByFocusNote",
-                  "menuTitle": "当前文档：录入「选中卡片」的🆔"
+                  "menuTitle": "录入「选中卡片」的🆔"
                 },
                 // {
                 //   "action": "referenceStoreOneIdForCurrentDoc",
@@ -4095,15 +4099,15 @@ static template(action) {
                 // },
                 {
                   "action": "referenceStoreIdsForCurrentDoc",
-                  "menuTitle": "当前文档：「手动录入」参考文献卡片🆔"
+                  "menuTitle": "「手动录入」参考文献卡片🆔"
                 },
                 {
                   "action": "referenceStoreIdsForCurrentDocFromClipboard",
-                  "menuTitle": "当前文档：从剪切板录入参考文献卡片🆔"
+                  "menuTitle": "从剪切板录入当前文档的参考文献卡片🆔"
                 },
                 {
                   "action": "referenceClearIdsForCurrentDoc",
-                  "menuTitle": "当前文档：清空卡片 ID",
+                  "menuTitle": "清空当前文档卡片🆔",
                 },
               ]
             },
