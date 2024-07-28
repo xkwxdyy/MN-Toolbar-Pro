@@ -3533,7 +3533,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
 
               /* 预处理 */
               /* 只对淡蓝色、淡粉色、深绿色、深蓝色、淡紫色的卡片进行制卡 */
-              if ([0, 2, 3, 4, 9, 10, 15].includes(focusNoteColorIndex)) {
+              if (
+                [0, 2, 3, 4, 9, 10, 15].includes(focusNoteColorIndex) &&
+                !focusNote.noteTitle.startsWith("【文献")  // 防止文献卡片被制卡
+              ) {
                 /* 先将卡变成非摘录版本 */
                 // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
                 if (focusNote.excerptText) {
