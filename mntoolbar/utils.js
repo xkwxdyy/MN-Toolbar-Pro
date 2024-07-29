@@ -32,6 +32,16 @@ class toolbarUtils {
   // TODO:
   // - 判断链接是否存在
 
+  // 获得淡绿色、淡黄色、黄色卡片的类型
+  static getClassificationNoteTypeByTitle(title) {
+    let match = title.match(/.*相关(.*)/)
+    if (match) {
+      return match[1]
+    } else {
+      return ""
+    }
+  }
+
   static referenceSeriesBookMakeCard(focusNote, seriesName, seriesNum) {
     if (focusNote.excerptText) {
       this.convertNoteToNonexcerptVersion(focusNote)
@@ -813,6 +823,14 @@ class toolbarUtils {
           break;
         case "method":
           templateNoteId = "EC68EDFE-580E-4E53-BA1B-875F3BEEFE62"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "question":
+          templateNoteId = "C4B464CD-B8C6-42DE-B459-55B48EB31AD8"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "application":
+          templateNoteId = "C4B464CD-B8C6-42DE-B459-55B48EB31AD8"
           cloneAndMerge(focusNote, templateNoteId)
           break;
       }
@@ -4328,13 +4346,14 @@ static template(action) {
         {
           "action": "menu",
           "menuTitle": "➡️ 链接 🔗",
+          "menuWidth": 400,
           "menuItems": [
             // {
             //   "menuTitle": "🔽 "
             // },
             {
-              "action": "",
-              "menuTitle": "更新概念衍生知识点🔗"
+              "action": "renewLinksBetweenDefNoteAndExtensionNote",
+              "menuTitle": "更新1️⃣次「概念卡片」与「衍生知识归类卡片」之间的🔗"
             },
             // {
             //   "action": "",
