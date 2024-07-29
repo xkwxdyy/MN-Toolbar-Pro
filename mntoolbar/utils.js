@@ -32,6 +32,87 @@ class toolbarUtils {
   // TODO:
   // - 判断链接是否存在
 
+  static referenceSeriesBookMakeCard(focusNote, seriesName, seriesNum) {
+    if (focusNote.excerptText) {
+      this.convertNoteToNonexcerptVersion(focusNote)
+    } else {
+      MNUtil.undoGrouping(()=>{
+        let seriesLibraryNote = MNNote.new("4DBABA2A-F4EB-4B35-90AB-A192B79411FD")
+        let findSeries = false
+        let targetSeriesNote
+        let focusNoteIndexInTargetSeriesNote
+        for (let i = 0; i <= seriesLibraryNote.childNotes.length-1; i++) {
+          if (seriesLibraryNote.childNotes[i].noteTitle.includes(seriesName)) {
+            targetSeriesNote = seriesLibraryNote.childNotes[i]
+            seriesName = toolbarUtils.getFirstKeywordFromTitle(targetSeriesNote.noteTitle)
+            findSeries = true
+            break;
+          }
+        }
+        if (!findSeries) {
+          targetSeriesNote = MNNote.clone("5CDABCEC-8824-4E9F-93E1-574EA7811FB4")
+          targetSeriesNote.note.noteTitle = "【文献：书作系列】; " + seriesName
+          seriesLibraryNote.addChild(targetSeriesNote.note)
+        }
+        let referenceInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
+        if (referenceInfoHtmlCommentIndex == -1) {
+          cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
+        }
+        let seriesTextIndex = focusNote.getIncludingCommentIndex("- 系列", true)
+        let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+        MNUtil.undoGrouping(()=>{
+          if (seriesNum !== "0") {
+            focusNote.noteTitle = toolbarUtils.replaceStringStartWithSquarebracketContent(focusNote.noteTitle, "【文献：书作："+ seriesName + " - Vol. "+ seriesNum + "】")
+          } else {
+            focusNote.noteTitle = toolbarUtils.replaceStringStartWithSquarebracketContent(focusNote.noteTitle, "【文献：书作："+ seriesName + "】")
+          }
+        })
+        if (seriesTextIndex == -1) {
+          MNUtil.undoGrouping(()=>{
+            if (seriesNum !== "0") {
+              focusNote.appendMarkdownComment("- 系列：Vol. " + seriesNum, thoughtHtmlCommentIndex)
+            } else {
+              focusNote.appendMarkdownComment("- 系列：", thoughtHtmlCommentIndex)
+            }
+          })
+          focusNote.appendNoteLink(targetSeriesNote, "To")
+          focusNote.moveComment(focusNote.comments.length-1,thoughtHtmlCommentIndex+1)
+        } else {
+          // 删掉重新添加
+          focusNote.removeCommentByIndex(seriesTextIndex)
+          MNUtil.undoGrouping(()=>{
+            if (seriesNum !== "0") {
+              focusNote.appendMarkdownComment("- 系列：Vol. " + seriesNum, seriesTextIndex)
+            } else {
+              focusNote.appendMarkdownComment("- 系列：", seriesTextIndex)
+            }
+          })
+          if (focusNote.getCommentIndex("marginnote4app://note/" + targetSeriesNote.noteId) == -1) {
+            focusNote.appendNoteLink(targetSeriesNote, "To")
+            focusNote.moveComment(focusNote.comments.length-1,seriesTextIndex + 1)
+          } else {
+            focusNote.moveComment(focusNote.getCommentIndex("marginnote4app://note/" + targetSeriesNote.noteId),seriesTextIndex + 1)
+          }
+        }
+        focusNoteIndexInTargetSeriesNote = targetSeriesNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+        if (focusNoteIndexInTargetSeriesNote == -1){
+          targetSeriesNote.appendNoteLink(focusNote, "To")
+        }
+        try {
+          MNUtil.undoGrouping(()=>{
+            toolbarUtils.sortNoteByVolNum(targetSeriesNote, 1)
+            let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
+            bookLibraryNote.addChild(focusNote.note)
+            // focusNote.focusInMindMap(0.5)
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+      })
+      return focusNote
+    }
+  }
+
   static replaceStringStartWithSquarebracketContent(string, afterContent) {
     if (string.startsWith("【")) {
       string = string.replace(/^【.*?】/, afterContent)
@@ -4218,69 +4299,64 @@ static template(action) {
     case "menu_reference":
       config.action = "menu"
       config.menuItems = [
-        {
-          "action": "renewBookSeriesNotes",
-          "menuTitle": "书作系列卡片更新",
-        },
-        {
-          "action": "renewBookNotes",
-          "menuTitle": "书作卡片更新",
-        },
-        {
-          "action": "menu",
-          "menuTitle": "➡️ 引用",
-          "menuWidth": 500,
-          "menuItems": [
-            "⬇️ ➕引用",
-            {
-              "action": "referenceRefByRefNum",
-              "menuTitle": "选中「具体引用」卡片+输入文献号→ ➕引用"
-            },
-            {
-              "action": "referenceRefByRefNumAndFocusInMindMap",
-              "menuTitle": "选中「具体引用」卡片+输入文献号→ ➕引用 + 剪切归类 + 主视图定位"
-            },
-            {
-              "action": "referenceRefByRefNumAddFocusInFloatMindMap",
-              "menuTitle": "选中「具体引用」卡片+输入文献号→ ➕引用 + 剪切归类 + 浮窗定位"
-            },
-            "⬇️ ➕引用归类卡片",
-            {
-              "action": "referenceCreateClassificationNoteByIdAndFocusNote",
-              "menuTitle": "选中「参考文献摘录」卡片+输入文献号→ ➕引用归类卡片 + 浮窗定位",
-            },
-            {
-              "action": "referenceCreateClassificationNoteById",
-              "menuTitle": "输入文献号→ ➕引用归类卡片 + 浮窗定位",
-            },
-            // {
-            //   "action": "referenceCreateClassificationNoteByFocusNote",
-            //   "menuTitle": "选中「参考文献摘录」卡片→ ➕引用归类卡片",
-            // },
-          ]
-        },
+        // {
+        //   "action": "renewBookSeriesNotes",
+        //   "menuTitle": "书作系列卡片更新",
+        // },
+        // {
+        //   "action": "renewBookNotes",
+        //   "menuTitle": "书作卡片更新",
+        // },
         {
           "action": "menu",
-          "menuTitle": "️️➡️ 文献制卡",
+          "menuTitle": "➡️ 🧠文献学习",
           "menuItems": [
-            // {
-            //   "menuTitle": "🔽 "
-            // },
             {
-              "action": "referencePaperMakeCards",
-              "menuTitle": "📄 论文制卡"
+              "action": "menu",
+              "menuTitle": "➡️ 引用",
+              "menuWidth": 500,
+              "menuItems": [
+                "⬇️ ➕引用",
+                {
+                  "action": "referenceRefByRefNum",
+                  "menuTitle": "选中「具体引用」卡片+输入文献号→ ➕引用"
+                },
+                {
+                  "action": "referenceRefByRefNumAndFocusInMindMap",
+                  "menuTitle": "选中「具体引用」卡片+输入文献号→ ➕引用 + 剪切归类 + 主视图定位"
+                },
+                {
+                  "action": "referenceRefByRefNumAddFocusInFloatMindMap",
+                  "menuTitle": "选中「具体引用」卡片+输入文献号→ ➕引用 + 剪切归类 + 浮窗定位"
+                },
+                "⬇️ ➕引用归类卡片",
+                {
+                  "action": "referenceCreateClassificationNoteByIdAndFocusNote",
+                  "menuTitle": "选中「参考文献摘录」卡片+输入文献号→ ➕引用归类卡片 + 浮窗定位",
+                },
+                {
+                  "action": "referenceCreateClassificationNoteById",
+                  "menuTitle": "输入文献号→ ➕引用归类卡片 + 浮窗定位",
+                },
+                // {
+                //   "action": "referenceCreateClassificationNoteByFocusNote",
+                //   "menuTitle": "选中「参考文献摘录」卡片→ ➕引用归类卡片",
+                // },
+              ]
             },
             {
-              "action": "referenceBookMakeCards",
-              "menuTitle": "📚 书作制卡"
-            },
-            {
-              "action": "referenceSeriesBookMakeCards",
-              "menuTitle": "📚 系列书作制卡"
-            },
-            {
-              "action": "referenceOneVolumeJournalMakeCards",
-              "menuTitle": "📄 整卷期刊制卡"
+              "action": "menu",
+              "menuTitle": "➡️ 思考",
+              "menuItems": [
+                {
+                  "action": "",
+                  "menuTitle": "➕思考点",
+                },
+                // {
+                //   "action": "",
+                //   "menuTitle": "",
+                // }
+              ]
             },
           ]
         },
@@ -4357,84 +4433,89 @@ static template(action) {
         },
         {
           "action": "menu",
-          "menuTitle": "➡️ 🧠文献学习",
+          "menuTitle": "➡️ 🗂️文献卡片",
           "menuItems": [
             {
               "action": "menu",
-              "menuTitle": "➡️ 思考",
+              "menuTitle": "️️➡️ 文献制卡",
               "menuItems": [
-                {
-                  "action": "",
-                  "menuTitle": "➕思考点",
-                },
                 // {
-                //   "action": "",
-                //   "menuTitle": "",
-                // }
+                //   "menuTitle": "🔽 "
+                // },
+                {
+                  "action": "referencePaperMakeCards",
+                  "menuTitle": "📄 论文制卡"
+                },
+                {
+                  "action": "referenceBookMakeCards",
+                  "menuTitle": "📚 书作制卡"
+                },
+                {
+                  "action": "referenceSeriesBookMakeCard",
+                  "menuTitle": "📚 系列书作制卡"
+                },
+                {
+                  "action": "referenceOneVolumeJournalMakeCards",
+                  "menuTitle": "📄 整卷期刊制卡"
+                },
               ]
             },
-          ]
-        },
-        {
-          "action": "menu",
-          "menuTitle": "➡️ 🗂️文献信息",
-          "menuItems": [
-              {
-                "action": "referenceInfoAuthor",
-                "menuTitle": "👨‍🎓 作者"
-              },
-              {
-                "action": "referenceInfoJournal",
-                "menuTitle": "📄 期刊",
-              },
-              {
-                "action": "referenceInfoPublisher",
-                "menuTitle": "📚 出版社",
-              },
-              {
-                "action": "referenceInfoKeywords",
-                "menuTitle": "📌 关键词",
-              },
-              {
-                "action": "referenceInfoDoiFromClipboard",
-                "menuTitle": "🔢 DOI",
-              },
-              {
-                "action": "menu",
-                "menuTitle": "➡️ 🔗 引用样式",
-                "menuItems": [
-                  {
-                    "action": "referenceInfoRefFromInputRefNum",
-                    "menuTitle": "输入文献号录入引用样式"
-                  },
-                  {
-                    "action": "referenceInfoRefFromFocusNote",
-                    "menuTitle": "选中摘录自动录入引用样式"
-                  },
-                  {
-                    "action": "referenceInfoInputRef",
-                    "menuTitle": "手动输入引用样式"
-                  }
-                ]
-              },
-              {
-                "action": "menu",
-                "menuTitle": "➡️ .bib 信息",
-                "menuItems": [
-                  {
-                    "action": "referenceBibInfoPasteFromClipboard",
-                    "menuTitle": "从剪切板粘贴 .bib 信息"
-                  },
-                  {
-                    "action": "referenceBibInfoCopy",
-                    "menuTitle": "复制 .bib 信息"
-                  },
-                  {
-                    "action": "referenceBibInfoExport",
-                    "menuTitle": "导出 .bib 信息",
-                  }
-                ]
-              }
+            {
+              "action": "referenceInfoAuthor",
+              "menuTitle": "👨‍🎓 作者"
+            },
+            {
+              "action": "referenceInfoJournal",
+              "menuTitle": "📄 期刊",
+            },
+            {
+              "action": "referenceInfoPublisher",
+              "menuTitle": "📚 出版社",
+            },
+            {
+              "action": "referenceInfoKeywords",
+              "menuTitle": "📌 关键词",
+            },
+            {
+              "action": "referenceInfoDoiFromClipboard",
+              "menuTitle": "🔢 DOI",
+            },
+            {
+              "action": "menu",
+              "menuTitle": "➡️ 🔗 引用样式",
+              "menuItems": [
+                {
+                  "action": "referenceInfoRefFromInputRefNum",
+                  "menuTitle": "输入文献号录入引用样式"
+                },
+                {
+                  "action": "referenceInfoRefFromFocusNote",
+                  "menuTitle": "选中摘录自动录入引用样式"
+                },
+                {
+                  "action": "referenceInfoInputRef",
+                  "menuTitle": "手动输入引用样式"
+                }
+              ]
+            },
+            {
+              "action": "menu",
+              "menuTitle": "➡️ .bib 信息",
+              "menuItems": [
+                {
+                  "action": "referenceBibInfoPasteFromClipboard",
+                  "menuTitle": "从剪切板粘贴 .bib 信息"
+                },
+                {
+                  "action": "referenceBibInfoCopy",
+                  "menuTitle": "复制 .bib 信息"
+                },
+                {
+                  "action": "referenceBibInfoExport",
+                  "menuTitle": "导出 .bib 信息",
+                }
+              ]
+            }
           ]
         },
         {
@@ -4568,6 +4649,10 @@ static template(action) {
             {
               "action" : "renewCards",
               "menuTitle" : "🔄 更新旧卡片"
+            },
+            {
+              "action": "clearAllLinks",
+              "menuTitle": "❌ 链接",
             },
             {
               "action": "clearContentKeepExcerptWithTitle",

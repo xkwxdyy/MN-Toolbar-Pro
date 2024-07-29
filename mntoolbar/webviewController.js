@@ -2350,125 +2350,46 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           })
         })
         break;
-      case "referenceSeriesBookMakeCards":
-        MNUtil.undoGrouping(()=>{
-          focusNotes.forEach(focusNote=>{
-            let seriesNum
-            let seriesName
-            if (focusNote.excerptText) {
-              toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
-            } else {
-              UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
-                "系列书作",
-                "输入系列名",
-                2,
-                "取消",
-                ["确定"],
-                (alert, buttonIndex) => {
-                  try {
-                    MNUtil.undoGrouping(()=>{
-                      seriesName = alert.textFieldAtIndex(0).text;
-                      if (buttonIndex === 1) {
-                        let seriesLibraryNote = MNNote.new("4DBABA2A-F4EB-4B35-90AB-A192B79411FD")
-                        let findSeries = false
-                        let targetSeriesNote
-                        let focusNoteIndexInTargetSeriesNote
-                        for (let i = 0; i <= seriesLibraryNote.childNotes.length-1; i++) {
-                          if (seriesLibraryNote.childNotes[i].noteTitle.includes(seriesName)) {
-                            targetSeriesNote = seriesLibraryNote.childNotes[i]
-                            seriesName = toolbarUtils.getFirstKeywordFromTitle(targetSeriesNote.noteTitle)
-                            findSeries = true
-                            break;
-                          }
+      case "referenceSeriesBookMakeCard":
+        try {
+          MNUtil.undoGrouping(()=>{
+            UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+              "系列书作",
+              "输入系列名",
+              2,
+              "取消",
+              ["确定"],
+              (alert, buttonIndex) => {
+                if (buttonIndex === 1) {
+                  let seriesName = alert.textFieldAtIndex(0).text;
+                  UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+                    "系列号",
+                    "",
+                    2,
+                    "取消",
+                    ["确定"],
+                    (alertI, buttonIndexI) => {
+                      if (buttonIndex == 1) {
+                        let seriesNum = alertI.textFieldAtIndex(0).text;
+                        try {
+                          toolbarUtils.referenceSeriesBookMakeCard(focusNote, seriesName, seriesNum)
+                        } catch (error) {
+                          MNUtil.showHUD(error);
                         }
-                        if (!findSeries) {
-                          targetSeriesNote = MNNote.clone("5CDABCEC-8824-4E9F-93E1-574EA7811FB4")
-                          targetSeriesNote.note.noteTitle = "【文献：书作系列】; " + seriesName
-                          seriesLibraryNote.addChild(targetSeriesNote.note)
-                        }
-                        let referenceInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
-                        if (referenceInfoHtmlCommentIndex == -1) {
-                          cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
-                        }
-                        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
-                          "系列号",
-                          "",
-                          2,
-                          "取消",
-                          ["确定"],
-                          (alertI, buttonIndex) => {
-                            if (buttonIndex == 1) {
-                              seriesNum = alertI.textFieldAtIndex(0).text;
-                              let seriesTextIndex = focusNote.getIncludingCommentIndex("- 系列", true)
-                              let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
-                              MNUtil.undoGrouping(()=>{
-                                if (seriesNum !== "0") {
-                                  focusNote.noteTitle = toolbarUtils.replaceStringStartWithSquarebracketContent(focusNote.noteTitle, "【文献：书作："+ seriesName + " - Vol. "+ seriesNum + "】")
-                                } else {
-                                  focusNote.noteTitle = toolbarUtils.replaceStringStartWithSquarebracketContent(focusNote.noteTitle, "【文献：书作："+ seriesName + "】")
-                                }
-                              })
-                              if (seriesTextIndex == -1) {
-                                MNUtil.undoGrouping(()=>{
-                                  if (seriesNum !== "0") {
-                                    focusNote.appendMarkdownComment("- 系列：Vol. " + seriesNum, thoughtHtmlCommentIndex)
-                                  } else {
-                                    focusNote.appendMarkdownComment("- 系列：", thoughtHtmlCommentIndex)
-                                  }
-                                })
-                                focusNote.appendNoteLink(targetSeriesNote, "To")
-                                focusNote.moveComment(focusNote.comments.length-1,thoughtHtmlCommentIndex+1)
-                              } else {
-                                // focusNote.appendNoteLink(targetSeriesNote, "To")
-                                // focusNote.moveComment(focusNote.comments.length-1,seriesTextIndex + 1)
-                                // 删掉重新添加
-                                focusNote.removeCommentByIndex(seriesTextIndex)
-                                MNUtil.undoGrouping(()=>{
-                                  if (seriesNum !== "0") {
-                                    focusNote.appendMarkdownComment("- 系列：Vol. " + seriesNum, seriesTextIndex)
-                                  } else {
-                                    focusNote.appendMarkdownComment("- 系列：", seriesTextIndex)
-                                  }
-                                })
-                                if (focusNote.getCommentIndex("marginnote4app://note/" + targetSeriesNote.noteId) == -1) {
-                                  focusNote.appendNoteLink(targetSeriesNote, "To")
-                                  focusNote.moveComment(focusNote.comments.length-1,seriesTextIndex + 1)
-                                } else {
-                                  focusNote.moveComment(focusNote.getCommentIndex("marginnote4app://note/" + targetSeriesNote.noteId),seriesTextIndex + 1)
-                                }
-                              }
-                              focusNoteIndexInTargetSeriesNote = targetSeriesNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
-                              if (focusNoteIndexInTargetSeriesNote == -1){
-                                targetSeriesNote.appendNoteLink(focusNote, "To")
-                              }
-                              try {
-                                MNUtil.undoGrouping(()=>{
-                                  toolbarUtils.sortNoteByVolNum(targetSeriesNote, 1)
-                                  let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
-                                  bookLibraryNote.addChild(focusNote.note)
-                                  focusNote.focusInMindMap(0.5)
-                                })
-                              } catch (error) {
-                                MNUtil.showHUD(error);
-                              }
-                            }
-                          }
-                        )
-                        
                       }
-                    })
-                  } catch (error) {
-                    MNUtil.showHUD(error);
-                  }
+                    }
+                  )
                 }
-              )
-            }
+              }
+            )
           })
-        })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
         break;
       case "referenceOneVolumeJournalMakeCards":
-        MNUtil.undoGrouping(()=>{
-          focusNotes.forEach(focusNote=>{
+        try {
+          MNUtil.undoGrouping(()=>{
             let journalVolNum
             let journalName
             if (focusNote.excerptText) {
@@ -2481,100 +2402,86 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 "取消",
                 ["确定"],
                 (alert, buttonIndex) => {
-                  try {
-                    MNUtil.undoGrouping(()=>{
-                      journalName = alert.textFieldAtIndex(0).text;
-                      if (buttonIndex === 1) {
-                        let journalLibraryNote = MNNote.new("1D83F1FA-E54D-4E0E-9E74-930199F9838E")
-                        let findJournal = false
-                        let targetJournalNote
-                        let focusNoteIndexInTargetJournalNote
-                        for (let i = 0; i <= journalLibraryNote.childNotes.length-1; i++) {
-                          if (journalLibraryNote.childNotes[i].noteTitle.includes(journalName)) {
-                            targetJournalNote = journalLibraryNote.childNotes[i]
-                            journalName = toolbarUtils.getFirstKeywordFromTitle(targetJournalNote.noteTitle)
-                            findJournal = true
-                            break;
-                          }
+                  MNUtil.undoGrouping(()=>{
+                    journalName = alert.textFieldAtIndex(0).text;
+                    if (buttonIndex === 1) {
+                      let journalLibraryNote = MNNote.new("1D83F1FA-E54D-4E0E-9E74-930199F9838E")
+                      let findJournal = false
+                      let targetJournalNote
+                      let focusNoteIndexInTargetJournalNote
+                      for (let i = 0; i <= journalLibraryNote.childNotes.length-1; i++) {
+                        if (journalLibraryNote.childNotes[i].noteTitle.includes(journalName)) {
+                          targetJournalNote = journalLibraryNote.childNotes[i]
+                          journalName = toolbarUtils.getFirstKeywordFromTitle(targetJournalNote.noteTitle)
+                          findJournal = true
+                          break;
                         }
-                        if (!findJournal) {
-                          targetJournalNote = MNNote.clone("129EB4D6-D57A-4367-8087-5C89864D3595")
-                          targetJournalNote.note.noteTitle = "【文献：期刊】; " + journalName
-                          journalLibraryNote.addChild(targetJournalNote.note)
-                        }
-                        let journalInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
-                        if (journalInfoHtmlCommentIndex == -1) {
-                          cloneAndMerge(focusNote, "1C976BDD-A04D-46D0-8790-34CE0F6671A4")
-                        }
-                        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
-                          "卷号",
-                          "",
-                          2,
-                          "取消",
-                          ["确定"],
-                          (alertI, buttonIndex) => {
-                            if (buttonIndex == 1) {
-                              journalVolNum = alertI.textFieldAtIndex(0).text;
-                              let journalTextIndex = focusNote.getIncludingCommentIndex("- 整卷期刊：", true)
-                              // let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
-                              let includingHtmlCommentIndex = focusNote.getCommentIndex("包含：", true)
-                              if (focusNote.noteTitle.includes("【文献：期刊】")) {
-                                focusNote.noteTitle = focusNote.noteTitle.replace("【文献：期刊】", "【文献：整卷期刊："+ journalName + " - Vol. "+ journalVolNum + "】")
-                              } else {
-                                try {
-                                  if (focusNote.noteTitle.startsWith("【文献：整卷")) {
-                                    // 把  focusNote.noteTitle 开头的【.*】 删掉
-                                    let reg = new RegExp("^【.*】")
-                                    focusNote.noteTitle = focusNote.noteTitle.replace(reg, "【文献：整卷期刊："+journalName + " - Vol. "+ journalVolNum + "】")
-                                  } else {
-                                    focusNote.noteTitle = "【文献：整卷期刊："+journalName + " - Vol. "+ journalVolNum + "】; " + focusNote.noteTitle
-                                  }
-                                } catch (error) {
-                                  MNUtil.showHUD(error);
-                                }
-                              }
-                              if (journalTextIndex == -1) {
-                                focusNote.appendMarkdownComment("- 整卷期刊：Vol. " + journalVolNum, includingHtmlCommentIndex)
-                                focusNote.appendNoteLink(targetJournalNote, "To")
-                                focusNote.moveComment(focusNote.comments.length-1,includingHtmlCommentIndex+1)
-                              } else {
-                                // focusNote.appendNoteLink(targetJournalNote, "To")
-                                // focusNote.moveComment(focusNote.comments.length-1,journalTextIndex + 1)
-                                focusNote.removeCommentByIndex(journalTextIndex)
-                                focusNote.appendMarkdownComment("- 整卷期刊：Vol. " + journalVolNum, journalTextIndex)
-                                if (focusNote.getCommentIndex("marginnote4app://note/" + targetJournalNote.noteId) == -1) {
-                                  focusNote.appendNoteLink(targetJournalNote, "To")
-                                  focusNote.moveComment(focusNote.comments.length-1,journalTextIndex + 1)
-                                }
-                              }
-                              focusNoteIndexInTargetJournalNote = targetJournalNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
-                              let singleInfoIndexInTargetJournalNote = targetJournalNote.getIncludingCommentIndex("**单份**")
-                              if (focusNoteIndexInTargetJournalNote == -1){
-                                targetJournalNote.appendNoteLink(focusNote, "To")
-                                targetJournalNote.moveComment(targetJournalNote.comments.length-1,singleInfoIndexInTargetJournalNote)
-                              } else {
-                                targetJournalNote.moveComment(focusNoteIndexInTargetJournalNote,singleInfoIndexInTargetJournalNote)
-                              }
-                              // toolbarUtils.sortNoteByVolNum(targetJournalNote, 1)
-                              let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
-                              MNUtil.undoGrouping(()=>{
-                                bookLibraryNote.addChild(focusNote.note)
-                                focusNote.focusInMindMap(0.5)
-                              })
-                            }
-                          }
-                        )
-                        
                       }
-                    })
-                  } catch (error) {
-                    MNUtil.showHUD(error);
-                  }
+                      if (!findJournal) {
+                        targetJournalNote = MNNote.clone("129EB4D6-D57A-4367-8087-5C89864D3595")
+                        targetJournalNote.note.noteTitle = "【文献：期刊】; " + journalName
+                        journalLibraryNote.addChild(targetJournalNote.note)
+                      }
+                      let journalInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
+                      if (journalInfoHtmlCommentIndex == -1) {
+                        cloneAndMerge(focusNote, "1C976BDD-A04D-46D0-8790-34CE0F6671A4")
+                      }
+                      UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+                        "卷号",
+                        "",
+                        2,
+                        "取消",
+                        ["确定"],
+                        (alertI, buttonIndex) => {
+                          if (buttonIndex == 1) {
+                            journalVolNum = alertI.textFieldAtIndex(0).text;
+                            let journalTextIndex = focusNote.getIncludingCommentIndex("- 整卷期刊：", true)
+                            // let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+                            let includingHtmlCommentIndex = focusNote.getCommentIndex("包含：", true)
+                            focusNote.noteTitle = toolbarUtils.replaceStringStartWithSquarebracketContent(
+                              focusNote.noteTitle,
+                              "【文献：整卷期刊："+ journalName + " - Vol. "+ journalVolNum + "】"
+                            )
+                            if (journalTextIndex == -1) {
+                              focusNote.appendMarkdownComment("- 整卷期刊：Vol. " + journalVolNum, includingHtmlCommentIndex)
+                              focusNote.appendNoteLink(targetJournalNote, "To")
+                              focusNote.moveComment(focusNote.comments.length-1,includingHtmlCommentIndex+1)
+                            } else {
+                              // focusNote.appendNoteLink(targetJournalNote, "To")
+                              // focusNote.moveComment(focusNote.comments.length-1,journalTextIndex + 1)
+                              focusNote.removeCommentByIndex(journalTextIndex)
+                              focusNote.appendMarkdownComment("- 整卷期刊：Vol. " + journalVolNum, journalTextIndex)
+                              if (focusNote.getCommentIndex("marginnote4app://note/" + targetJournalNote.noteId) == -1) {
+                                focusNote.appendNoteLink(targetJournalNote, "To")
+                                focusNote.moveComment(focusNote.comments.length-1,journalTextIndex + 1)
+                              }
+                            }
+                            focusNoteIndexInTargetJournalNote = targetJournalNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                            let singleInfoIndexInTargetJournalNote = targetJournalNote.getIncludingCommentIndex("**单份**")
+                            if (focusNoteIndexInTargetJournalNote == -1){
+                              targetJournalNote.appendNoteLink(focusNote, "To")
+                              targetJournalNote.moveComment(targetJournalNote.comments.length-1,singleInfoIndexInTargetJournalNote)
+                            } else {
+                              targetJournalNote.moveComment(focusNoteIndexInTargetJournalNote,singleInfoIndexInTargetJournalNote)
+                            }
+                            // toolbarUtils.sortNoteByVolNum(targetJournalNote, 1)
+                            let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
+                            MNUtil.undoGrouping(()=>{
+                              bookLibraryNote.addChild(focusNote.note)
+                              focusNote.focusInMindMap(0.5)
+                            })
+                          }
+                        }
+                      )
+                    }
+                  })
                 }
               )
             }
           })
-        })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
         break;
       case "referenceBibInfoCopy":
         bibContentArr = []
@@ -2671,9 +2578,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "renewBookSeriesNotes":
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{
-            focusNote.removeCommentByIndex(0)
-            cloneAndMerge(focusNote, "5CDABCEC-8824-4E9F-93E1-574EA7811FB4")
-            focusNote.moveComment(focusNote.comments.length-1,0)
+            let title = focusNote.noteTitle
+            let seriesName = title.match(/【文献：系列书作：(.*) - (\d+)】/)[1]
+            let seriesNum = title.match(/【文献：系列书作：(.*) - (\d+)】/)[2]
+            // MNUtil.showHUD(seriesName,seriesNum)
+            toolbarUtils.referenceSeriesBookMakeCard(focusNote, seriesName, seriesNum)
           })
         })
         break;
