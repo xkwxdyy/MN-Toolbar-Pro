@@ -1220,7 +1220,6 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                 MNUtil.showHUD("不支持对此颜色的卡片进行制卡！")
                 return // 使用 return 来提前结束函数, 避免了在内部函数中使用 break 导致的语法错误。
               }
-
               /* 开始制卡 */
               /* 合并第一层模板 */
               toolbarUtils.makeCardsAuxFirstLayerTemplate(focusNote, focusNoteType)

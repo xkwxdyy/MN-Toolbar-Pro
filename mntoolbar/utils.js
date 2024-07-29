@@ -955,9 +955,10 @@ class toolbarUtils {
     if (!focusNote.excerptText) { // 非摘录版本才开始链接
       if (parentNoteTitle !== undefined) {
           if (focusNoteType == "outline") {
+            // 归类类型的卡片
             let parentNoteColorIndex = parentNote.note.colorIndex
             if (parentNoteColorIndex == 1) {
-              // 淡绿色
+              // 父卡片是淡绿色
               // MNUtil.undoGrouping(()=>{
                 try {
                   // 把选中的变成黄色
@@ -991,7 +992,7 @@ class toolbarUtils {
               // })
             } else {
               if (parentNoteColorIndex == 0 || parentNoteColorIndex == 4) {
-                // 淡黄色 or 黄色
+                // 父卡片是淡黄色 or 黄色
                 MNUtil.undoGrouping(()=>{
                   // 把选中的变成黄色
                   focusNote.note.colorIndex = 0
@@ -1024,7 +1025,7 @@ class toolbarUtils {
           } else {
             // let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.*)”：“(.*)”相关(.*)/)
             // if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
-            // 归类型的淡黄色卡片
+            // 父卡片是归类型的淡黄色卡片
             let parentNoteOldUrl = "marginnote3app://note/" + parentNoteId
             let parentNoteNewUrl = "marginnote4app://note/" + parentNoteId
             parentNoteOldLinkIndexInFocusNote = focusNote.getCommentIndex(parentNoteOldUrl)
@@ -1057,7 +1058,9 @@ class toolbarUtils {
                 focusNote.removeCommentByIndex(linkHtmlCommentIndex+1)
               }
               focusNote.appendNoteLink(parentNote, "To")
-              focusNote.moveComment(focusNote.note.comments.length-1, linkHtmlCommentIndex+1)  // 放在“相关链接：”下面
+              focusNote.moveComment(focusNote.comments.length-1, linkHtmlCommentIndex+1)  // 放在“相关链接：”下面
+            } else {
+              focusNote.moveComment(parentNoteLinkIndexInFocusNote, linkHtmlCommentIndex+1)
             }
             focusNoteOldLinkIndexInParentNote = parentNote.getCommentIndex("marginnote3app://note/" + focusNote.noteId)
             focusNoteNewLinkIndexInParentNote = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
@@ -1067,7 +1070,7 @@ class toolbarUtils {
             }
           }
         } else {
-          // 非归类型的淡黄色卡片
+          // 父卡片是非归类型的淡黄色卡片
           focusNoteOldLinkIndexInParentNote = parentNote.getCommentIndex("marginnote3app://note/" + focusNote.noteId)
           focusNoteNewLinkIndexInParentNote = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
           if ((focusNoteOldLinkIndexInParentNote == -1) && (focusNoteNewLinkIndexInParentNote == -1)) { // 防止第二次链接
@@ -1371,7 +1374,8 @@ class toolbarUtils {
       if (this.getKnowledgeNoteTypeByColorIndex(focusNote.note.colorIndex) == "definition") {
         focusNote.appendMarkdownComment("- ", linkHtmlCommentIndex)
       } else {
-        focusNote.appendMarkdownComment("- ", keywordsHtmlCommentIndex)
+        let targetIndex = (keywordsHtmlCommentIndex == -1)? linkHtmlCommentIndex : keywordsHtmlCommentIndex
+        focusNote.appendMarkdownComment("- ", targetIndex)
       }
     }
   }
@@ -1453,12 +1457,13 @@ class toolbarUtils {
           }
         })
 
+        let targetIndex = (keywordsHtmlCommentIndex == -1)? linkHtmlCommentIndex : keywordsHtmlCommentIndex
         if (nonLinkNoteCommentsIndex.length !== 0) {
-          for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, keywordsHtmlCommentIndex++) {
-            focusNote.moveComment(i, keywordsHtmlCommentIndex);
+          for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, targetIndex++) {
+            focusNote.moveComment(i, targetIndex);
           }
         } else {
-          focusNote.appendMarkdownComment("- ", keywordsHtmlCommentIndex)
+          focusNote.appendMarkdownComment("- ", targetIndex)
         }
       }
     }
@@ -1754,7 +1759,7 @@ class toolbarUtils {
                 let linkHtmlCommentIndex = Math.max(focusNote.getCommentIndex("相关链接：",true), focusNote.getCommentIndex("所属：",true))
                 let preContent, postContent
                 if (parentNoteColorIndex == 1) {
-                  // 淡绿色
+                  // 父卡片是淡绿色
                   MNUtil.undoGrouping(()=>{
                     if (focusNoteColorIndex == 4) {
                       // 把选中的变成淡黄色
@@ -1905,6 +1910,7 @@ class toolbarUtils {
                         focusNote.childNotes.forEach(childNote => {
                           childNote.refresh()
                         })
+                        this.changePrefix(focusNote)
                       } else {
                         // focusNote 是知识点卡片
                         if (
@@ -2253,7 +2259,8 @@ class toolbarUtils {
               comment.text.includes("三层") || 
               comment.text.includes("四层") || 
               comment.text.includes("五层") ||
-              comment.text.trim() == "-"
+              comment.text.trim() == "-" ||
+              comment.text.includes("由来/背景：")
             )
           ) {
             try {
