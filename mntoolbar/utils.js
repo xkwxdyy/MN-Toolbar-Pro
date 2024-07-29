@@ -29,13 +29,16 @@ class toolbarUtils {
 
   // 夏大鱼羊自定义函数
 
+  // TODO:
+  // - 判断链接是否存在
+
   static replaceStringStartWithSquarebracketContent(string, afterContent) {
     if (string.startsWith("【")) {
-      string = string.replace(/(【.*?】)/, afterContent)
+      string = string.replace(/^【.*?】/, afterContent)
     } else {
       string = afterContent + string
-      return string
     }
+    return string
   }
 
   static referenceRefByRefNum(focusNote, refNum) {
@@ -4215,10 +4218,14 @@ static template(action) {
     case "menu_reference":
       config.action = "menu"
       config.menuItems = [
-        // {
-        //   "action": "renewBookSeriesNotes",
-        //   "menuTitle": "书作系列卡片更新",
-        // },
+        {
+          "action": "renewBookSeriesNotes",
+          "menuTitle": "书作系列卡片更新",
+        },
+        {
+          "action": "renewBookNotes",
+          "menuTitle": "书作卡片更新",
+        },
         {
           "action": "menu",
           "menuTitle": "➡️ 引用",

@@ -2400,30 +2400,35 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                               seriesNum = alertI.textFieldAtIndex(0).text;
                               let seriesTextIndex = focusNote.getIncludingCommentIndex("- 系列", true)
                               let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
-                              if (focusNote.noteTitle.includes("【文献：书作】")) {
-                                focusNote.noteTitle = focusNote.noteTitle.replace("【文献：书作】", "【文献：书作："+ seriesName + " - Vol. "+ seriesNum + "】")
-                              } else {
-                                try {
-                                  if (focusNote.noteTitle.startsWith("【文献：书作：")) {
-                                    // 把  focusNote.noteTitle 开头的【.*】 删掉
-                                    let reg = new RegExp("^【.*】")
-                                    focusNote.noteTitle = focusNote.noteTitle.replace(reg, "【文献：书作："+seriesName + " - Vol. "+ seriesNum + "】")
-                                  } else {
-                                    focusNote.noteTitle = "【文献：书作："+seriesName + " - Vol. "+ seriesNum + "】; " + focusNote.noteTitle
-                                  }
-                                } catch (error) {
-                                  MNUtil.showHUD(error);
+                              MNUtil.undoGrouping(()=>{
+                                if (seriesNum !== "0") {
+                                  focusNote.noteTitle = toolbarUtils.replaceStringStartWithSquarebracketContent(focusNote.noteTitle, "【文献：书作："+ seriesName + " - Vol. "+ seriesNum + "】")
+                                } else {
+                                  focusNote.noteTitle = toolbarUtils.replaceStringStartWithSquarebracketContent(focusNote.noteTitle, "【文献：书作："+ seriesName + "】")
                                 }
-                              }
+                              })
                               if (seriesTextIndex == -1) {
-                                focusNote.appendMarkdownComment("- 系列：Vol. " + seriesNum, thoughtHtmlCommentIndex)
+                                MNUtil.undoGrouping(()=>{
+                                  if (seriesNum !== "0") {
+                                    focusNote.appendMarkdownComment("- 系列：Vol. " + seriesNum, thoughtHtmlCommentIndex)
+                                  } else {
+                                    focusNote.appendMarkdownComment("- 系列：", thoughtHtmlCommentIndex)
+                                  }
+                                })
                                 focusNote.appendNoteLink(targetSeriesNote, "To")
                                 focusNote.moveComment(focusNote.comments.length-1,thoughtHtmlCommentIndex+1)
                               } else {
                                 // focusNote.appendNoteLink(targetSeriesNote, "To")
                                 // focusNote.moveComment(focusNote.comments.length-1,seriesTextIndex + 1)
+                                // 删掉重新添加
                                 focusNote.removeCommentByIndex(seriesTextIndex)
-                                focusNote.appendMarkdownComment("- 系列：Vol. " + seriesNum, seriesTextIndex)
+                                MNUtil.undoGrouping(()=>{
+                                  if (seriesNum !== "0") {
+                                    focusNote.appendMarkdownComment("- 系列：Vol. " + seriesNum, seriesTextIndex)
+                                  } else {
+                                    focusNote.appendMarkdownComment("- 系列：", seriesTextIndex)
+                                  }
+                                })
                                 if (focusNote.getCommentIndex("marginnote4app://note/" + targetSeriesNote.noteId) == -1) {
                                   focusNote.appendNoteLink(targetSeriesNote, "To")
                                   focusNote.moveComment(focusNote.comments.length-1,seriesTextIndex + 1)
@@ -2435,12 +2440,16 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                               if (focusNoteIndexInTargetSeriesNote == -1){
                                 targetSeriesNote.appendNoteLink(focusNote, "To")
                               }
-                              toolbarUtils.sortNoteByVolNum(targetSeriesNote, 1)
-                              let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
-                              MNUtil.undoGrouping(()=>{
-                                bookLibraryNote.addChild(focusNote.note)
-                                focusNote.focusInMindMap(0.5)
-                              })
+                              try {
+                                MNUtil.undoGrouping(()=>{
+                                  toolbarUtils.sortNoteByVolNum(targetSeriesNote, 1)
+                                  let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
+                                  bookLibraryNote.addChild(focusNote.note)
+                                  focusNote.focusInMindMap(0.5)
+                                })
+                              } catch (error) {
+                                MNUtil.showHUD(error);
+                              }
                             }
                           }
                         )
@@ -2662,7 +2671,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{
             focusNote.removeCommentByIndex(0)
-            cloneAndMerge(focusNote, "FAD11540-DF81-4E31-9748-34806CDE1D64")
+            cloneAndMerge(focusNote, "5CDABCEC-8824-4E9F-93E1-574EA7811FB4")
             focusNote.moveComment(focusNote.comments.length-1,0)
           })
         })
