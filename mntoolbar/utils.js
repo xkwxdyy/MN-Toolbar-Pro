@@ -1158,6 +1158,21 @@ class toolbarUtils {
     }
     let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
     let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
+    let applicationHtmlCommentIndexArr = []
+    if (applicationHtmlCommentIndex !== -1) {
+      focusNote.comments.forEach((comment, index) => {
+        if (
+          comment.text &&
+          (
+            comment.text.includes("应用：") ||
+            comment.text.includes("的应用")
+          )
+        ) {
+          applicationHtmlCommentIndexArr.push(index)
+        }
+      })
+      applicationHtmlCommentIndex = applicationHtmlCommentIndexArr[applicationHtmlCommentIndexArr.length-1]
+    }
     // let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
     // if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") { // 若“证明：”下面是 HtmlNote，则说明没有证明内容，就需要移动“证明：”
       // 证明内容要么在最上方，要么在最下方，判断标准为“应用：”及链接后面有没有内容
@@ -1374,7 +1389,23 @@ class toolbarUtils {
     if (thoughtHtmlCommentIndex !== -1) {
       let keywordsHtmlCommentIndex = focusNote.getIncludingCommentIndex("关键词：", true)
       let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
-      let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
+      let applicationHtmlCommentIndex = focusNote.getIncludingCommentIndex("应用：", true)
+      let applicationHtmlCommentIndexArr = []
+      if (applicationHtmlCommentIndex !== -1) {
+        focusNote.comments.forEach((comment, index) => {
+          if (
+            comment.text &&
+            (
+              comment.text.includes("应用：") ||
+              comment.text.includes("的应用")
+            )
+          ) {
+            applicationHtmlCommentIndexArr.push(index)
+          }
+        })
+        applicationHtmlCommentIndex = applicationHtmlCommentIndexArr[applicationHtmlCommentIndexArr.length-1]
+      }
+
       let focusNoteComments = focusNote.note.comments
       let focusNoteCommentLength = focusNoteComments.length
       let nonLinkNoteCommentsIndex = []
