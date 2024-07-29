@@ -914,15 +914,15 @@ try {
   // let activeActionNumbers = actionNames.length
   for (let index = 0; index < this.maxButtonNumber; index++) {
     let actionName = actionNames[index]
-    if (actionName !== undefined) {
-      if (this["ColorButton"+index]) {
-      }else{
-        this["ColorButton"+index] = UIButton.buttonWithType(0);
-        this["moveGesture"+index] = new UIPanGestureRecognizer(this,"onMoveGesture:")
-        this["ColorButton"+index].addGestureRecognizer(this["moveGesture"+index])
-        this["moveGesture"+index].view.hidden = false
-      }
-      this["ColorButton"+index].index = index
+    if (this["ColorButton"+index]) {
+    }else{
+      this["ColorButton"+index] = UIButton.buttonWithType(0);
+      this["moveGesture"+index] = new UIPanGestureRecognizer(this,"onMoveGesture:")
+      this["ColorButton"+index].addGestureRecognizer(this["moveGesture"+index])
+      this["moveGesture"+index].view.hidden = false
+    }
+    this["ColorButton"+index].index = index
+    if (actionName) {
       if (actionName.includes("color")) {
         this["ColorButton"+index].color = parseInt(actionName.slice(5))
         this.setColorButtonLayout(this["ColorButton"+index],"setColor:",buttonColor)
@@ -931,12 +931,7 @@ try {
       }else{
         this.setColorButtonLayout(this["ColorButton"+index],actionName+":",buttonColor)
       }
-      // MNButton.setImage(this["ColorButton"+index], toolbarConfig.imageConfigs[actionName])
-      // let image = (actionName in actions)?actions[actionName].image+".png":defaultActions[actionName].image+".png"
-      // this["ColorButton"+index].setImageForState(MNUtil.getImage(toolbarConfig.mainPath + `/`+image),0)
       this["ColorButton"+index].setImageForState(toolbarConfig.imageConfigs[actionName],0)
-      // self["ColorButton"+index].setTitleForState("",0) 
-      // self["ColorButton"+index].contentHorizontalAlignment = 1
     }
   }
   if (this.dynamicToolbar) {
@@ -3333,10 +3328,24 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           })
         })
         break;
+      case "referenceMoveLastCommentToThought":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            toolbarUtils.referenceMoveLastCommentToThought(focusNote)
+          })
+        })
+        break;
       case "moveLastTwoCommentsToThought":
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{
             toolbarUtils.moveLastTwoCommentsToThought(focusNote)
+          })
+        })
+        break;
+      case "referenceMoveLastTwoCommentsToThought":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            toolbarUtils.referenceMoveLastTwoCommentsToThought(focusNote)
           })
         })
         break;
@@ -3346,6 +3355,18 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             focusNotes.forEach(focusNote=>{
               toolbarUtils.addThoughtPoint(focusNote)
               toolbarUtils.moveLastCommentToThought(focusNote)
+            })
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
+      case "referenceAddThoughtPointAndMoveLastCommentToThought":
+        try {
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.referenceAddThoughtPoint(focusNote)
+              toolbarUtils.referenceMoveLastCommentToThought(focusNote)
             })
           })
         } catch (error) {
@@ -3481,11 +3502,33 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           }
         })
         break;
+      case "referenceAddThoughtPoint":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.referenceAddThoughtPoint(focusNote)
+            })
+          } catch (error) {
+            MNUtil.showHUD(error)
+          }
+        })
+        break;
       case "moveUpThoughtPoints":
         MNUtil.undoGrouping(()=>{
           try {
             focusNotes.forEach(focusNote=>{
               toolbarUtils.moveUpThoughtPoints(focusNote)
+            })
+          } catch (error) {
+            MNUtil.showHUD(error)
+          }
+        })
+        break;
+      case "referenceMoveUpThoughtPoints":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.referenceMoveUpThoughtPoints(focusNote)
             })
           } catch (error) {
             MNUtil.showHUD(error)

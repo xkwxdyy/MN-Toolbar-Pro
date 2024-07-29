@@ -698,10 +698,10 @@ class toolbarUtils {
   static getContinuousSequenceFromNum(arr, startNum) {
     let sequence = []; // 存储连续序列的数组
     let i = arr.indexOf(startNum); // 找到startNum在数组中的索引位置
-  
+
     // 检查是否找到startNum或者它是否合法
     if (i === -1 || startNum !== arr[i]) {
-      return []; // 如果找不到startNum或者它不在数组中，返回空数组
+      return [];
     }
   
     let currentNum = startNum; // 当前处理的数字
@@ -1229,18 +1229,30 @@ class toolbarUtils {
         return "example"
     }
   }
+  static referenceMoveLastCommentToThought(focusNote){
+    let refedHtmlCommentIndex = focusNote.getCommentIndex("被引用情况：", true)
+    focusNote.moveComment(focusNote.comments.length-1, refedHtmlCommentIndex)
+  }
+
   static moveLastCommentToThought(focusNote){
     let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
     let keywordsHtmlCommentIndex = focusNote.getIncludingCommentIndex("关键词：", true)
     let finalIndex = (keywordsHtmlCommentIndex == -1)? linkHtmlCommentIndex : keywordsHtmlCommentIndex
     focusNote.moveComment(focusNote.comments.length-1, finalIndex)
   }
+
   static moveLastTwoCommentsToThought(focusNote){
     let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
     let keywordsHtmlCommentIndex = focusNote.getIncludingCommentIndex("关键词：", true)
     let finalIndex = (keywordsHtmlCommentIndex == -1)? linkHtmlCommentIndex : keywordsHtmlCommentIndex
     focusNote.moveComment(focusNote.comments.length-1, finalIndex)
     focusNote.moveComment(focusNote.comments.length-1, finalIndex)
+  }
+
+  static referenceMoveLastTwoCommentsToThought(focusNote){
+    let refedHtmlCommentIndex = focusNote.getCommentIndex("被引用情况：", true)
+    focusNote.moveComment(focusNote.comments.length-1, refedHtmlCommentIndex)
+    focusNote.moveComment(focusNote.comments.length-1, refedHtmlCommentIndex)
   }
   // 增加思考
   static addThought(focusNotes) {
@@ -1349,6 +1361,14 @@ class toolbarUtils {
     }
   }
 
+  static referenceAddThoughtPoint(focusNote) {
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    if (thoughtHtmlCommentIndex !== -1) {
+      let refedHtmlCommentIndex = focusNote.getCommentIndex("被引用情况：", true)
+      focusNote.appendMarkdownComment("- ", refedHtmlCommentIndex)
+    }
+  }
+
   static moveUpThoughtPoints(focusNote) {
     let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
     if (thoughtHtmlCommentIndex !== -1) {
@@ -1413,6 +1433,46 @@ class toolbarUtils {
     }
   }
 
+  static referenceMoveUpThoughtPoints(focusNote) {
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    if (thoughtHtmlCommentIndex !== -1) {
+      let referenceHtmlCommentIndex = focusNote.getCommentIndex("参考文献：", true)
+      let refedHtmlCommentIndex = focusNote.getCommentIndex("被引用情况：", true)
+      let linksArr = []
+      try {
+        MNUtil.undoGrouping(()=>{
+          focusNote.comments.forEach((comment, index) => {
+            if (
+              comment.type == "TextNote" &&
+              (
+                comment.text.includes("marginnote4app") || comment.text.includes("marginnote3app")
+              )
+            ) {
+              linksArr.push(index)
+            }
+          })
+          let startIndex
+          if (referenceHtmlCommentIndex < focusNote.comments.length-1) {
+            let referenceContinuousLinksArr = this.getContinuousSequenceFromNum(linksArr, referenceHtmlCommentIndex+1)
+            if (referenceContinuousLinksArr.length == 0) {
+              // “参考文献：”下方没有紧跟链接
+              startIndex = referenceHtmlCommentIndex
+            } else {
+              // “参考文献：”下方有紧跟链接
+              startIndex = referenceContinuousLinksArr[referenceContinuousLinksArr.length-1]
+            }
+            if (startIndex < focusNote.comments.length-1) {
+              for (let i = focusNote.comments.length-1; i > startIndex; i--) {
+                focusNote.moveComment(focusNote.comments.length-1, refedHtmlCommentIndex)
+              }
+            }
+          }
+        })
+      } catch (error) {
+        MNUtil.showHUD(error);
+      }
+    }
+  }
   // 消除卡片内容，保留文字评论
   static clearContentKeepMarkdownText(focusNote) {
     let focusNoteComments = focusNote.note.comments
@@ -4349,13 +4409,25 @@ static template(action) {
               "menuTitle": "➡️ 思考",
               "menuItems": [
                 {
-                  "action": "",
-                  "menuTitle": "➕思考点",
+                  "action" : "referenceMoveUpThoughtPoints",
+                  "menuTitle" : "思考点⬆️"
                 },
-                // {
-                //   "action": "",
-                //   "menuTitle": "",
-                // }
+                {
+                  "action" : "referenceAddThoughtPoint",
+                  "menuTitle" : "➕思考点"
+                },
+                {
+                  "action": "referenceAddThoughtPointAndMoveLastCommentToThought",
+                  "menuTitle": "➕思考点 + 最后🔗⬆️思考",
+                },
+                {
+                  "action" : "referenceMoveLastCommentToThought",
+                  "menuTitle" : "最后1️⃣💬⬆️思考"
+                },
+                {
+                  "action" : "referenceMoveLastTwoCommentsToThought",
+                  "menuTitle" : "最后2️⃣💬⬆️思考"
+                },
               ]
             },
           ]
