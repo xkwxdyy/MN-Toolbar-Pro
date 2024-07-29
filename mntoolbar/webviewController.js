@@ -1742,7 +1742,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //   break;
       // case "":
       //   UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
-      //     "增加期刊",
+      //     "输入文献号",
       //     "",
       //     2,
       //     "取消",
@@ -1750,10 +1750,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     (alert, buttonIndex) => {
       //       try {
       //         MNUtil.undoGrouping(()=>{
-      //           let userInput = alert.textFieldAtIndex(0).text;
-      //             if (buttonIndex == 1) {
-                    
-      //             }
+      //           let refNum = alert.textFieldAtIndex(0).text;
+    //             if (buttonIndex == 1) {
+                  
+    //             }
       //         })
       //       } catch (error) {
       //         MNUtil.showHUD(error);
@@ -1761,6 +1761,264 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "referenceRefByRefNumAddFocusInFloatMindMap":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入文献号",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let refNum = alert.textFieldAtIndex(0).text;
+                if (buttonIndex == 1) {
+                  let refNote = toolbarUtils.referenceRefByRefNum(focusNote, refNum)[0]
+                  let classificationNote = toolbarUtils.referenceRefByRefNum(focusNote, refNum)[1]
+                  classificationNote.addChild(refNote.note)
+                  refNote.focusInFloatMindMap(0.3)
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceRefByRefNumAndFocusInMindMap":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入文献号",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let refNum = alert.textFieldAtIndex(0).text;
+                if (buttonIndex == 1) {
+                  let refNote = toolbarUtils.referenceRefByRefNum(focusNote, refNum)[0]
+                  let classificationNote = toolbarUtils.referenceRefByRefNum(focusNote, refNum)[1]
+                  classificationNote.addChild(refNote.note)
+                  refNote.focusInMindMap(0.3)
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceRefByRefNum":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入文献号",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let refNum = alert.textFieldAtIndex(0).text;
+                if (buttonIndex == 1) {
+                  toolbarUtils.referenceRefByRefNum(focusNote, refNum)
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceCreateClassificationNoteByIdAndFocusNote":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入文献号",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                if (buttonIndex == 1) {
+                  let refNum = alert.textFieldAtIndex(0).text
+                  let currentDocmd5 = MNUtil.currentDocmd5
+                  let findClassificationNote = false
+                  let classificationNote
+                  if (referenceIds.hasOwnProperty(currentDocmd5)) {
+                    if (referenceIds[currentDocmd5].hasOwnProperty(refNum)) {
+                      if (referenceIds[currentDocmd5][0] == undefined) {
+                        MNUtil.showHUD("文档未绑定 ID")
+                      } else {
+                        let refSourceNoteId = referenceIds[currentDocmd5][0]
+                        let refSourceNote = MNNote.new(refSourceNoteId)
+                        let refSourceNoteTitle = toolbarUtils.getFirstKeywordFromTitle(refSourceNote.noteTitle)
+                        let refSourceNoteAuthor = toolbarUtils.getFirstAuthorFromReferenceById(refSourceNoteId)
+                        let refedNoteId = referenceIds[currentDocmd5][refNum]
+                        let refedNote = MNNote.new(refedNoteId)
+                        let refedNoteTitle = toolbarUtils.getFirstKeywordFromTitle(refedNote.noteTitle)
+                        let refedNoteAuthor = toolbarUtils.getFirstAuthorFromReferenceById(refedNoteId)
+                        // 先看 refedNote 有没有归类的子卡片了
+                        for (let i = 0; i < refedNote.childNotes.length; i++) {
+                          let childNote = refedNote.childNotes[i]
+                          if (
+                            childNote.noteTitle &&
+                            childNote.noteTitle.includes("[" + refNum + "] " + refedNoteTitle)
+                          ) {
+                            classificationNote = refedNote.childNotes[i]
+                            findClassificationNote = true
+                            break
+                          }
+                        }
+                        if (!findClassificationNote) {
+                          // 没有的话就创建一个
+                          classificationNote = MNNote.clone("C24C2604-4B3A-4B6F-97E6-147F3EC67143")
+                          classificationNote.noteTitle = 
+                            "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
+                        }
+                        refedNote.addChild(classificationNote.note)
+                        // 移动链接到“引用：”
+                        let refedNoteIdIndexInClassificationNote = classificationNote.getCommentIndex("marginnote4app://note/" + refedNoteId)
+                        if (refedNoteIdIndexInClassificationNote == -1){
+                          classificationNote.appendNoteLink(refedNote, "To")
+                          classificationNote.moveComment(classificationNote.comments.length-1,classificationNote.getCommentIndex("具体引用：", true))
+                        } else {
+                          classificationNote.moveComment(refedNoteIdIndexInClassificationNote,classificationNote.getCommentIndex("具体引用：", true) - 1)
+                        }
+                        // 移动链接到“原文献”
+                        let refSourceNoteIdIndexInClassificationNote = classificationNote.getCommentIndex("marginnote4app://note/" + refSourceNoteId)
+                        if (refSourceNoteIdIndexInClassificationNote == -1){
+                          classificationNote.appendNoteLink(refSourceNote, "To")
+                          classificationNote.moveComment(classificationNote.comments.length-1,classificationNote.getCommentIndex("引用：", true))
+                        } else {
+                          classificationNote.moveComment(refSourceNoteIdIndexInClassificationNote,classificationNote.getCommentIndex("引用：", true) - 1)
+                        }
+                        // 链接归类卡片到 refSourceNote
+                        let classificationNoteIdIndexInRefSourceNote = refSourceNote.getCommentIndex("marginnote4app://note/" + classificationNote.noteId)
+                        if (classificationNoteIdIndexInRefSourceNote == -1){
+                          refSourceNote.appendNoteLink(classificationNote, "To")
+                        }
+                        // 链接归类卡片到 refedNote
+                        let classificationNoteIdIndexInRefedNote = refedNote.getCommentIndex("marginnote4app://note/" + classificationNote.noteId)
+                        if (classificationNoteIdIndexInRefedNote == -1){
+                          refedNote.appendNoteLink(classificationNote, "To")
+                          refedNote.moveComment(refedNote.comments.length-1,refedNote.getCommentIndex("参考文献：", true))
+                        } else {
+                          refedNote.moveComment(classificationNoteIdIndexInRefedNote,refedNote.getCommentIndex("参考文献：", true) - 1)
+                        }
+                        classificationNote.merge(focusNote.note)
+                        classificationNote.moveComment(
+                          classificationNote.comments.length-1,
+                          classificationNote.getCommentIndex("引用：", true) + 1
+                        )
+                        classificationNote.focusInFloatMindMap(0.5)
+                      }
+                    } else {
+                      MNUtil.showHUD("["+refNum+"] 未进行 ID 绑定")
+                    }
+                  } else {
+                    MNUtil.showHUD("当前文档并未开始绑定 ID")
+                  }
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceCreateClassificationNoteById":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入文献号",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                if (buttonIndex == 1) {
+                  let refNum = alert.textFieldAtIndex(0).text
+                  let currentDocmd5 = MNUtil.currentDocmd5
+                  let findClassificationNote = false
+                  let classificationNote
+                  if (referenceIds.hasOwnProperty(currentDocmd5)) {
+                    if (referenceIds[currentDocmd5].hasOwnProperty(refNum)) {
+                      if (referenceIds[currentDocmd5][0] == undefined) {
+                        MNUtil.showHUD("文档未绑定 ID")
+                      } else {
+                        let refSourceNoteId = referenceIds[currentDocmd5][0]
+                        let refSourceNote = MNNote.new(refSourceNoteId)
+                        let refSourceNoteTitle = toolbarUtils.getFirstKeywordFromTitle(refSourceNote.noteTitle)
+                        let refSourceNoteAuthor = toolbarUtils.getFirstAuthorFromReferenceById(refSourceNoteId)
+                        let refedNoteId = referenceIds[currentDocmd5][refNum]
+                        let refedNote = MNNote.new(refedNoteId)
+                        let refedNoteTitle = toolbarUtils.getFirstKeywordFromTitle(refedNote.noteTitle)
+                        let refedNoteAuthor = toolbarUtils.getFirstAuthorFromReferenceById(refedNoteId)
+                        // 先看 refedNote 有没有归类的子卡片了
+                        for (let i = 0; i < refedNote.childNotes.length; i++) {
+                          let childNote = refedNote.childNotes[i]
+                          if (
+                            childNote.noteTitle &&
+                            childNote.noteTitle.includes("[" + refNum + "] " + refedNoteTitle)
+                          ) {
+                            classificationNote = refedNote.childNotes[i]
+                            findClassificationNote = true
+                            break
+                          }
+                        }
+                        if (!findClassificationNote) {
+                          // 没有的话就创建一个
+                          classificationNote = MNNote.clone("C24C2604-4B3A-4B6F-97E6-147F3EC67143")
+                          classificationNote.noteTitle = 
+                            "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
+                        }
+                        refedNote.addChild(classificationNote.note)
+                        // 移动链接到“引用：”
+                        let refedNoteIdIndexInClassificationNote = classificationNote.getCommentIndex("marginnote4app://note/" + refedNoteId)
+                        if (refedNoteIdIndexInClassificationNote == -1){
+                          classificationNote.appendNoteLink(refedNote, "To")
+                          classificationNote.moveComment(classificationNote.comments.length-1,classificationNote.getCommentIndex("具体引用：", true))
+                        } else {
+                          classificationNote.moveComment(refedNoteIdIndexInClassificationNote,classificationNote.getCommentIndex("具体引用：", true))
+                        }
+                        // 移动链接到“原文献”
+                        let refSourceNoteIdIndexInClassificationNote = classificationNote.getCommentIndex("marginnote4app://note/" + refSourceNoteId)
+                        if (refSourceNoteIdIndexInClassificationNote == -1){
+                          classificationNote.appendNoteLink(refSourceNote, "To")
+                          classificationNote.moveComment(classificationNote.comments.length-1,classificationNote.getCommentIndex("引用：", true))
+                        } else {
+                          classificationNote.moveComment(refSourceNoteIdIndexInClassificationNote,classificationNote.getCommentIndex("引用：", true))
+                        }
+                        // 链接归类卡片到 refSourceNote
+                        let classificationNoteIdIndexInRefSourceNote = refSourceNote.getCommentIndex("marginnote4app://note/" + classificationNote.noteId)
+                        if (classificationNoteIdIndexInRefSourceNote == -1){
+                          refSourceNote.appendNoteLink(classificationNote, "To")
+                        }
+                        // 链接归类卡片到 refedNote
+                        let classificationNoteIdIndexInRefedNote = refedNote.getCommentIndex("marginnote4app://note/" + classificationNote.noteId)
+                        if (classificationNoteIdIndexInRefedNote == -1){
+                          refedNote.appendNoteLink(classificationNote, "To")
+                          refedNote.moveComment(refedNote.comments.length-1,refedNote.getCommentIndex("参考文献：", true))
+                        } else {
+                          refedNote.moveComment(classificationNoteIdIndexInRefedNote,refedNote.getCommentIndex("参考文献：", true))
+                        }
+                        classificationNote.focusInFloatMindMap(0.5)
+                      }
+                    } else {
+                      MNUtil.showHUD("["+refNum+"] 未进行 ID 绑定")
+                    }
+                  } else {
+                    MNUtil.showHUD("当前文档并未开始绑定 ID")
+                  }
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
       case "refreshNotes":
         try {
           MNUtil.undoGrouping(()=>{
@@ -3247,7 +3505,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         }
         break;
       case "convertNoteToNonexcerptVersion":
-        MNUtil.showHUD("卡片转化为非摘录版本")
+        // MNUtil.showHUD("卡片转化为非摘录版本")
         try {
           MNUtil.undoGrouping(()=>{
             focusNotes.forEach(focusNote=>{
