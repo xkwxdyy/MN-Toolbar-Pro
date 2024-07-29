@@ -32,6 +32,16 @@ class toolbarUtils {
   // TODO:
   // - 判断链接是否存在
 
+  // 获得淡绿色、淡黄色、黄色卡片的类型
+  static getClassificationNoteTypeByTitle(title) {
+    let match = title.match(/.*相关(.*)/)
+    if (match) {
+      return match[1]
+    } else {
+      return ""
+    }
+  }
+
   static referenceSeriesBookMakeCard(focusNote, seriesName, seriesNum) {
     if (focusNote.excerptText) {
       this.convertNoteToNonexcerptVersion(focusNote)
@@ -698,10 +708,10 @@ class toolbarUtils {
   static getContinuousSequenceFromNum(arr, startNum) {
     let sequence = []; // 存储连续序列的数组
     let i = arr.indexOf(startNum); // 找到startNum在数组中的索引位置
-  
+
     // 检查是否找到startNum或者它是否合法
     if (i === -1 || startNum !== arr[i]) {
-      return []; // 如果找不到startNum或者它不在数组中，返回空数组
+      return [];
     }
   
     let currentNum = startNum; // 当前处理的数字
@@ -813,6 +823,14 @@ class toolbarUtils {
           break;
         case "method":
           templateNoteId = "EC68EDFE-580E-4E53-BA1B-875F3BEEFE62"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "question":
+          templateNoteId = "C4B464CD-B8C6-42DE-B459-55B48EB31AD8"
+          cloneAndMerge(focusNote, templateNoteId)
+          break;
+        case "application":
+          templateNoteId = "C4B464CD-B8C6-42DE-B459-55B48EB31AD8"
           cloneAndMerge(focusNote, templateNoteId)
           break;
       }
@@ -955,9 +973,10 @@ class toolbarUtils {
     if (!focusNote.excerptText) { // 非摘录版本才开始链接
       if (parentNoteTitle !== undefined) {
           if (focusNoteType == "outline") {
+            // 归类类型的卡片
             let parentNoteColorIndex = parentNote.note.colorIndex
             if (parentNoteColorIndex == 1) {
-              // 淡绿色
+              // 父卡片是淡绿色
               // MNUtil.undoGrouping(()=>{
                 try {
                   // 把选中的变成黄色
@@ -991,7 +1010,7 @@ class toolbarUtils {
               // })
             } else {
               if (parentNoteColorIndex == 0 || parentNoteColorIndex == 4) {
-                // 淡黄色 or 黄色
+                // 父卡片是淡黄色 or 黄色
                 MNUtil.undoGrouping(()=>{
                   // 把选中的变成黄色
                   focusNote.note.colorIndex = 0
@@ -1024,7 +1043,7 @@ class toolbarUtils {
           } else {
             // let matchResultFromParentNoteTitle = parentNoteTitle.match(/“(.*)”：“(.*)”相关(.*)/)
             // if (matchResultFromParentNoteTitle && matchResultFromParentNoteTitle.length > 0) {
-            // 归类型的淡黄色卡片
+            // 父卡片是归类型的淡黄色卡片
             let parentNoteOldUrl = "marginnote3app://note/" + parentNoteId
             let parentNoteNewUrl = "marginnote4app://note/" + parentNoteId
             parentNoteOldLinkIndexInFocusNote = focusNote.getCommentIndex(parentNoteOldUrl)
@@ -1057,7 +1076,9 @@ class toolbarUtils {
                 focusNote.removeCommentByIndex(linkHtmlCommentIndex+1)
               }
               focusNote.appendNoteLink(parentNote, "To")
-              focusNote.moveComment(focusNote.note.comments.length-1, linkHtmlCommentIndex+1)  // 放在“相关链接：”下面
+              focusNote.moveComment(focusNote.comments.length-1, linkHtmlCommentIndex+1)  // 放在“相关链接：”下面
+            } else {
+              focusNote.moveComment(parentNoteLinkIndexInFocusNote, linkHtmlCommentIndex+1)
             }
             focusNoteOldLinkIndexInParentNote = parentNote.getCommentIndex("marginnote3app://note/" + focusNote.noteId)
             focusNoteNewLinkIndexInParentNote = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
@@ -1067,7 +1088,7 @@ class toolbarUtils {
             }
           }
         } else {
-          // 非归类型的淡黄色卡片
+          // 父卡片是非归类型的淡黄色卡片
           focusNoteOldLinkIndexInParentNote = parentNote.getCommentIndex("marginnote3app://note/" + focusNote.noteId)
           focusNoteNewLinkIndexInParentNote = parentNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
           if ((focusNoteOldLinkIndexInParentNote == -1) && (focusNoteNewLinkIndexInParentNote == -1)) { // 防止第二次链接
@@ -1158,6 +1179,21 @@ class toolbarUtils {
     }
     let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
     let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
+    let applicationHtmlCommentIndexArr = []
+    if (applicationHtmlCommentIndex !== -1) {
+      focusNote.comments.forEach((comment, index) => {
+        if (
+          comment.text &&
+          (
+            comment.text.includes("应用：") ||
+            comment.text.includes("的应用")
+          )
+        ) {
+          applicationHtmlCommentIndexArr.push(index)
+        }
+      })
+      applicationHtmlCommentIndex = applicationHtmlCommentIndexArr[applicationHtmlCommentIndexArr.length-1]
+    }
     // let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
     // if (focusNoteComments[proofHtmlCommentIndex+1].type == "HtmlNote") { // 若“证明：”下面是 HtmlNote，则说明没有证明内容，就需要移动“证明：”
       // 证明内容要么在最上方，要么在最下方，判断标准为“应用：”及链接后面有没有内容
@@ -1229,18 +1265,30 @@ class toolbarUtils {
         return "example"
     }
   }
+  static referenceMoveLastCommentToThought(focusNote){
+    let refedHtmlCommentIndex = focusNote.getCommentIndex("被引用情况：", true)
+    focusNote.moveComment(focusNote.comments.length-1, refedHtmlCommentIndex)
+  }
+
   static moveLastCommentToThought(focusNote){
     let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
     let keywordsHtmlCommentIndex = focusNote.getIncludingCommentIndex("关键词：", true)
     let finalIndex = (keywordsHtmlCommentIndex == -1)? linkHtmlCommentIndex : keywordsHtmlCommentIndex
     focusNote.moveComment(focusNote.comments.length-1, finalIndex)
   }
+
   static moveLastTwoCommentsToThought(focusNote){
     let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
     let keywordsHtmlCommentIndex = focusNote.getIncludingCommentIndex("关键词：", true)
     let finalIndex = (keywordsHtmlCommentIndex == -1)? linkHtmlCommentIndex : keywordsHtmlCommentIndex
     focusNote.moveComment(focusNote.comments.length-1, finalIndex)
     focusNote.moveComment(focusNote.comments.length-1, finalIndex)
+  }
+
+  static referenceMoveLastTwoCommentsToThought(focusNote){
+    let refedHtmlCommentIndex = focusNote.getCommentIndex("被引用情况：", true)
+    focusNote.moveComment(focusNote.comments.length-1, refedHtmlCommentIndex)
+    focusNote.moveComment(focusNote.comments.length-1, refedHtmlCommentIndex)
   }
   // 增加思考
   static addThought(focusNotes) {
@@ -1344,8 +1392,17 @@ class toolbarUtils {
       if (this.getKnowledgeNoteTypeByColorIndex(focusNote.note.colorIndex) == "definition") {
         focusNote.appendMarkdownComment("- ", linkHtmlCommentIndex)
       } else {
-        focusNote.appendMarkdownComment("- ", keywordsHtmlCommentIndex)
+        let targetIndex = (keywordsHtmlCommentIndex == -1)? linkHtmlCommentIndex : keywordsHtmlCommentIndex
+        focusNote.appendMarkdownComment("- ", targetIndex)
       }
+    }
+  }
+
+  static referenceAddThoughtPoint(focusNote) {
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    if (thoughtHtmlCommentIndex !== -1) {
+      let refedHtmlCommentIndex = focusNote.getCommentIndex("被引用情况：", true)
+      focusNote.appendMarkdownComment("- ", refedHtmlCommentIndex)
     }
   }
 
@@ -1354,7 +1411,23 @@ class toolbarUtils {
     if (thoughtHtmlCommentIndex !== -1) {
       let keywordsHtmlCommentIndex = focusNote.getIncludingCommentIndex("关键词：", true)
       let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
-      let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
+      let applicationHtmlCommentIndex = focusNote.getIncludingCommentIndex("应用：", true)
+      let applicationHtmlCommentIndexArr = []
+      if (applicationHtmlCommentIndex !== -1) {
+        focusNote.comments.forEach((comment, index) => {
+          if (
+            comment.text &&
+            (
+              comment.text.includes("应用：") ||
+              comment.text.includes("的应用")
+            )
+          ) {
+            applicationHtmlCommentIndexArr.push(index)
+          }
+        })
+        applicationHtmlCommentIndex = applicationHtmlCommentIndexArr[applicationHtmlCommentIndexArr.length-1]
+      }
+
       let focusNoteComments = focusNote.note.comments
       let focusNoteCommentLength = focusNoteComments.length
       let nonLinkNoteCommentsIndex = []
@@ -1402,17 +1475,58 @@ class toolbarUtils {
           }
         })
 
+        let targetIndex = (keywordsHtmlCommentIndex == -1)? linkHtmlCommentIndex : keywordsHtmlCommentIndex
         if (nonLinkNoteCommentsIndex.length !== 0) {
-          for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, keywordsHtmlCommentIndex++) {
-            focusNote.moveComment(i, keywordsHtmlCommentIndex);
+          for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, targetIndex++) {
+            focusNote.moveComment(i, targetIndex);
           }
         } else {
-          focusNote.appendMarkdownComment("- ", keywordsHtmlCommentIndex)
+          focusNote.appendMarkdownComment("- ", targetIndex)
         }
       }
     }
   }
 
+  static referenceMoveUpThoughtPoints(focusNote) {
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    if (thoughtHtmlCommentIndex !== -1) {
+      let referenceHtmlCommentIndex = focusNote.getCommentIndex("参考文献：", true)
+      let refedHtmlCommentIndex = focusNote.getCommentIndex("被引用情况：", true)
+      let linksArr = []
+      try {
+        MNUtil.undoGrouping(()=>{
+          focusNote.comments.forEach((comment, index) => {
+            if (
+              comment.type == "TextNote" &&
+              (
+                comment.text.includes("marginnote4app") || comment.text.includes("marginnote3app")
+              )
+            ) {
+              linksArr.push(index)
+            }
+          })
+          let startIndex
+          if (referenceHtmlCommentIndex < focusNote.comments.length-1) {
+            let referenceContinuousLinksArr = this.getContinuousSequenceFromNum(linksArr, referenceHtmlCommentIndex+1)
+            if (referenceContinuousLinksArr.length == 0) {
+              // “参考文献：”下方没有紧跟链接
+              startIndex = referenceHtmlCommentIndex
+            } else {
+              // “参考文献：”下方有紧跟链接
+              startIndex = referenceContinuousLinksArr[referenceContinuousLinksArr.length-1]
+            }
+            if (startIndex < focusNote.comments.length-1) {
+              for (let i = focusNote.comments.length-1; i > startIndex; i--) {
+                focusNote.moveComment(focusNote.comments.length-1, refedHtmlCommentIndex)
+              }
+            }
+          }
+        })
+      } catch (error) {
+        MNUtil.showHUD(error);
+      }
+    }
+  }
   // 消除卡片内容，保留文字评论
   static clearContentKeepMarkdownText(focusNote) {
     let focusNoteComments = focusNote.note.comments
@@ -1663,7 +1777,7 @@ class toolbarUtils {
                 let linkHtmlCommentIndex = Math.max(focusNote.getCommentIndex("相关链接：",true), focusNote.getCommentIndex("所属：",true))
                 let preContent, postContent
                 if (parentNoteColorIndex == 1) {
-                  // 淡绿色
+                  // 父卡片是淡绿色
                   MNUtil.undoGrouping(()=>{
                     if (focusNoteColorIndex == 4) {
                       // 把选中的变成淡黄色
@@ -1814,6 +1928,7 @@ class toolbarUtils {
                         focusNote.childNotes.forEach(childNote => {
                           childNote.refresh()
                         })
+                        this.changePrefix(focusNote)
                       } else {
                         // focusNote 是知识点卡片
                         if (
@@ -2162,7 +2277,8 @@ class toolbarUtils {
               comment.text.includes("三层") || 
               comment.text.includes("四层") || 
               comment.text.includes("五层") ||
-              comment.text.trim() == "-"
+              comment.text.trim() == "-" ||
+              comment.text.includes("由来/背景：")
             )
           ) {
             try {
@@ -4230,13 +4346,14 @@ static template(action) {
         {
           "action": "menu",
           "menuTitle": "➡️ 链接 🔗",
+          "menuWidth": 400,
           "menuItems": [
             // {
             //   "menuTitle": "🔽 "
             // },
             {
-              "action": "",
-              "menuTitle": "更新概念衍生知识点🔗"
+              "action": "renewLinksBetweenDefNoteAndExtensionNote",
+              "menuTitle": "更新1️⃣次「概念卡片」与「衍生知识归类卡片」之间的🔗"
             },
             // {
             //   "action": "",
@@ -4349,13 +4466,25 @@ static template(action) {
               "menuTitle": "➡️ 思考",
               "menuItems": [
                 {
-                  "action": "",
-                  "menuTitle": "➕思考点",
+                  "action" : "referenceMoveUpThoughtPoints",
+                  "menuTitle" : "思考点⬆️"
                 },
-                // {
-                //   "action": "",
-                //   "menuTitle": "",
-                // }
+                {
+                  "action" : "referenceAddThoughtPoint",
+                  "menuTitle" : "➕思考点"
+                },
+                {
+                  "action": "referenceAddThoughtPointAndMoveLastCommentToThought",
+                  "menuTitle": "➕思考点 + 最后🔗⬆️思考",
+                },
+                {
+                  "action" : "referenceMoveLastCommentToThought",
+                  "menuTitle" : "最后1️⃣💬⬆️思考"
+                },
+                {
+                  "action" : "referenceMoveLastTwoCommentsToThought",
+                  "menuTitle" : "最后2️⃣💬⬆️思考"
+                },
               ]
             },
           ]
