@@ -1756,6 +1756,131 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "proofAddMethodComment":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入方法数",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alertI, buttonIndexI) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let methodNum = alertI.textFieldAtIndex(0).text;
+                let findMethod = false
+                let methodIndex = -1
+                if (buttonIndexI == 1) {
+                  for (let i = 0; i < focusNote.comments.length; i++) {
+                    let comment = focusNote.comments[i];
+                    if (
+                      comment.text &&
+                      comment.text.startsWith("<span") &&
+                      comment.text.includes("方法"+toolbarUtils.numberToChinese(methodNum))
+                    ) {
+                      methodIndex = i
+                      findMethod = true
+                      break
+                    }
+                  }
+                  if (!findMethod) {
+                    MNUtil.showHUD("没有此方法！")
+                  } else {
+                    UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+                      "输入此方法的注释",
+                      "",
+                      2,
+                      "取消",
+                      ["确定"],
+                      (alert, buttonIndex) => {
+                        try {
+                          MNUtil.undoGrouping(()=>{
+                            let methodComment = alert.textFieldAtIndex(0).text;
+                            if (methodComment == "") {
+                              methodComment = "- - - - - - - - - - - - - - -"
+                            }
+                            if (buttonIndex == 1) {
+                              focusNote.removeCommentByIndex(methodIndex)
+                              focusNote.appendMarkdownComment(
+                                '<span style="font-weight: bold; color: #014f9c; background-color: #ecf5fc; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 方法'+ toolbarUtils.numberToChinese(methodNum) +'：'+ methodComment +'</span>',
+                                methodIndex
+                              )
+                            }
+                          })
+                        } catch (error) {
+                          MNUtil.showHUD(error);
+                        }
+                      }
+                    )
+                  }
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break
+      case "proofAddNewMethodWithComment":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入此方法的注释",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let methodComment = alert.textFieldAtIndex(0).text;
+                if (methodComment == "") {
+                  methodComment = "- - - - - - - - - - - - - - -"
+                }
+                if (buttonIndex == 1) {
+                  let methodNum = 0
+                  focusNote.comments.forEach(comment=>{
+                    if (
+                      comment.text &&
+                      comment.text.startsWith("<span") &&
+                      comment.text.includes("方法")
+                    ) {
+                      methodNum++
+                    }
+                  })
+                  let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：",true)
+                  focusNote.appendMarkdownComment(
+                    '<span style="font-weight: bold; color: #014f9c; background-color: #ecf5fc; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 方法'+ toolbarUtils.numberToChinese(methodNum+1) +'：'+ methodComment +'</span>',
+                    thoughtHtmlCommentIndex
+                  )
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break
+      case "proofAddNewMethod":
+        try {
+          MNUtil.undoGrouping(()=>{
+            let methodNum = 0
+            focusNote.comments.forEach(comment=>{
+              if (
+                comment.text &&
+                comment.text.startsWith("<span") &&
+                comment.text.includes("方法")
+              ) {
+                methodNum++
+              }
+            })
+            let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：",true)
+            focusNote.appendMarkdownComment(
+              '<span style="font-weight: bold; color: #014f9c; background-color: #ecf5fc; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 方法'+ toolbarUtils.numberToChinese(methodNum+1) +'：- - - - - - - - - - - - - - - </span>',
+              thoughtHtmlCommentIndex
+            )
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break
       case "renewLinksBetweenDefNoteAndExtensionNote":
         try {
           MNUtil.undoGrouping(()=>{
@@ -3819,6 +3944,43 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "hideAddonBar":
         MNUtil.postNotification("toggleMindmapToolbar", {target:"addonBar"})
         break;
+      case "moveProofToMethod":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入方法数",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let methodNum = alert.textFieldAtIndex(0).text;
+                let findMethod = false
+                if (buttonIndex == 1) {
+                  for (let i = 0; i < focusNote.comments.length; i++) {
+                    let comment = focusNote.comments[i];
+                    if (
+                      comment.text &&
+                      comment.text.startsWith("<span") &&
+                      comment.text.includes("方法"+toolbarUtils.numberToChinese(methodNum))
+                    ) {
+                      findMethod = true
+                      break
+                    }
+                  }
+                  if (!findMethod) {
+                    MNUtil.showHUD("没有此方法！")
+                  } else {
+                    toolbarUtils.moveProofToMethod(focusNote,methodNum)
+                  }
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error)
+            }
+          }
+        )
+        break
       case "makeCards":
         try {
           // MNUtil.showHUD("制卡")
