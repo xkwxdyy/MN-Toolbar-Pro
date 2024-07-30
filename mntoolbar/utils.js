@@ -32,6 +32,30 @@ class toolbarUtils {
   // TODO:
   // - 判断链接是否存在
 
+  static numberToChinese(num) {
+    const chineseNumbers = '零一二三四五六七八九';
+    const units = ['', '十', '百', '千', '万', '亿'];
+    
+    if (num === 0) return chineseNumbers[0];
+
+    let result = '';
+    let unitIndex = 0;
+
+    while (num > 0) {
+        const digit = num % 10;
+        if (digit !== 0) {
+            result = chineseNumbers[digit] + units[unitIndex] + result;
+        } else if (result && result[0] !== chineseNumbers[0]) {
+            result = chineseNumbers[0] + result; // 在需要时添加"零"
+        }
+        num = Math.floor(num / 10);
+        unitIndex++;
+    }
+
+    // 去除前面的零
+    return result.replace(/零+/, '零').replace(/零+$/, '').trim();
+}
+
   // 获得淡绿色、淡黄色、黄色卡片的类型
   static getClassificationNoteTypeByTitle(title) {
     let match = title.match(/.*相关(.*)/)
@@ -1160,6 +1184,98 @@ class toolbarUtils {
     }
   }
 
+  static moveProofToMethod(focusNote,methodNum) {
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let nonLinkNoteCommentsIndex = []
+    let proofHtmlCommentIndex
+    let focusNoteType
+    switch (focusNote.colorIndex) {
+      case 0: // 淡黄色
+        focusNoteType = "outline"
+        break;
+      case 2: // 淡蓝色：定义类
+        focusNoteType = "definition"
+        break;
+      case 3: // 淡粉色：反例
+        focusNoteType = "antiexample"
+        break;
+      case 4: // 黄色：归类
+        focusNoteType = "outline"
+        break;
+      case 6: // 蓝色：应用
+        focusNoteType = "application"
+        break;
+      case 9: // 深绿色：思想方法
+        focusNoteType = "method"
+        break;
+      case 10: // 深蓝色：定理命题
+        focusNoteType = "theorem"
+        break;
+      case 13: // 淡灰色：问题
+        focusNoteType = "question"
+        break;
+      case 15: // 淡紫色：例子
+        focusNoteType = "example"
+        break;
+    }
+    // let afterApplicationHtmlContinuousLink = true
+    switch (focusNoteType) {
+      case "method":
+        proofHtmlCommentIndex= focusNote.getCommentIndex("原理：", true)
+        break;
+      case "antiexample":
+        proofHtmlCommentIndex= focusNote.getCommentIndex("反例及证明：", true)
+        break;
+      default:
+        proofHtmlCommentIndex = focusNote.getIncludingCommentIndex('方法'+ this.numberToChinese(methodNum) +'：', true)
+        break;
+    }
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
+    let applicationHtmlCommentIndexArr = []
+    if (applicationHtmlCommentIndex !== -1) {
+      focusNote.comments.forEach((comment, index) => {
+        if (
+          comment.text &&
+          (
+            comment.text.includes("应用：") ||
+            comment.text.includes("的应用")
+          )
+        ) {
+          applicationHtmlCommentIndexArr.push(index)
+        }
+      })
+      applicationHtmlCommentIndex = applicationHtmlCommentIndexArr[applicationHtmlCommentIndexArr.length-1]
+    }
+      focusNoteComments.forEach((comment, index) => {
+        if (index > applicationHtmlCommentIndex) {
+          if (
+            comment.type == "PaintNote" || comment.type == "LinkNote" ||
+            (
+              comment.text &&
+              !comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") 
+            )
+          ) {
+            nonLinkNoteCommentsIndex.push(index)
+          }
+        }
+      })
+
+      // bug：手写无法移动
+      // for (let i = nonLinkNoteCommentsIndex[0]; i < focusNoteCommentLength; i++, targetCommentIndex++) {
+      //   focusNote.moveComment(i, targetCommentIndex);
+      // }
+      let targetCommentIndex
+      let nextMethodCommentIndex = focusNote.getIncludingCommentIndex('方法'+ this.numberToChinese(parseInt(methodNum)+1) +'：')
+      targetCommentIndex = (nextMethodCommentIndex == -1)? thoughtHtmlCommentIndex: nextMethodCommentIndex
+      // MNUtil.showHUD("next"+ nextMethodCommentIndex + " target"+ targetCommentIndex)
+
+      for (let i = focusNoteCommentLength-1; i >= nonLinkNoteCommentsIndex[0]; i--) {
+        focusNote.moveComment(focusNoteCommentLength-1, targetCommentIndex);
+      }
+  }
+
   static makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType) {
     let focusNoteComments = focusNote.note.comments
     let focusNoteCommentLength = focusNoteComments.length
@@ -1247,7 +1363,6 @@ class toolbarUtils {
           }
         }
       }
-    // }
   }
 
   // 根据颜色 index 确认卡片类型
@@ -1566,7 +1681,9 @@ class toolbarUtils {
     )
   }
 
-  // 把卡片中的 HtmlNote 的内容转化为 Markdown 语法
+
+  // 把卡片中的 HtmlNote 的内容转化为 Markdown 语
+
   static convetHtmlToMarkdown(focusNote){
     let focusNoteComments = focusNote.note.comments
     focusNoteComments.forEach((comment, index) => {
@@ -4401,6 +4518,22 @@ static template(action) {
           "action": "menu",
           "menuTitle": "➡️ 证明",
           "menuItems": [
+            {
+              "action": "moveProofToMethod",
+              "menuTitle": "证明⬆️某种方法",
+            },
+            {
+              "action": "proofAddNewMethodWithComment",
+              "menuTitle": "➕证明方法（补充注释）",
+            },
+            {
+              "action": "proofAddNewMethod",
+              "menuTitle": "➕证明方法（无补充）",
+            },
+            {
+              "action": "proofAddMethodComment",
+              "menuTitle": "补充证明方法的注释",
+            },
             {
               "action" : "renewProof",
               "menuTitle" : "更新证明"
