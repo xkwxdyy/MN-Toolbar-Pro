@@ -1099,7 +1099,9 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
       case "renewCards":
         try {
           MNUtil.undoGrouping(()=>{
-            toolbarUtils.renewCards(focusNotes)
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.renewCards(focusNote)
+            })
           })
         } catch (error) {
           MNUtil.showHUD(error);
@@ -1150,11 +1152,25 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
         try {
           // MNUtil.showHUD("制卡")
           MNUtil.undoGrouping(()=>{
-            focusNotes.forEach(focusNote=>{
+            // focusNotes.forEach(focusNote=>{
+            for (let i = 0; i < focusNotes.length; i++) {
+              focusNote = focusNotes[i]
               /* 初始化 */
               let ifParentNoteChosen = false
 
-              toolbarUtils.renewCards([focusNote])
+              toolbarUtils.renewCards(focusNote)
+
+              /* 先将卡变成非摘录版本 */
+              // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
+              if (focusNote.excerptText) {
+                toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+                // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就失焦了（因为被合并到其它卡片了）
+                // 所以下面的代码不会执行，这就产生了一个效果：
+                // 点击第一次：将摘录版本变成非摘录版本
+                // 点击第二次：开始制卡
+                // 误打误撞产生最佳效果了属于是
+                break
+              }
 
               /* 确定卡片类型 */
               switch (focusNoteColorIndex) {
@@ -1167,14 +1183,20 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                 case 3: // 淡粉色：反例
                   focusNoteType = "antiexample"
                   break;
-                case 4: // 黄色
+                case 4: // 黄色：归类
                   focusNoteType = "outline"
+                  break;
+                case 6: // 蓝色：应用
+                  focusNoteType = "application"
                   break;
                 case 9: // 深绿色：思想方法
                   focusNoteType = "method"
                   break;
                 case 10: // 深蓝色：定理命题
                   focusNoteType = "theorem"
+                  break;
+                case 13: // 淡灰色：问题
+                  focusNoteType = "question"
                   break;
                 case 15: // 淡紫色：例子
                   focusNoteType = "example"
@@ -1183,22 +1205,10 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
 
               /* 预处理 */
               /* 只对淡蓝色、淡粉色、深绿色、深蓝色、淡紫色的卡片进行制卡 */
-              if ([0, 2, 3, 4, 9, 10, 15].includes(focusNoteColorIndex)) {
-                /* 先将卡变成非摘录版本 */
-                // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
-                if (focusNote.excerptText) {
-                  toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
-                  // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就失焦了（因为被合并到其它卡片了）
-                  // 所以下面的代码不会执行，这就产生了一个效果：
-                  // 点击第一次：将摘录版本变成非摘录版本
-                  // 点击第二次：开始制卡
-                  // 误打误撞产生最佳效果了属于是
-                } else {
-                  // 非摘录的话就添加到复习卡组
-                  if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
-                    MNUtil.excuteCommand("AddToReview")
-                  }
-                }
+              if (
+                [0, 2, 3, 4, 6, 9, 10, 13, 15].includes(focusNoteColorIndex) &&
+                !focusNote.noteTitle.startsWith("【文献")  // 防止文献卡片被制卡
+              ) {
 
                 /* 检测父卡片的存在和颜色 */
                 parentNote = focusNote.parentNote
@@ -1217,9 +1227,51 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                   }
                 }
               } else {
-                MNUtil.showHUD("不支持对此颜色的卡片进行制卡！")
+                MNUtil.showHUD("此卡片不支持制卡！")
                 return // 使用 return 来提前结束函数, 避免了在内部函数中使用 break 导致的语法错误。
               }
+
+              let parentNoteType = toolbarUtils.getClassificationNoteTypeByTitle(parentNote.noteTitle)
+              if (
+                [2,3,6,9,10,13,15].includes(focusNoteColorIndex) ||
+                !focusNote.noteTitle.match(/“.*”相关.*/)
+              ) {
+                switch (parentNoteType) {
+                  case "定义":
+                    focusNoteType = "definition"
+                    focusNote.note.colorIndex = 2
+                    break
+                  case "命题":
+                    focusNoteType = "theorem"
+                    focusNote.note.colorIndex = 10
+                    break
+                  case "反例":
+                    focusNoteType = "antiexample"
+                    focusNote.note.colorIndex = 3
+                    break
+                  case "例子":
+                    focusNoteType = "example"
+                    focusNote.note.colorIndex = 15
+                    break
+                  case "思想方法":
+                    focusNoteType = "method"
+                    focusNote.note.colorIndex = 9
+                    break
+                  case "问题":
+                    focusNoteType = "question"
+                    focusNote.note.colorIndex = 13
+                    break
+                  case "应用":
+                    focusNoteType = "application"
+                    focusNote.note.colorIndex = 6
+                    break
+                }
+              }
+              
+              if ([2, 3, 6, 9, 10, 13, 15].includes(focusNote.note.colorIndex)) {
+                MNUtil.excuteCommand("AddToReview")
+              }
+
               /* 开始制卡 */
               /* 合并第一层模板 */
               toolbarUtils.makeCardsAuxFirstLayerTemplate(focusNote, focusNoteType)
@@ -1262,7 +1314,7 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                   MNUtil.showHUD(error);
                 }
               }
-            })
+            }
           })
         } catch (error) {
           MNUtil.showHUD(error)
@@ -3897,7 +3949,9 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "renewCards":
         try {
           MNUtil.undoGrouping(()=>{
-            toolbarUtils.renewCards(focusNotes)
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.renewCards(focusNote)
+            })
           })
         } catch (error) {
           MNUtil.showHUD(error);
@@ -3985,11 +4039,25 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         try {
           // MNUtil.showHUD("制卡")
           MNUtil.undoGrouping(()=>{
-            focusNotes.forEach(focusNote=>{
+            // focusNotes.forEach(focusNote=>{
+            for (let i = 0; i < focusNotes.length; i++) {
+              focusNote = focusNotes[i]
               /* 初始化 */
               let ifParentNoteChosen = false
 
-              toolbarUtils.renewCards([focusNote])
+              toolbarUtils.renewCards(focusNote)
+
+              /* 先将卡变成非摘录版本 */
+              // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
+              if (focusNote.excerptText) {
+                toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+                // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就失焦了（因为被合并到其它卡片了）
+                // 所以下面的代码不会执行，这就产生了一个效果：
+                // 点击第一次：将摘录版本变成非摘录版本
+                // 点击第二次：开始制卡
+                // 误打误撞产生最佳效果了属于是
+                break
+              }
 
               /* 确定卡片类型 */
               switch (focusNoteColorIndex) {
@@ -4028,21 +4096,6 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 [0, 2, 3, 4, 6, 9, 10, 13, 15].includes(focusNoteColorIndex) &&
                 !focusNote.noteTitle.startsWith("【文献")  // 防止文献卡片被制卡
               ) {
-                /* 先将卡变成非摘录版本 */
-                // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
-                if (focusNote.excerptText) {
-                  toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
-                  // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就失焦了（因为被合并到其它卡片了）
-                  // 所以下面的代码不会执行，这就产生了一个效果：
-                  // 点击第一次：将摘录版本变成非摘录版本
-                  // 点击第二次：开始制卡
-                  // 误打误撞产生最佳效果了属于是
-                } else {
-                  // 非摘录的话就添加到复习卡组
-                  if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
-                    MNUtil.excuteCommand("AddToReview")
-                  }
-                }
 
                 /* 检测父卡片的存在和颜色 */
                 parentNote = focusNote.parentNote
@@ -4066,35 +4119,44 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
               }
 
               let parentNoteType = toolbarUtils.getClassificationNoteTypeByTitle(parentNote.noteTitle)
-              switch (parentNoteType) {
-                case "定义":
-                  focusNoteType = "definition"
-                  focusNote.note.colorIndex = 2
-                  break
-                case "命题":
-                  focusNoteType = "theorem"
-                  focusNote.note.colorIndex = 10
-                  break
-                case "反例":
-                  focusNoteType = "antiexample"
-                  focusNote.note.colorIndex = 3
-                  break
-                case "例子":
-                  focusNoteType = "example"
-                  focusNote.note.colorIndex = 15
-                  break
-                case "思想方法":
-                  focusNoteType = "method"
-                  focusNote.note.colorIndex = 9
-                  break
-                case "问题":
-                  focusNoteType = "question"
-                  focusNote.note.colorIndex = 13
-                  break
-                case "应用":
-                  focusNoteType = "application"
-                  focusNote.note.colorIndex = 6
-                  break
+              if (
+                [2,3,6,9,10,13,15].includes(focusNoteColorIndex) ||
+                !focusNote.noteTitle.match(/“.*”相关.*/)
+              ) {
+                switch (parentNoteType) {
+                  case "定义":
+                    focusNoteType = "definition"
+                    focusNote.note.colorIndex = 2
+                    break
+                  case "命题":
+                    focusNoteType = "theorem"
+                    focusNote.note.colorIndex = 10
+                    break
+                  case "反例":
+                    focusNoteType = "antiexample"
+                    focusNote.note.colorIndex = 3
+                    break
+                  case "例子":
+                    focusNoteType = "example"
+                    focusNote.note.colorIndex = 15
+                    break
+                  case "思想方法":
+                    focusNoteType = "method"
+                    focusNote.note.colorIndex = 9
+                    break
+                  case "问题":
+                    focusNoteType = "question"
+                    focusNote.note.colorIndex = 13
+                    break
+                  case "应用":
+                    focusNoteType = "application"
+                    focusNote.note.colorIndex = 6
+                    break
+                }
+              }
+              
+              if ([2, 3, 6, 9, 10, 13, 15].includes(focusNote.note.colorIndex)) {
+                MNUtil.excuteCommand("AddToReview")
               }
 
               /* 开始制卡 */
@@ -4139,7 +4201,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                   MNUtil.showHUD(error);
                 }
               }
-            })
+            }
           })
         } catch (error) {
           MNUtil.showHUD(error)

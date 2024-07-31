@@ -2369,96 +2369,94 @@ class toolbarUtils {
     3. 去掉“- ”
   */
   
-  static renewCards(focusNotes) {
-    focusNotes.forEach(focusNote => {
-      let focusNoteComments = focusNote.note.comments
-      let focusNoteCommentLength = focusNoteComments.length
-      let comment
-      let htmlCommentsIndexArr = []
+  static renewCards(focusNote) {
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let comment
+    let htmlCommentsIndexArr = []
 
-      let layerStartIndex, layerEndIndex
-      // layerEndIndex = focusNoteCommentLength - 1 - (templateHtmlCommentEndIndex - templateHtmlCommentStartIndex)
-      // layerStartIndex = htmlCommentsIndexArr[htmlCommentsIndexArr.length - 1]
-      layerStartIndex = 0
-      layerEndIndex = focusNoteCommentLength - 1
-      // if (focusNoteColorIndex == 0 || focusNoteColorIndex == 1 || focusNoteColorIndex == 4) {
-        // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-        for (let i = layerEndIndex; i >= layerStartIndex; i--) {
-          comment = focusNoteComments[i]
-          if (
-            comment.text && 
-            (
-              comment.text.includes("零层") || 
-              comment.text.includes("一层") || 
-              comment.text.includes("两层") || 
-              comment.text.includes("三层") || 
-              comment.text.includes("四层") || 
-              comment.text.includes("五层") ||
-              comment.text.trim() == "-" ||
-              comment.text.includes("由来/背景：")
-            )
-          ) {
-            try {
-              MNUtil.undoGrouping(()=>{
-                focusNote.removeCommentByIndex(i)
-              })
-            } catch (error) {
-              MNUtil.showHUD(error);
-            }
+    let layerStartIndex, layerEndIndex
+    // layerEndIndex = focusNoteCommentLength - 1 - (templateHtmlCommentEndIndex - templateHtmlCommentStartIndex)
+    // layerStartIndex = htmlCommentsIndexArr[htmlCommentsIndexArr.length - 1]
+    layerStartIndex = 0
+    layerEndIndex = focusNoteCommentLength - 1
+    // if (focusNoteColorIndex == 0 || focusNoteColorIndex == 1 || focusNoteColorIndex == 4) {
+      // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+      for (let i = layerEndIndex; i >= layerStartIndex; i--) {
+        comment = focusNoteComments[i]
+        if (
+          comment.text && 
+          (
+            comment.text.includes("零层") || 
+            comment.text.includes("一层") || 
+            comment.text.includes("两层") || 
+            comment.text.includes("三层") || 
+            comment.text.includes("四层") || 
+            comment.text.includes("五层") ||
+            comment.text.trim() == "-" ||
+            comment.text.includes("由来/背景：")
+          )
+        ) {
+          try {
+            MNUtil.undoGrouping(()=>{
+              focusNote.removeCommentByIndex(i)
+            })
+          } catch (error) {
+            MNUtil.showHUD(error);
           }
         }
-      // }
-      
-      focusNoteComments.forEach((comment, index) => {
-        if (comment.type == "HtmlNote") {
-          htmlCommentsIndexArr.push(index)
-        }
-      })
-
-      // MNUtil.showHUD(htmlCommentsIndex);
-
-      // 重新更新 focusNoteComments 和 focusNoteCommentLength
-      focusNoteComments = focusNote.note.comments
-      focusNoteCommentLength = focusNoteComments.length
-
-      let templateHtmlCommentStartIndexI = focusNote.getCommentIndex("模版：", true)
-      let templateHtmlCommentStartIndexII = focusNote.getCommentIndex("模板：", true)
-      let templateHtmlCommentStartIndex = Math.max(templateHtmlCommentStartIndexI, templateHtmlCommentStartIndexII)
-      // let templateHtmlCommentIndex = htmlCommentsIndexArr.indexOf(templateHtmlCommentStartIndex)
-      let templateHtmlCommentEndIndex
-      // let templateHtmlCommentEndIndex = htmlCommentsIndexArr[templateHtmlCommentIndex+1]
-      let templateHtmlCommentEndIndexI = focusNote.getCommentIndex("包含：", true)
-      let templateHtmlCommentEndIndexII = Math.max(
-        focusNote.getCommentIndex("相关概念：", true),
-        focusNote.getCommentIndex("相关命题：", true),
-        focusNote.getCommentIndex("相关反例：", true),
-        focusNote.getCommentIndex("相关例子：", true),
-        focusNote.getCommentIndex("相关应用：", true),
-        focusNote.getCommentIndex("相关问题：", true),
-        focusNote.getCommentIndex("相关思想方法：", true)
-      )
-      if (templateHtmlCommentEndIndexII !== -1) {
-        templateHtmlCommentEndIndex = templateHtmlCommentEndIndexII
-      } else {
-        templateHtmlCommentEndIndex = templateHtmlCommentEndIndexI
       }
-      // MNUtil.showHUD(templateHtmlCommentStartIndex + " " + templateHtmlCommentEndIndex);
-      if (templateHtmlCommentStartIndex !== -1) {
-        for (let i = templateHtmlCommentEndIndex-1; i >= templateHtmlCommentStartIndex; i--) {
-          focusNote.removeCommentByIndex(i)
-        }
+    // }
+    
+    focusNoteComments.forEach((comment, index) => {
+      if (comment.type == "HtmlNote") {
+        htmlCommentsIndexArr.push(index)
       }
-
-      try {
-        MNUtil.undoGrouping(()=>{
-          this.makeCardsAuxMoveDownApplicationsComments(focusNote)
-          this.makeCardsAuxMoveDownDefinitionsComments(focusNote)
-        })
-      } catch (error) {
-        MNUtil.showHUD(error);
-      }
-      focusNote.refresh()
     })
+
+    // MNUtil.showHUD(htmlCommentsIndex);
+
+    // 重新更新 focusNoteComments 和 focusNoteCommentLength
+    focusNoteComments = focusNote.note.comments
+    focusNoteCommentLength = focusNoteComments.length
+
+    let templateHtmlCommentStartIndexI = focusNote.getCommentIndex("模版：", true)
+    let templateHtmlCommentStartIndexII = focusNote.getCommentIndex("模板：", true)
+    let templateHtmlCommentStartIndex = Math.max(templateHtmlCommentStartIndexI, templateHtmlCommentStartIndexII)
+    // let templateHtmlCommentIndex = htmlCommentsIndexArr.indexOf(templateHtmlCommentStartIndex)
+    let templateHtmlCommentEndIndex
+    // let templateHtmlCommentEndIndex = htmlCommentsIndexArr[templateHtmlCommentIndex+1]
+    let templateHtmlCommentEndIndexI = focusNote.getCommentIndex("包含：", true)
+    let templateHtmlCommentEndIndexII = Math.max(
+      focusNote.getCommentIndex("相关概念：", true),
+      focusNote.getCommentIndex("相关命题：", true),
+      focusNote.getCommentIndex("相关反例：", true),
+      focusNote.getCommentIndex("相关例子：", true),
+      focusNote.getCommentIndex("相关应用：", true),
+      focusNote.getCommentIndex("相关问题：", true),
+      focusNote.getCommentIndex("相关思想方法：", true)
+    )
+    if (templateHtmlCommentEndIndexII !== -1) {
+      templateHtmlCommentEndIndex = templateHtmlCommentEndIndexII
+    } else {
+      templateHtmlCommentEndIndex = templateHtmlCommentEndIndexI
+    }
+    // MNUtil.showHUD(templateHtmlCommentStartIndex + " " + templateHtmlCommentEndIndex);
+    if (templateHtmlCommentStartIndex !== -1) {
+      for (let i = templateHtmlCommentEndIndex-1; i >= templateHtmlCommentStartIndex; i--) {
+        focusNote.removeCommentByIndex(i)
+      }
+    }
+
+    try {
+      MNUtil.undoGrouping(()=>{
+        this.makeCardsAuxMoveDownApplicationsComments(focusNote)
+        this.makeCardsAuxMoveDownDefinitionsComments(focusNote)
+      })
+    } catch (error) {
+      MNUtil.showHUD(error);
+    }
+    focusNote.refresh()
   }
 
   static changePrefix(focusNote) {
@@ -4472,10 +4470,10 @@ static template(action) {
               "action": "renewLinksBetweenDefNoteAndExtensionNote",
               "menuTitle": "更新1️⃣次「概念卡片」与「衍生知识归类卡片」之间的🔗"
             },
-            // {
-            //   "action": "",
-            //   "menuTitle": ""
-            // }
+            {
+              "action": "",
+              "menuTitle": "更新1️⃣次「知识卡片」与「归类卡片」之间的🔗"
+            }
           ]
         },
         {
