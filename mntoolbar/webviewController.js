@@ -1175,7 +1175,7 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
               /* 确定卡片类型 */
               switch (focusNoteColorIndex) {
                 case 0: // 淡黄色
-                  focusNoteType = "outline"
+                  focusNoteType = "classification"
                   break;
                 case 2: // 淡蓝色：定义类
                   focusNoteType = "definition"
@@ -1184,7 +1184,7 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                   focusNoteType = "antiexample"
                   break;
                 case 4: // 黄色：归类
-                  focusNoteType = "outline"
+                  focusNoteType = "classification"
                   break;
                 case 6: // 蓝色：应用
                   focusNoteType = "application"
@@ -1297,7 +1297,7 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                 - 反例类型的是“反例及证明：”
                 - 思想方法类型的是“原理：”
               */
-              if (focusNoteType !== "definition" && focusNoteType !== "outline") {
+              if (focusNoteType !== "definition" && focusNoteType !== "classification") {
                 try {
                   toolbarUtils.makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType)
                 } catch (error) {
@@ -1933,60 +1933,171 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           MNUtil.showHUD(error);
         }
         break
-      case "renewLinksBetweenDefNoteAndExtensionNote":
+      case "renewLinksBetweenClassificationNoteAndExtensionNote":
         try {
           MNUtil.undoGrouping(()=>{
-            if (focusNoteColorIndex == 2) {
-              // 如果选择的是概念类型卡片
-              let targetNoteId = MNUtil.getNoteIdByURL(focusNote.comments[focusNote.comments.length - 1].text)
-
-              // 处理衍生卡片
-              let targetNote = MNNote.new(targetNoteId)
-              let targetNoteType = toolbarUtils.getClassificationNoteTypeByTitle(targetNote.noteTitle)
-              let relatedHtmlCommentIndex = targetNote.getCommentIndex("相关"+targetNoteType+"：",true)
-              let includingHtmlCommentIndex = targetNote.getCommentIndex("包含：",true)
-              let targetNoteTargetIndex = (relatedHtmlCommentIndex==-1)? includingHtmlCommentIndex: relatedHtmlCommentIndex
-              targetNote.moveComment(
-                targetNote.comments.length-1,
-                targetNoteTargetIndex
-              )
-
-              // 处理概念卡片
-              let definitionHtmlCommentIndex = focusNote.getCommentIndex("相关概念：",true)
-              focusNote.moveComment(
-                focusNote.comments.length-1,
-                definitionHtmlCommentIndex
-              )
+            let targetNoteId = MNUtil.getNoteIdByURL(focusNote.comments[focusNote.comments.length - 1].text)
+            let targetNote = MNNote.new(targetNoteId)
+            let targetNoteColorIndex = targetNote.note.colorIndex
+            let targetNoteType
+            let targetClassificationNoteType = toolbarUtils.getClassificationNoteTypeByTitle(targetNote.noteTitle)
+            let focusClassificationNoteType = toolbarUtils.getClassificationNoteTypeByTitle(focusNote.noteTitle)
+            let targetCommentIndex
+            if ([0,1,4].includes(targetNoteColorIndex)) {
+              targetNoteType = "classification"
             } else {
-              if (
-                focusNoteColorIndex == 0 ||
-                focusNoteColorIndex == 1 ||
-                focusNoteColorIndex == 4
-              ) {
-                // 选择的是归类型卡片
-                let targetNoteId = MNUtil.getNoteIdByURL(focusNote.comments[focusNote.comments.length - 1].text)
-
-                // 处理概念卡片
-                let targetNote = MNNote.new(targetNoteId)
-                let definitionHtmlCommentIndex = targetNote.getCommentIndex("相关概念：",true)
-                targetNote.moveComment(
-                  targetNote.comments.length-1,
-                  definitionHtmlCommentIndex
-                )
-
-
-                // 处理衍生卡片
-                let focusNoteType = toolbarUtils.getClassificationNoteTypeByTitle(focusNote.noteTitle)
-                let relatedHtmlCommentIndex = focusNote.getCommentIndex("相关"+focusNoteType+"：",true)
-                let includingHtmlCommentIndex = focusNote.getCommentIndex("包含：",true)
-                let focusNoteTargetIndex = (relatedHtmlCommentIndex==-1)? includingHtmlCommentIndex: relatedHtmlCommentIndex
-                focusNote.moveComment(
-                  focusNote.comments.length-1,
-                  focusNoteTargetIndex
-                )
-
+              switch (targetNoteColorIndex) {
+                case 2: // 淡蓝色：定义类
+                  targetNoteType = "definition"
+                  break;
+                case 3: // 淡粉色：反例
+                  targetNoteType = "antiexample"
+                  break;
+                case 6: // 蓝色：应用
+                  targetNoteType = "application"
+                  break;
+                case 9: // 深绿色：思想方法
+                  targetNoteType = "method"
+                  break;
+                case 10: // 深蓝色：定理命题
+                  targetNoteType = "theorem"
+                  break;
+                case 13: // 淡灰色：问题
+                  targetNoteType = "question"
+                  break;
+                case 15: // 淡紫色：例子
+                  targetNoteType = "example"
+                  break;
               }
             }
+
+            let focusNoteType
+            switch (focusNoteColorIndex) {
+              case 0: // 淡黄色：归类
+                focusNoteType = "classification"
+                break;
+              case 1: // 淡绿色：归类
+                focusNoteType = "classification"
+                break;
+              case 2: // 淡蓝色：定义类
+                focusNoteType = "definition"
+                break;
+              case 3: // 淡粉色：反例
+                focusNoteType = "antiexample"
+                break;
+              case 4: // 黄色：归类
+                focusNoteType = "classification"
+                break;
+              case 6: // 蓝色：应用
+                focusNoteType = "application"
+                break;
+              case 9: // 深绿色：思想方法
+                focusNoteType = "method"
+                break;
+              case 10: // 深蓝色：定理命题
+                focusNoteType = "theorem"
+                break;
+              case 13: // 淡灰色：问题
+                focusNoteType = "question"
+                break;
+              case 15: // 淡紫色：例子
+                focusNoteType = "example"
+                break;
+            }
+
+            switch (focusNoteType) {
+              case "definition":
+                // 概念卡片只会和归类卡片链接
+                targetCommentIndex = toolbarUtils.moveLastCommentAboveComment(targetNote, "相关"+targetClassificationNoteType+"：" )
+                if (targetCommentIndex == -1) {
+                  toolbarUtils.moveLastCommentAboveComment(
+                    targetNote,
+                    "包含："
+                  )
+                }
+
+                toolbarUtils.moveLastCommentAboveComment(focusNote, "相关概念：")
+                break;
+              case "classification":
+                switch (targetNoteType) {
+                  case "definition":
+                    // 淡绿色只会和概念卡片链接
+                    targetCommentIndex = toolbarUtils.moveLastCommentAboveComment(focusNote, "相关"+focusClassificationNoteType+"：" )
+                    if (targetCommentIndex == -1) {
+                      toolbarUtils.moveLastCommentAboveComment(
+                        focusNote,
+                        "包含："
+                      )
+                    }
+    
+                    toolbarUtils.moveLastCommentAboveComment(targetNote, "相关概念：")
+                    break;
+                  case "classification":
+                    // 此时黄色只能和黄色卡片链接，因为黄色和绿色只有一种链接
+                    // 此时就是移动到“相关xxx”下方
+                    toolbarUtils.moveLastCommentAboveComment(focusNote, "包含：" )
+                    toolbarUtils.moveLastCommentAboveComment(targetNote, "包含：" )
+                    break;
+                  default:
+                    // 其余的知识卡片都只移动知识卡片的链接
+                    toolbarUtils.moveLastCommentAboveComment(targetNote, "应用：" )
+                    break;
+                }
+                break;
+              default:
+                // 知识卡片只与归类卡片链接
+                toolbarUtils.moveLastCommentAboveComment(focusNote, "应用：" )
+                break;
+            }
+
+            // if (focusNoteColorIndex == 2) {
+            //   // 如果选择的是概念类型卡片
+              
+            //   let targetNoteType = toolbarUtils.getClassificationNoteTypeByTitle(targetNote.noteTitle)
+            //   let relatedHtmlCommentIndex = targetNote.getCommentIndex("相关"+targetNoteType+"：",true)
+            //   let includingHtmlCommentIndex = targetNote.getCommentIndex("包含：",true)
+            //   let targetNoteTargetIndex = (relatedHtmlCommentIndex==-1)? includingHtmlCommentIndex: relatedHtmlCommentIndex
+            //   targetNote.moveComment(
+            //     targetNote.comments.length-1,
+            //     targetNoteTargetIndex
+            //   )
+
+            //   // 处理概念卡片
+            //   let definitionHtmlCommentIndex = focusNote.getCommentIndex("相关概念：",true)
+            //   focusNote.moveComment(
+            //     focusNote.comments.length-1,
+            //     definitionHtmlCommentIndex
+            //   )
+            // } else {
+            //   if (
+            //     focusNoteColorIndex == 0 ||
+            //     focusNoteColorIndex == 1 ||
+            //     focusNoteColorIndex == 4
+            //   ) {
+            //     // 选择的是归类型卡片
+            //     let targetNoteId = MNUtil.getNoteIdByURL(focusNote.comments[focusNote.comments.length - 1].text)
+
+            //     // 处理概念卡片
+            //     let targetNote = MNNote.new(targetNoteId)
+            //     let definitionHtmlCommentIndex = targetNote.getCommentIndex("相关概念：",true)
+            //     targetNote.moveComment(
+            //       targetNote.comments.length-1,
+            //       definitionHtmlCommentIndex
+            //     )
+
+
+            //     // 处理衍生卡片
+            //     let focusNoteType = toolbarUtils.getClassificationNoteTypeByTitle(focusNote.noteTitle)
+            //     let relatedHtmlCommentIndex = focusNote.getCommentIndex("相关"+focusNoteType+"：",true)
+            //     let includingHtmlCommentIndex = focusNote.getCommentIndex("包含：",true)
+            //     let focusNoteTargetIndex = (relatedHtmlCommentIndex==-1)? includingHtmlCommentIndex: relatedHtmlCommentIndex
+            //     focusNote.moveComment(
+            //       focusNote.comments.length-1,
+            //       focusNoteTargetIndex
+            //     )
+
+            //   }
+            // }
           })
         } catch (error) {
           MNUtil.showHUD(error);
@@ -4062,7 +4173,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
               /* 确定卡片类型 */
               switch (focusNoteColorIndex) {
                 case 0: // 淡黄色
-                  focusNoteType = "outline"
+                  focusNoteType = "classification"
                   break;
                 case 2: // 淡蓝色：定义类
                   focusNoteType = "definition"
@@ -4071,7 +4182,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                   focusNoteType = "antiexample"
                   break;
                 case 4: // 黄色：归类
-                  focusNoteType = "outline"
+                  focusNoteType = "classification"
                   break;
                 case 6: // 蓝色：应用
                   focusNoteType = "application"
@@ -4184,7 +4295,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 - 反例类型的是“反例及证明：”
                 - 思想方法类型的是“原理：”
               */
-              if (focusNoteType !== "definition" && focusNoteType !== "outline") {
+              if (focusNoteType !== "definition" && focusNoteType !== "classification") {
                 try {
                   toolbarUtils.makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType)
                 } catch (error) {

@@ -32,6 +32,18 @@ class toolbarUtils {
   // TODO:
   // - 判断链接是否存在
 
+
+  static moveLastCommentAboveComment(note, commentText){
+    let commentIndex = note.getCommentIndex(commentText, true)
+    if (commentIndex != -1) {
+      note.moveComment(
+        note.comments.length - 1,
+        commentIndex
+      )
+    }
+    return commentIndex
+  }
+
   static numberToChinese(num) {
     const chineseNumbers = '零一二三四五六七八九';
     const units = ['', '十', '百', '千', '万', '亿'];
@@ -996,7 +1008,7 @@ class toolbarUtils {
     let parentNoteId = parentNote.noteId
     if (!focusNote.excerptText) { // 非摘录版本才开始链接
       if (parentNoteTitle !== undefined) {
-          if (focusNoteType == "outline") {
+          if (focusNoteType == "classification") {
             // 归类类型的卡片
             let parentNoteColorIndex = parentNote.note.colorIndex
             if (parentNoteColorIndex == 1) {
@@ -1192,7 +1204,7 @@ class toolbarUtils {
     let focusNoteType
     switch (focusNote.colorIndex) {
       case 0: // 淡黄色
-        focusNoteType = "outline"
+        focusNoteType = "classification"
         break;
       case 2: // 淡蓝色：定义类
         focusNoteType = "definition"
@@ -1201,7 +1213,7 @@ class toolbarUtils {
         focusNoteType = "antiexample"
         break;
       case 4: // 黄色：归类
-        focusNoteType = "outline"
+        focusNoteType = "classification"
         break;
       case 6: // 蓝色：应用
         focusNoteType = "application"
@@ -4482,13 +4494,9 @@ static template(action) {
             //   "menuTitle": "🔽 "
             // },
             {
-              "action": "renewLinksBetweenDefNoteAndExtensionNote",
-              "menuTitle": "更新1️⃣次「概念卡片」与「衍生知识归类卡片」之间的🔗"
+              "action": "renewLinksBetweenClassificationNoteAndExtensionNote",
+              "menuTitle": "更新1️⃣次「归类卡片」与「概念or归类卡片」之间的🔗"
             },
-            {
-              "action": "",
-              "menuTitle": "更新1️⃣次「知识卡片」与「归类卡片」之间的🔗"
-            }
           ]
         },
         {
