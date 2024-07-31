@@ -1809,11 +1809,11 @@ class toolbarUtils {
         "请输入标题并选择类型",
         2,
         "取消",
-        ["向下层增加模板", "增加概念衍生层级","向上层增加模板", "最顶层（淡绿色）", "专题"],
+        ["向下层增加模板", "增加概念衍生层级","增加兄弟层级模板","向上层增加模板", "最顶层（淡绿色）", "专题"],
         (alert, buttonIndex) => {
           let userInputTitle = alert.textFieldAtIndex(0).text;
           switch (buttonIndex) {
-            case 5:
+            case  6:
               /* 专题 */
               // 因为专题模板卡片比较多，所以增加一个确认界面
               UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
@@ -1841,7 +1841,7 @@ class toolbarUtils {
                 }
               )
               break;
-            case 4: 
+            case 5: 
             /* 增加最顶层的淡绿色模板 */
             try {
               let parentNote
@@ -1886,7 +1886,7 @@ class toolbarUtils {
               }
               
               break;
-            case 3:
+            case 4:
               try {
                 /* 向上增加模板 */
                 let parentNote = focusNote.parentNote
@@ -2089,7 +2089,22 @@ class toolbarUtils {
                 MNUtil.showHUD(error);
               }
               break;
-  
+            case 3:
+              // 增加兄弟层级模板
+              type = focusNote.noteTitle.match(/“.+”相关(.*)/)[1]
+              if (type) {
+                // MNUtil.showHUD(type);
+                templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
+                templateNote.note.colorIndex = focusNote.note.colorIndex 
+                templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[1] + "”：“" +  userInputTitle + "”相关" + type
+                MNUtil.undoGrouping(()=>{
+                  focusNote.parentNote.addChild(templateNote.note)
+                  focusNote.parentNote.appendNoteLink(templateNote, "Both")
+                  templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                })
+                templateNote.focusInMindMap(0.5)
+              }
+              break
             case 2:
               try {
                 let targetType
