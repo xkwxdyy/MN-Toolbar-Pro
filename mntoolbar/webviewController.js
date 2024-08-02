@@ -2686,6 +2686,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             if (focusNote.excerptText) {
               toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
             }
+            focusNote.note.colorIndex = 15
             if (focusNote.noteTitle.startsWith("【文献：")) {
               // 把  focusNote.noteTitle 开头的【.*】 删掉
               let reg = new RegExp("^【.*】")
@@ -2709,6 +2710,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             if (focusNote.excerptText) {
               toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
             }
+            focusNote.note.colorIndex = 15
             if (focusNote.noteTitle.startsWith("【文献：")) {
               // 把  focusNote.noteTitle 开头的【.*】 删掉
               let reg = new RegExp("^【.*】")
@@ -2771,6 +2773,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             if (focusNote.excerptText) {
               toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
             } else {
+              focusNote.note.colorIndex = 15
               UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
                 "整卷期刊",
                 "输入期刊名",
