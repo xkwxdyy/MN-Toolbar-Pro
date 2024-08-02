@@ -32,6 +32,87 @@ class toolbarUtils {
   // TODO:
   // - 判断链接是否存在
 
+  // 检测 str 是不是一个 4 位的数字
+  static isFourDigitNumber(str) {
+    // 使用正则表达式检查
+    const regex = /^\d{4}$/;
+    return regex.test(str);
+  }
+
+  static referenceInfoYear(focusNote, year) {
+    let findYear = false
+    let targetYearNote
+    let yearLibraryNote = MNNote.new("F251AFCC-AA8E-4A1C-A489-7EA4E4B58A02")
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    for (let i = 0; i <= yearLibraryNote.childNotes.length-1; i++) {
+      if (
+        this.getFirstKeywordFromTitle(yearLibraryNote.childNotes[i].noteTitle) == year
+      ) {
+        targetYearNote = yearLibraryNote.childNotes[i]
+        findYear = true
+        break;
+      }
+    }
+    if (!findYear) {
+      // 若不存在，则添加年份卡片
+      targetYearNote = MNNote.clone("16454AD3-C1F2-4BC4-8006-721F84999BEA")
+      targetYearNote.note.noteTitle += "; " + year
+      yearLibraryNote.addChild(targetYearNote.note)
+    }
+    let yearTextIndex = focusNote.getIncludingCommentIndex("- 年份", true)
+    if (yearTextIndex == -1) {
+      focusNote.appendMarkdownComment("- 年份（Year）：", thoughtHtmlCommentIndex)
+      focusNote.appendNoteLink(targetYearNote, "To")
+      focusNote.moveComment(focusNote.comments.length-1,thoughtHtmlCommentIndex+1)
+    } else {
+      if (focusNote.getCommentIndex("marginnote4app://note/" + targetYearNote.noteId) == -1) {
+        focusNote.appendNoteLink(targetYearNote, "To")
+        focusNote.moveComment(focusNote.comments.length-1,yearTextIndex + 1)
+      } else {
+        focusNote.moveComment(focusNote.getCommentIndex("marginnote4app://note/" + targetYearNote.noteId),yearTextIndex + 1)
+      }
+    }
+  
+    // 处理年份卡片
+    // focusNoteIndexInTargetYearNote = targetYearNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+    // if (focusNoteIndexInTargetYearNote == -1){
+    //   targetYearNote.appendNoteLink(focusNote, "To")
+    // }
+    // 处理年份卡片
+    let focusNoteIndexInTargetYearNote = targetYearNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+    let paperInfoIndexInTargetYearNote = targetYearNote.getIncludingCommentIndex("**论文**")
+    // let bookInfoIndexIntargetYearNote = targetYearNote.getIncludingCommentIndex("**书作**")
+    if (focusNoteIndexInTargetYearNote == -1){
+      targetYearNote.appendNoteLink(focusNote, "To")
+      if (toolbarUtils.getReferenceNoteType(focusNote) == "book") {
+        targetYearNote.moveComment(targetYearNote.comments.length-1, paperInfoIndexInTargetYearNote)
+      }
+    } else {
+      if (toolbarUtils.getReferenceNoteType(focusNote) == "book") {
+        if (focusNoteIndexInTargetYearNote > paperInfoIndexInTargetYearNote) {
+          targetYearNote.moveComment(focusNoteIndexInTargetYearNote, paperInfoIndexInTargetYearNote)
+        }
+      }
+    }
+
+    targetYearNote.refresh()
+    focusNote.refresh()
+    // 年份库的卡片按照时间重新排序
+    this.sortNoteByYear()
+  }
+
+
+  static moveLastCommentAboveComment(note, commentText){
+    let commentIndex = note.getCommentIndex(commentText, true)
+    if (commentIndex != -1) {
+      note.moveComment(
+        note.comments.length - 1,
+        commentIndex
+      )
+    }
+    return commentIndex
+  }
+
   static numberToChinese(num) {
     const chineseNumbers = '零一二三四五六七八九';
     const units = ['', '十', '百', '千', '万', '亿'];
@@ -191,6 +272,11 @@ class toolbarUtils {
             if (!findClassificationNote) {
               // 没有的话就创建一个
               classificationNote = MNNote.clone("C24C2604-4B3A-4B6F-97E6-147F3EC67143")
+              classificationNote.noteTitle = 
+                "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
+            } else {
+              // 如果找到的话就更新一下标题
+              // 因为可能会出现偶尔忘记写作者导致的 No author 
               classificationNote.noteTitle = 
                 "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
             }
@@ -413,6 +499,26 @@ class toolbarUtils {
     return this.getVolNumFromTitle(title)
   }
 
+  // 卡片按照标题的年份进行排序
+  static sortNoteByYear() {
+    let yearLibraryNote = MNNote.new("F251AFCC-AA8E-4A1C-A489-7EA4E4B58A02")
+    let indexArr = Array.from({ length: yearLibraryNote.childNotes.length }, (_, i) => i);
+    let idIndexArr = indexArr.map(index => ({
+      id: yearLibraryNote.childNotes[index].noteId,
+      year: parseInt(toolbarUtils.getFirstKeywordFromTitle(yearLibraryNote.childNotes[index].noteTitle))
+    }));
+    let sortedArr = idIndexArr.sort((a, b) => a.year - b.year)
+    // MNUtil.showHUD(sortedArr[1].year)
+
+    MNUtil.undoGrouping(()=>{
+      sortedArr.forEach(
+        (item, index) => {
+          let yearNote = MNNote.new(item.id)
+          yearLibraryNote.addChild(yearNote.note)
+        }
+      )
+    })
+  }
 
   // 链接按照 vol 的数值排序
   // startIndex 表示开始排序的评论索引
@@ -486,7 +592,31 @@ class toolbarUtils {
     }
   
     // 如果没有匹配，返回 null 或者空字符串
-    return null;
+    return "";
+  }
+
+  static getSecondKeywordFromTitle(title) {
+    // const regex = /【.*?】(.*?); (.*?)(;.*)?/;
+    const regex = /【.*】(.*?);\s*([^;]*?)(?:;|$)/;
+    const matches = title.match(regex);
+    let targetText = title
+  
+    if (matches) {
+      const firstPart = matches[1].trim(); // 提取分号前的内容
+      const secondPart = matches[2].trim(); // 提取第一个分号后的内容
+  
+      // 根据第一部分是否为空选择返回内容
+      if (firstPart !== '') {
+        targetText = targetText.replace(firstPart, "")
+        return this.getFirstKeywordFromTitle(targetText)
+      } else {
+        targetText = targetText.replace("; " + secondPart, "")
+        return this.getFirstKeywordFromTitle(targetText)
+      }
+    }
+  
+    // 如果没有匹配，返回 null 或者空字符串
+    return "";
   }
 
   static languageOfString(input) {
@@ -996,7 +1126,7 @@ class toolbarUtils {
     let parentNoteId = parentNote.noteId
     if (!focusNote.excerptText) { // 非摘录版本才开始链接
       if (parentNoteTitle !== undefined) {
-          if (focusNoteType == "outline") {
+          if (focusNoteType == "classification") {
             // 归类类型的卡片
             let parentNoteColorIndex = parentNote.note.colorIndex
             if (parentNoteColorIndex == 1) {
@@ -1192,7 +1322,7 @@ class toolbarUtils {
     let focusNoteType
     switch (focusNote.colorIndex) {
       case 0: // 淡黄色
-        focusNoteType = "outline"
+        focusNoteType = "classification"
         break;
       case 2: // 淡蓝色：定义类
         focusNoteType = "definition"
@@ -1201,7 +1331,7 @@ class toolbarUtils {
         focusNoteType = "antiexample"
         break;
       case 4: // 黄色：归类
-        focusNoteType = "outline"
+        focusNoteType = "classification"
         break;
       case 6: // 蓝色：应用
         focusNoteType = "application"
@@ -1809,11 +1939,11 @@ class toolbarUtils {
         "请输入标题并选择类型",
         2,
         "取消",
-        ["向下层增加模板", "增加概念衍生层级","向上层增加模板", "最顶层（淡绿色）", "专题"],
+        ["向下层增加模板", "增加概念衍生层级","增加兄弟层级模板","向上层增加模板", "最顶层（淡绿色）", "专题"],
         (alert, buttonIndex) => {
           let userInputTitle = alert.textFieldAtIndex(0).text;
           switch (buttonIndex) {
-            case 5:
+            case  6:
               /* 专题 */
               // 因为专题模板卡片比较多，所以增加一个确认界面
               UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
@@ -1841,7 +1971,7 @@ class toolbarUtils {
                 }
               )
               break;
-            case 4: 
+            case 5: 
             /* 增加最顶层的淡绿色模板 */
             try {
               let parentNote
@@ -1886,7 +2016,7 @@ class toolbarUtils {
               }
               
               break;
-            case 3:
+            case 4:
               try {
                 /* 向上增加模板 */
                 let parentNote = focusNote.parentNote
@@ -2089,7 +2219,22 @@ class toolbarUtils {
                 MNUtil.showHUD(error);
               }
               break;
-  
+            case 3:
+              // 增加兄弟层级模板
+              type = focusNote.noteTitle.match(/“.+”相关(.*)/)[1]
+              if (type) {
+                // MNUtil.showHUD(type);
+                templateNote = MNNote.clone(this.addTemplateAuxGetNoteIdByType(type))
+                templateNote.note.colorIndex = focusNote.note.colorIndex 
+                templateNote.note.noteTitle = "“" + focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[1] + "”：“" +  userInputTitle + "”相关" + type
+                MNUtil.undoGrouping(()=>{
+                  focusNote.parentNote.addChild(templateNote.note)
+                  focusNote.parentNote.appendNoteLink(templateNote, "Both")
+                  templateNote.moveComment(templateNote.note.comments.length-1, 1)
+                })
+                templateNote.focusInMindMap(0.5)
+              }
+              break
             case 2:
               try {
                 let targetType
@@ -2369,96 +2514,94 @@ class toolbarUtils {
     3. 去掉“- ”
   */
   
-  static renewCards(focusNotes) {
-    focusNotes.forEach(focusNote => {
-      let focusNoteComments = focusNote.note.comments
-      let focusNoteCommentLength = focusNoteComments.length
-      let comment
-      let htmlCommentsIndexArr = []
+  static renewCards(focusNote) {
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let comment
+    let htmlCommentsIndexArr = []
 
-      let layerStartIndex, layerEndIndex
-      // layerEndIndex = focusNoteCommentLength - 1 - (templateHtmlCommentEndIndex - templateHtmlCommentStartIndex)
-      // layerStartIndex = htmlCommentsIndexArr[htmlCommentsIndexArr.length - 1]
-      layerStartIndex = 0
-      layerEndIndex = focusNoteCommentLength - 1
-      // if (focusNoteColorIndex == 0 || focusNoteColorIndex == 1 || focusNoteColorIndex == 4) {
-        // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-        for (let i = layerEndIndex; i >= layerStartIndex; i--) {
-          comment = focusNoteComments[i]
-          if (
-            comment.text && 
-            (
-              comment.text.includes("零层") || 
-              comment.text.includes("一层") || 
-              comment.text.includes("两层") || 
-              comment.text.includes("三层") || 
-              comment.text.includes("四层") || 
-              comment.text.includes("五层") ||
-              comment.text.trim() == "-" ||
-              comment.text.includes("由来/背景：")
-            )
-          ) {
-            try {
-              MNUtil.undoGrouping(()=>{
-                focusNote.removeCommentByIndex(i)
-              })
-            } catch (error) {
-              MNUtil.showHUD(error);
-            }
+    let layerStartIndex, layerEndIndex
+    // layerEndIndex = focusNoteCommentLength - 1 - (templateHtmlCommentEndIndex - templateHtmlCommentStartIndex)
+    // layerStartIndex = htmlCommentsIndexArr[htmlCommentsIndexArr.length - 1]
+    layerStartIndex = 0
+    layerEndIndex = focusNoteCommentLength - 1
+    // if (focusNoteColorIndex == 0 || focusNoteColorIndex == 1 || focusNoteColorIndex == 4) {
+      // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+      for (let i = layerEndIndex; i >= layerStartIndex; i--) {
+        comment = focusNoteComments[i]
+        if (
+          comment.text && 
+          (
+            comment.text.includes("零层") || 
+            comment.text.includes("一层") || 
+            comment.text.includes("两层") || 
+            comment.text.includes("三层") || 
+            comment.text.includes("四层") || 
+            comment.text.includes("五层") ||
+            comment.text.trim() == "-" ||
+            comment.text.includes("由来/背景：")
+          )
+        ) {
+          try {
+            MNUtil.undoGrouping(()=>{
+              focusNote.removeCommentByIndex(i)
+            })
+          } catch (error) {
+            MNUtil.showHUD(error);
           }
         }
-      // }
-      
-      focusNoteComments.forEach((comment, index) => {
-        if (comment.type == "HtmlNote") {
-          htmlCommentsIndexArr.push(index)
-        }
-      })
-
-      // MNUtil.showHUD(htmlCommentsIndex);
-
-      // 重新更新 focusNoteComments 和 focusNoteCommentLength
-      focusNoteComments = focusNote.note.comments
-      focusNoteCommentLength = focusNoteComments.length
-
-      let templateHtmlCommentStartIndexI = focusNote.getCommentIndex("模版：", true)
-      let templateHtmlCommentStartIndexII = focusNote.getCommentIndex("模板：", true)
-      let templateHtmlCommentStartIndex = Math.max(templateHtmlCommentStartIndexI, templateHtmlCommentStartIndexII)
-      // let templateHtmlCommentIndex = htmlCommentsIndexArr.indexOf(templateHtmlCommentStartIndex)
-      let templateHtmlCommentEndIndex
-      // let templateHtmlCommentEndIndex = htmlCommentsIndexArr[templateHtmlCommentIndex+1]
-      let templateHtmlCommentEndIndexI = focusNote.getCommentIndex("包含：", true)
-      let templateHtmlCommentEndIndexII = Math.max(
-        focusNote.getCommentIndex("相关概念：", true),
-        focusNote.getCommentIndex("相关命题：", true),
-        focusNote.getCommentIndex("相关反例：", true),
-        focusNote.getCommentIndex("相关例子：", true),
-        focusNote.getCommentIndex("相关应用：", true),
-        focusNote.getCommentIndex("相关问题：", true),
-        focusNote.getCommentIndex("相关思想方法：", true)
-      )
-      if (templateHtmlCommentEndIndexII !== -1) {
-        templateHtmlCommentEndIndex = templateHtmlCommentEndIndexII
-      } else {
-        templateHtmlCommentEndIndex = templateHtmlCommentEndIndexI
       }
-      // MNUtil.showHUD(templateHtmlCommentStartIndex + " " + templateHtmlCommentEndIndex);
-      if (templateHtmlCommentStartIndex !== -1) {
-        for (let i = templateHtmlCommentEndIndex-1; i >= templateHtmlCommentStartIndex; i--) {
-          focusNote.removeCommentByIndex(i)
-        }
+    // }
+    
+    focusNoteComments.forEach((comment, index) => {
+      if (comment.type == "HtmlNote") {
+        htmlCommentsIndexArr.push(index)
       }
-
-      try {
-        MNUtil.undoGrouping(()=>{
-          this.makeCardsAuxMoveDownApplicationsComments(focusNote)
-          this.makeCardsAuxMoveDownDefinitionsComments(focusNote)
-        })
-      } catch (error) {
-        MNUtil.showHUD(error);
-      }
-      focusNote.refresh()
     })
+
+    // MNUtil.showHUD(htmlCommentsIndex);
+
+    // 重新更新 focusNoteComments 和 focusNoteCommentLength
+    focusNoteComments = focusNote.note.comments
+    focusNoteCommentLength = focusNoteComments.length
+
+    let templateHtmlCommentStartIndexI = focusNote.getCommentIndex("模版：", true)
+    let templateHtmlCommentStartIndexII = focusNote.getCommentIndex("模板：", true)
+    let templateHtmlCommentStartIndex = Math.max(templateHtmlCommentStartIndexI, templateHtmlCommentStartIndexII)
+    // let templateHtmlCommentIndex = htmlCommentsIndexArr.indexOf(templateHtmlCommentStartIndex)
+    let templateHtmlCommentEndIndex
+    // let templateHtmlCommentEndIndex = htmlCommentsIndexArr[templateHtmlCommentIndex+1]
+    let templateHtmlCommentEndIndexI = focusNote.getCommentIndex("包含：", true)
+    let templateHtmlCommentEndIndexII = Math.max(
+      focusNote.getCommentIndex("相关概念：", true),
+      focusNote.getCommentIndex("相关命题：", true),
+      focusNote.getCommentIndex("相关反例：", true),
+      focusNote.getCommentIndex("相关例子：", true),
+      focusNote.getCommentIndex("相关应用：", true),
+      focusNote.getCommentIndex("相关问题：", true),
+      focusNote.getCommentIndex("相关思想方法：", true)
+    )
+    if (templateHtmlCommentEndIndexII !== -1) {
+      templateHtmlCommentEndIndex = templateHtmlCommentEndIndexII
+    } else {
+      templateHtmlCommentEndIndex = templateHtmlCommentEndIndexI
+    }
+    // MNUtil.showHUD(templateHtmlCommentStartIndex + " " + templateHtmlCommentEndIndex);
+    if (templateHtmlCommentStartIndex !== -1) {
+      for (let i = templateHtmlCommentEndIndex-1; i >= templateHtmlCommentStartIndex; i--) {
+        focusNote.removeCommentByIndex(i)
+      }
+    }
+
+    try {
+      MNUtil.undoGrouping(()=>{
+        this.makeCardsAuxMoveDownApplicationsComments(focusNote)
+        this.makeCardsAuxMoveDownDefinitionsComments(focusNote)
+      })
+    } catch (error) {
+      MNUtil.showHUD(error);
+    }
+    focusNote.refresh()
   }
 
   static changePrefix(focusNote) {
@@ -2838,6 +2981,19 @@ class toolbarUtils {
       f
     )
     this.app.refreshAfterDBChanged(notebookId)
+  }
+  static async checkMNUtil(alert = false,delay = 0.01){
+    if (typeof MNUtil === 'undefined') {//如果MNUtil未被加载，则执行一次延时，然后再检测一次
+      //仅在MNUtil未被完全加载时执行delay
+      await toolbarUtils.delay(delay)
+      if (typeof MNUtil === 'undefined') {
+        if (alert) {
+          toolbarUtils.showHUD("MN ChatAI: Please install 'MN Utils' first!",5)
+        }
+        return false
+      }
+    }
+    return true
   }
   /**
    * 
@@ -3376,6 +3532,28 @@ class toolbarUtils {
       }
     }
   
+  }
+  static async chatAI(){
+    let des = toolbarConfig.getDescriptionByName("chatglm")
+    if (!des || !Object.keys(des).length) {
+      MNUtil.postNotification("customChat",{})
+      return
+    }
+    if (des.prompt) {
+      MNUtil.postNotification("customChat",{prompt:des.prompt})
+      return
+    }
+    if(des.user){
+      let question = {user:des.user}
+      if (des.system) {
+        question.system = des.system
+      }
+      MNUtil.postNotification("customChat",question)
+      // MNUtil.showHUD("Not supported yet...")
+      return;
+    }
+    MNUtil.postNotification("customChat",{})
+    // MNUtil.showHUD("No valid argument!")
   }
   static async ocr(){
     if (typeof ocrUtils === 'undefined') {
@@ -4259,7 +4437,8 @@ class toolbarConfig {
     sideMode:"",//固定工具栏下贴边模式
     splitMode:false,//固定工具栏下是否跟随分割线
     open:false,//固定工具栏是否默认常驻
-    dynamicButton:9//跟随模式下的工具栏显示的按钮数量
+    dynamicButton:9,//跟随模式下的工具栏显示的按钮数量,
+    frame:{x:0,y:0,width:40,height:415}
   }
   static imageConfigs = {}
   // static defaultConfig = {showEditorWhenEditingNote:false}
@@ -4469,13 +4648,9 @@ static template(action) {
             //   "menuTitle": "🔽 "
             // },
             {
-              "action": "renewLinksBetweenDefNoteAndExtensionNote",
-              "menuTitle": "更新1️⃣次「概念卡片」与「衍生知识归类卡片」之间的🔗"
+              "action": "renewLinksBetweenClassificationNoteAndExtensionNote",
+              "menuTitle": "更新1️⃣次「归类卡片」与「概念or归类卡片」之间的🔗"
             },
-            // {
-            //   "action": "",
-            //   "menuTitle": ""
-            // }
           ]
         },
         {
@@ -4553,10 +4728,10 @@ static template(action) {
         //   "action": "renewBookSeriesNotes",
         //   "menuTitle": "书作系列卡片更新",
         // },
-        // {
-        //   "action": "renewBookNotes",
-        //   "menuTitle": "书作卡片更新",
-        // },
+        {
+          "action": "renewBookNotes",
+          "menuTitle": "书作卡片更新",
+        },
         {
           "action": "menu",
           "menuTitle": "➡️ 🧠文献学习",
@@ -4725,6 +4900,10 @@ static template(action) {
             {
               "action": "referenceInfoAuthor",
               "menuTitle": "👨‍🎓 作者"
+            },
+            {
+              "action": "referenceInfoYear",
+              "menuTitle": "⌛️ 年份",
             },
             {
               "action": "referenceInfoJournal",
@@ -5087,7 +5266,7 @@ static checkCouldSave(actionName){
   if (actionName.includes("color")) {
     return true
   }
-  let whiteNamelist = ["ocr","edit","execute","searchInEudic"]
+  let whiteNamelist = ["chatglm","ocr","edit","execute","searchInEudic"]
   if (whiteNamelist.includes(actionName)) {
     return true
   }

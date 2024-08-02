@@ -16,9 +16,11 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.currentFrame = self.view.frame
     self.maxButtonNumber = 20
     self.buttonNumber = 15
+      // MNUtil.copy("refreshHeight: "+self.buttonNumber)
     if (self.dynamicWindow) {
       // self.maxButtonNumber = 9
       self.buttonNumber = toolbarConfig.getWindowState("dynamicButton");
+      // MNUtil.copy("refreshHeight: "+self.buttonNumber)
     }else{
       let lastFrame = toolbarConfig.getWindowState("frame")
       if (lastFrame) {
@@ -145,6 +147,9 @@ viewWillLayoutSubviews: function() {
   },
   changeScreen: function(sender) {
     let clickDate = Date.now()
+    if (self.dynamicWindow) {
+      return
+    }
     self.checkPopoverController()
     // if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
     var commandTable = [
@@ -483,12 +488,13 @@ try {
     }
   },
   chatglm: function () {
-    self.onClick = true
-    // let focusNote = MNNote.getFocusNote()
-    MNUtil.postNotification("customChat",{})
-    if (self.dynamicWindow) {
-      self.hideAfterDelay()
-    }
+    toolbarUtils.chatAI()
+    // self.onClick = true
+    // // let focusNote = MNNote.getFocusNote()
+    // MNUtil.postNotification("customChat",{})
+    // if (self.dynamicWindow) {
+    //   self.hideAfterDelay()
+    // }
   },
   search: function () {
     self.onClick = true
@@ -666,14 +672,13 @@ try {
     }else{
       self.splitMode = false
     }
-    if (self.custom) {
-      self.customMode = "None"
-      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(self.lastFrame.height,self.maxButtonNumber)}
-      self.currentFrame  = self.view.frame
-    }else{
-      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(frame.height,self.maxButtonNumber)}
-      self.currentFrame  = self.view.frame
+    // MNUtil.showHUD(studyFrame.height+"message"+(y+self.lastFrame.height))
+    frame.height = 45*self.buttonNumber+15
+    if ((y+frame.height) > studyFrame.height) {
+      frame.height = studyFrame.height - y
     }
+    self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(frame.height,self.maxButtonNumber)}
+    self.currentFrame  = self.view.frame
     if (gesture.state === 3) {
       // self.resi
       MNUtil.studyView.bringSubviewToFront(self.view)
@@ -704,18 +709,21 @@ try {
     self.view.frame = {x:frame.x,y:frame.y,width:40,height:height}
     self.currentFrame  = self.view.frame
     if (gesture.state === 3) {
-      let buttomNumber = Math.floor(height/45)
-      // MNUtil.showHUD("message"+buttomNumbers)
-      self.view.bringSubviewToFront(self.screenButton)
-      let windowState = toolbarConfig.windowState
-      if (self.dynamicWindow) {
-        windowState.dynamicButton = buttomNumber
-        // toolbarConfig.save("MNToolbar_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
-      }else{
-        windowState.frame = self.view.frame
-        windowState.open = true
+      let buttonNumber = Math.floor(height/45)
+      //当用户拖拽距离过短时，不触发配置存储
+      if (self.buttonNumber !== buttonNumber) {
+        self.buttonNumber = buttonNumber
+        self.view.bringSubviewToFront(self.screenButton)
+        let windowState = toolbarConfig.windowState
+        if (self.dynamicWindow) {
+          windowState.dynamicButton = buttonNumber
+          // toolbarConfig.save("MNToolbar_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
+        }else{
+          windowState.frame = self.view.frame
+          windowState.open = true
+        }
+        toolbarConfig.save("MNToolbar_windowState",windowState)
       }
-      toolbarConfig.save("MNToolbar_windowState",windowState)
       self.onResize = false
     }
   },
@@ -948,6 +956,9 @@ try {
  * @this {toolbarController}
  */
 toolbarController.prototype.refreshHeight = function () {
+  try {
+    
+
   let lastFrame = this.view.frame
   let currentHeight = lastFrame.height
   if (currentHeight > 420 && !toolbarUtils.isSubscribed(false)) {
@@ -956,12 +967,22 @@ toolbarController.prototype.refreshHeight = function () {
     return
   }
   let height = 45*this.buttonNumber+15
-  // if (lastFrame.height > height) {
+  // MNUtil.copyJSON(lastFrame)
+  if (lastFrame.y+lastFrame.height > MNUtil.studyView.frame.height) {
+
+  // MNUtil.showHUD("message")
+    let remainHeight = MNUtil.studyView.frame.height - lastFrame.y
+    let remainButton = Math.floor(remainHeight/45)
+    lastFrame.height = 45*(remainButton)+15
+  }else{
     lastFrame.height = height
-  // }
+  }
   this.view.frame = lastFrame
   this.currentFrame = lastFrame
   // showHUD("number:"+height)
+  } catch (error) {
+    toolbarUtils.addErrorLog(error, "refreshHeight")
+  }
 }
 
 toolbarController.prototype.setToolbarLayout = function () {
@@ -1099,7 +1120,9 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
       case "renewCards":
         try {
           MNUtil.undoGrouping(()=>{
-            toolbarUtils.renewCards(focusNotes)
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.renewCards(focusNote)
+            })
           })
         } catch (error) {
           MNUtil.showHUD(error);
@@ -1150,16 +1173,30 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
         try {
           // MNUtil.showHUD("制卡")
           MNUtil.undoGrouping(()=>{
-            focusNotes.forEach(focusNote=>{
+            // focusNotes.forEach(focusNote=>{
+            for (let i = 0; i < focusNotes.length; i++) {
+              focusNote = focusNotes[i]
               /* 初始化 */
               let ifParentNoteChosen = false
 
-              toolbarUtils.renewCards([focusNote])
+              toolbarUtils.renewCards(focusNote)
+
+              /* 先将卡变成非摘录版本 */
+              // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
+              if (focusNote.excerptText) {
+                toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+                // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就失焦了（因为被合并到其它卡片了）
+                // 所以下面的代码不会执行，这就产生了一个效果：
+                // 点击第一次：将摘录版本变成非摘录版本
+                // 点击第二次：开始制卡
+                // 误打误撞产生最佳效果了属于是
+                break
+              }
 
               /* 确定卡片类型 */
               switch (focusNoteColorIndex) {
                 case 0: // 淡黄色
-                  focusNoteType = "outline"
+                  focusNoteType = "classification"
                   break;
                 case 2: // 淡蓝色：定义类
                   focusNoteType = "definition"
@@ -1167,14 +1204,20 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                 case 3: // 淡粉色：反例
                   focusNoteType = "antiexample"
                   break;
-                case 4: // 黄色
-                  focusNoteType = "outline"
+                case 4: // 黄色：归类
+                  focusNoteType = "classification"
+                  break;
+                case 6: // 蓝色：应用
+                  focusNoteType = "application"
                   break;
                 case 9: // 深绿色：思想方法
                   focusNoteType = "method"
                   break;
                 case 10: // 深蓝色：定理命题
                   focusNoteType = "theorem"
+                  break;
+                case 13: // 淡灰色：问题
+                  focusNoteType = "question"
                   break;
                 case 15: // 淡紫色：例子
                   focusNoteType = "example"
@@ -1183,22 +1226,10 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
 
               /* 预处理 */
               /* 只对淡蓝色、淡粉色、深绿色、深蓝色、淡紫色的卡片进行制卡 */
-              if ([0, 2, 3, 4, 9, 10, 15].includes(focusNoteColorIndex)) {
-                /* 先将卡变成非摘录版本 */
-                // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
-                if (focusNote.excerptText) {
-                  toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
-                  // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就失焦了（因为被合并到其它卡片了）
-                  // 所以下面的代码不会执行，这就产生了一个效果：
-                  // 点击第一次：将摘录版本变成非摘录版本
-                  // 点击第二次：开始制卡
-                  // 误打误撞产生最佳效果了属于是
-                } else {
-                  // 非摘录的话就添加到复习卡组
-                  if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
-                    MNUtil.excuteCommand("AddToReview")
-                  }
-                }
+              if (
+                [0, 2, 3, 4, 6, 9, 10, 13, 15].includes(focusNoteColorIndex) &&
+                !focusNote.noteTitle.startsWith("【文献")  // 防止文献卡片被制卡
+              ) {
 
                 /* 检测父卡片的存在和颜色 */
                 parentNote = focusNote.parentNote
@@ -1217,9 +1248,51 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                   }
                 }
               } else {
-                MNUtil.showHUD("不支持对此颜色的卡片进行制卡！")
+                MNUtil.showHUD("此卡片不支持制卡！")
                 return // 使用 return 来提前结束函数, 避免了在内部函数中使用 break 导致的语法错误。
               }
+
+              let parentNoteType = toolbarUtils.getClassificationNoteTypeByTitle(parentNote.noteTitle)
+              if (
+                [2,3,6,9,10,13,15].includes(focusNoteColorIndex) ||
+                !focusNote.noteTitle.match(/“.*”相关.*/)
+              ) {
+                switch (parentNoteType) {
+                  case "定义":
+                    focusNoteType = "definition"
+                    focusNote.note.colorIndex = 2
+                    break
+                  case "命题":
+                    focusNoteType = "theorem"
+                    focusNote.note.colorIndex = 10
+                    break
+                  case "反例":
+                    focusNoteType = "antiexample"
+                    focusNote.note.colorIndex = 3
+                    break
+                  case "例子":
+                    focusNoteType = "example"
+                    focusNote.note.colorIndex = 15
+                    break
+                  case "思想方法":
+                    focusNoteType = "method"
+                    focusNote.note.colorIndex = 9
+                    break
+                  case "问题":
+                    focusNoteType = "question"
+                    focusNote.note.colorIndex = 13
+                    break
+                  case "应用":
+                    focusNoteType = "application"
+                    focusNote.note.colorIndex = 6
+                    break
+                }
+              }
+              
+              if ([2, 3, 6, 9, 10, 13, 15].includes(focusNote.note.colorIndex)) {
+                MNUtil.excuteCommand("AddToReview")
+              }
+
               /* 开始制卡 */
               /* 合并第一层模板 */
               toolbarUtils.makeCardsAuxFirstLayerTemplate(focusNote, focusNoteType)
@@ -1245,7 +1318,7 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                 - 反例类型的是“反例及证明：”
                 - 思想方法类型的是“原理：”
               */
-              if (focusNoteType !== "definition" && focusNoteType !== "outline") {
+              if (focusNoteType !== "definition" && focusNoteType !== "classification") {
                 try {
                   toolbarUtils.makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType)
                 } catch (error) {
@@ -1262,7 +1335,7 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                   MNUtil.showHUD(error);
                 }
               }
-            })
+            }
           })
         } catch (error) {
           MNUtil.showHUD(error)
@@ -1881,60 +1954,171 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           MNUtil.showHUD(error);
         }
         break
-      case "renewLinksBetweenDefNoteAndExtensionNote":
+      case "renewLinksBetweenClassificationNoteAndExtensionNote":
         try {
           MNUtil.undoGrouping(()=>{
-            if (focusNoteColorIndex == 2) {
-              // 如果选择的是概念类型卡片
-              let targetNoteId = MNUtil.getNoteIdByURL(focusNote.comments[focusNote.comments.length - 1].text)
-
-              // 处理衍生卡片
-              let targetNote = MNNote.new(targetNoteId)
-              let targetNoteType = toolbarUtils.getClassificationNoteTypeByTitle(targetNote.noteTitle)
-              let relatedHtmlCommentIndex = targetNote.getCommentIndex("相关"+targetNoteType+"：",true)
-              let includingHtmlCommentIndex = targetNote.getCommentIndex("包含：",true)
-              let targetNoteTargetIndex = (relatedHtmlCommentIndex==-1)? includingHtmlCommentIndex: relatedHtmlCommentIndex
-              targetNote.moveComment(
-                targetNote.comments.length-1,
-                targetNoteTargetIndex
-              )
-
-              // 处理概念卡片
-              let definitionHtmlCommentIndex = focusNote.getCommentIndex("相关概念：",true)
-              focusNote.moveComment(
-                focusNote.comments.length-1,
-                definitionHtmlCommentIndex
-              )
+            let targetNoteId = MNUtil.getNoteIdByURL(focusNote.comments[focusNote.comments.length - 1].text)
+            let targetNote = MNNote.new(targetNoteId)
+            let targetNoteColorIndex = targetNote.note.colorIndex
+            let targetNoteType
+            let targetClassificationNoteType = toolbarUtils.getClassificationNoteTypeByTitle(targetNote.noteTitle)
+            let focusClassificationNoteType = toolbarUtils.getClassificationNoteTypeByTitle(focusNote.noteTitle)
+            let targetCommentIndex
+            if ([0,1,4].includes(targetNoteColorIndex)) {
+              targetNoteType = "classification"
             } else {
-              if (
-                focusNoteColorIndex == 0 ||
-                focusNoteColorIndex == 1 ||
-                focusNoteColorIndex == 4
-              ) {
-                // 选择的是归类型卡片
-                let targetNoteId = MNUtil.getNoteIdByURL(focusNote.comments[focusNote.comments.length - 1].text)
-
-                // 处理概念卡片
-                let targetNote = MNNote.new(targetNoteId)
-                let definitionHtmlCommentIndex = targetNote.getCommentIndex("相关概念：",true)
-                targetNote.moveComment(
-                  targetNote.comments.length-1,
-                  definitionHtmlCommentIndex
-                )
-
-
-                // 处理衍生卡片
-                let focusNoteType = toolbarUtils.getClassificationNoteTypeByTitle(focusNote.noteTitle)
-                let relatedHtmlCommentIndex = focusNote.getCommentIndex("相关"+focusNoteType+"：",true)
-                let includingHtmlCommentIndex = focusNote.getCommentIndex("包含：",true)
-                let focusNoteTargetIndex = (relatedHtmlCommentIndex==-1)? includingHtmlCommentIndex: relatedHtmlCommentIndex
-                focusNote.moveComment(
-                  focusNote.comments.length-1,
-                  focusNoteTargetIndex
-                )
-
+              switch (targetNoteColorIndex) {
+                case 2: // 淡蓝色：定义类
+                  targetNoteType = "definition"
+                  break;
+                case 3: // 淡粉色：反例
+                  targetNoteType = "antiexample"
+                  break;
+                case 6: // 蓝色：应用
+                  targetNoteType = "application"
+                  break;
+                case 9: // 深绿色：思想方法
+                  targetNoteType = "method"
+                  break;
+                case 10: // 深蓝色：定理命题
+                  targetNoteType = "theorem"
+                  break;
+                case 13: // 淡灰色：问题
+                  targetNoteType = "question"
+                  break;
+                case 15: // 淡紫色：例子
+                  targetNoteType = "example"
+                  break;
               }
             }
+
+            let focusNoteType
+            switch (focusNoteColorIndex) {
+              case 0: // 淡黄色：归类
+                focusNoteType = "classification"
+                break;
+              case 1: // 淡绿色：归类
+                focusNoteType = "classification"
+                break;
+              case 2: // 淡蓝色：定义类
+                focusNoteType = "definition"
+                break;
+              case 3: // 淡粉色：反例
+                focusNoteType = "antiexample"
+                break;
+              case 4: // 黄色：归类
+                focusNoteType = "classification"
+                break;
+              case 6: // 蓝色：应用
+                focusNoteType = "application"
+                break;
+              case 9: // 深绿色：思想方法
+                focusNoteType = "method"
+                break;
+              case 10: // 深蓝色：定理命题
+                focusNoteType = "theorem"
+                break;
+              case 13: // 淡灰色：问题
+                focusNoteType = "question"
+                break;
+              case 15: // 淡紫色：例子
+                focusNoteType = "example"
+                break;
+            }
+
+            switch (focusNoteType) {
+              case "definition":
+                // 概念卡片只会和归类卡片链接
+                targetCommentIndex = toolbarUtils.moveLastCommentAboveComment(targetNote, "相关"+targetClassificationNoteType+"：" )
+                if (targetCommentIndex == -1) {
+                  toolbarUtils.moveLastCommentAboveComment(
+                    targetNote,
+                    "包含："
+                  )
+                }
+
+                toolbarUtils.moveLastCommentAboveComment(focusNote, "相关概念：")
+                break;
+              case "classification":
+                switch (targetNoteType) {
+                  case "definition":
+                    // 淡绿色只会和概念卡片链接
+                    targetCommentIndex = toolbarUtils.moveLastCommentAboveComment(focusNote, "相关"+focusClassificationNoteType+"：" )
+                    if (targetCommentIndex == -1) {
+                      toolbarUtils.moveLastCommentAboveComment(
+                        focusNote,
+                        "包含："
+                      )
+                    }
+    
+                    toolbarUtils.moveLastCommentAboveComment(targetNote, "相关概念：")
+                    break;
+                  case "classification":
+                    // 此时黄色只能和黄色卡片链接，因为黄色和绿色只有一种链接
+                    // 此时就是移动到“相关xxx”下方
+                    toolbarUtils.moveLastCommentAboveComment(focusNote, "包含：" )
+                    toolbarUtils.moveLastCommentAboveComment(targetNote, "包含：" )
+                    break;
+                  default:
+                    // 其余的知识卡片都只移动知识卡片的链接
+                    toolbarUtils.moveLastCommentAboveComment(targetNote, "应用：" )
+                    break;
+                }
+                break;
+              default:
+                // 知识卡片只与归类卡片链接
+                toolbarUtils.moveLastCommentAboveComment(focusNote, "应用：" )
+                break;
+            }
+
+            // if (focusNoteColorIndex == 2) {
+            //   // 如果选择的是概念类型卡片
+              
+            //   let targetNoteType = toolbarUtils.getClassificationNoteTypeByTitle(targetNote.noteTitle)
+            //   let relatedHtmlCommentIndex = targetNote.getCommentIndex("相关"+targetNoteType+"：",true)
+            //   let includingHtmlCommentIndex = targetNote.getCommentIndex("包含：",true)
+            //   let targetNoteTargetIndex = (relatedHtmlCommentIndex==-1)? includingHtmlCommentIndex: relatedHtmlCommentIndex
+            //   targetNote.moveComment(
+            //     targetNote.comments.length-1,
+            //     targetNoteTargetIndex
+            //   )
+
+            //   // 处理概念卡片
+            //   let definitionHtmlCommentIndex = focusNote.getCommentIndex("相关概念：",true)
+            //   focusNote.moveComment(
+            //     focusNote.comments.length-1,
+            //     definitionHtmlCommentIndex
+            //   )
+            // } else {
+            //   if (
+            //     focusNoteColorIndex == 0 ||
+            //     focusNoteColorIndex == 1 ||
+            //     focusNoteColorIndex == 4
+            //   ) {
+            //     // 选择的是归类型卡片
+            //     let targetNoteId = MNUtil.getNoteIdByURL(focusNote.comments[focusNote.comments.length - 1].text)
+
+            //     // 处理概念卡片
+            //     let targetNote = MNNote.new(targetNoteId)
+            //     let definitionHtmlCommentIndex = targetNote.getCommentIndex("相关概念：",true)
+            //     targetNote.moveComment(
+            //       targetNote.comments.length-1,
+            //       definitionHtmlCommentIndex
+            //     )
+
+
+            //     // 处理衍生卡片
+            //     let focusNoteType = toolbarUtils.getClassificationNoteTypeByTitle(focusNote.noteTitle)
+            //     let relatedHtmlCommentIndex = focusNote.getCommentIndex("相关"+focusNoteType+"：",true)
+            //     let includingHtmlCommentIndex = focusNote.getCommentIndex("包含：",true)
+            //     let focusNoteTargetIndex = (relatedHtmlCommentIndex==-1)? includingHtmlCommentIndex: relatedHtmlCommentIndex
+            //     focusNote.moveComment(
+            //       focusNote.comments.length-1,
+            //       focusNoteTargetIndex
+            //     )
+
+            //   }
+            // }
           })
         } catch (error) {
           MNUtil.showHUD(error);
@@ -2054,6 +2238,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                           classificationNote = MNNote.clone("C24C2604-4B3A-4B6F-97E6-147F3EC67143")
                           classificationNote.noteTitle = 
                             "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
+                        } else {
+                          // 如果找到的话就更新一下标题
+                          // 因为可能会出现偶尔忘记写作者导致的 No author 
+                          classificationNote.noteTitle = 
+                            "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
                         }
                         refedNote.addChild(classificationNote.note)
                         // 移动链接到“引用：”
@@ -2149,6 +2338,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                         if (!findClassificationNote) {
                           // 没有的话就创建一个
                           classificationNote = MNNote.clone("C24C2604-4B3A-4B6F-97E6-147F3EC67143")
+                          classificationNote.noteTitle = 
+                            "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
+                        } else {
+                          // 如果找到的话就更新一下标题
+                          // 因为可能会出现偶尔忘记写作者导致的 No author 
                           classificationNote.noteTitle = 
                             "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
                         }
@@ -2767,20 +2961,14 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "renewBookNotes":
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{
-            let htmlCommentsIndexArr = []
-            focusNote.comments.forEach(
-              (comment, index) => {
-                if (
-                  comment.type == "HtmlNote"
-                ) {
-                  htmlCommentsIndexArr.push(index)
-                }
-              }
-            )
-            for (let i = focusNote.comments.length-1; i >= htmlCommentsIndexArr[0]; i--) {
-              focusNote.removeCommentByIndex(i)
+            let title = focusNote.noteTitle
+            let yearMatch = toolbarUtils.isFourDigitNumber(toolbarUtils.getFirstKeywordFromTitle(title))
+            if (yearMatch) {
+              // MNUtil.showHUD(toolbarUtils.getFirstKeywordFromTitle(title))
+              let year = toolbarUtils.getFirstKeywordFromTitle(title)
+              toolbarUtils.referenceYear(focusNote, year)
+              focusNote.noteTitle = title.replace("; "+year, "")
             }
-            cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
           })
         })
         break;
@@ -3095,6 +3283,27 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           }
         )
         break;
+      case "referenceInfoYear":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "增加年份",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                year = alert.textFieldAtIndex(0).text;
+                if (buttonIndex === 1) {
+                  toolbarUtils.referenceInfoYear(focusNote, year)
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
       case "referenceKeywordsAddRelatedKeywords":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "增加相关关键词",
@@ -3109,7 +3318,6 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 let keywordArr = toolbarUtils.splitStringByFourSeparators(userInput)
                 let findKeyword = false
                 let targetKeywordNote
-                let relatedReferenceHtmlCommentIndex = focusNote.getCommentIndex("相关文献：", true)
                 let focusNoteIndexInTargetKeywordNote
                 if (buttonIndex === 1) {
                   let keywordLibraryNote = MNNote.new("3BA9E467-9443-4E5B-983A-CDC3F14D51DA")
@@ -3897,7 +4105,9 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "renewCards":
         try {
           MNUtil.undoGrouping(()=>{
-            toolbarUtils.renewCards(focusNotes)
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.renewCards(focusNote)
+            })
           })
         } catch (error) {
           MNUtil.showHUD(error);
@@ -3985,16 +4195,30 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         try {
           // MNUtil.showHUD("制卡")
           MNUtil.undoGrouping(()=>{
-            focusNotes.forEach(focusNote=>{
+            // focusNotes.forEach(focusNote=>{
+            for (let i = 0; i < focusNotes.length; i++) {
+              focusNote = focusNotes[i]
               /* 初始化 */
               let ifParentNoteChosen = false
 
-              toolbarUtils.renewCards([focusNote])
+              toolbarUtils.renewCards(focusNote)
+
+              /* 先将卡变成非摘录版本 */
+              // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
+              if (focusNote.excerptText) {
+                toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+                // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就失焦了（因为被合并到其它卡片了）
+                // 所以下面的代码不会执行，这就产生了一个效果：
+                // 点击第一次：将摘录版本变成非摘录版本
+                // 点击第二次：开始制卡
+                // 误打误撞产生最佳效果了属于是
+                break
+              }
 
               /* 确定卡片类型 */
               switch (focusNoteColorIndex) {
                 case 0: // 淡黄色
-                  focusNoteType = "outline"
+                  focusNoteType = "classification"
                   break;
                 case 2: // 淡蓝色：定义类
                   focusNoteType = "definition"
@@ -4003,7 +4227,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                   focusNoteType = "antiexample"
                   break;
                 case 4: // 黄色：归类
-                  focusNoteType = "outline"
+                  focusNoteType = "classification"
                   break;
                 case 6: // 蓝色：应用
                   focusNoteType = "application"
@@ -4028,21 +4252,6 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 [0, 2, 3, 4, 6, 9, 10, 13, 15].includes(focusNoteColorIndex) &&
                 !focusNote.noteTitle.startsWith("【文献")  // 防止文献卡片被制卡
               ) {
-                /* 先将卡变成非摘录版本 */
-                // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
-                if (focusNote.excerptText) {
-                  toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
-                  // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就失焦了（因为被合并到其它卡片了）
-                  // 所以下面的代码不会执行，这就产生了一个效果：
-                  // 点击第一次：将摘录版本变成非摘录版本
-                  // 点击第二次：开始制卡
-                  // 误打误撞产生最佳效果了属于是
-                } else {
-                  // 非摘录的话就添加到复习卡组
-                  if ([2, 3, 9, 10, 15].includes(focusNoteColorIndex)) {
-                    MNUtil.excuteCommand("AddToReview")
-                  }
-                }
 
                 /* 检测父卡片的存在和颜色 */
                 parentNote = focusNote.parentNote
@@ -4066,35 +4275,44 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
               }
 
               let parentNoteType = toolbarUtils.getClassificationNoteTypeByTitle(parentNote.noteTitle)
-              switch (parentNoteType) {
-                case "定义":
-                  focusNoteType = "definition"
-                  focusNote.note.colorIndex = 2
-                  break
-                case "命题":
-                  focusNoteType = "theorem"
-                  focusNote.note.colorIndex = 10
-                  break
-                case "反例":
-                  focusNoteType = "antiexample"
-                  focusNote.note.colorIndex = 3
-                  break
-                case "例子":
-                  focusNoteType = "example"
-                  focusNote.note.colorIndex = 15
-                  break
-                case "思想方法":
-                  focusNoteType = "method"
-                  focusNote.note.colorIndex = 9
-                  break
-                case "问题":
-                  focusNoteType = "question"
-                  focusNote.note.colorIndex = 13
-                  break
-                case "应用":
-                  focusNoteType = "application"
-                  focusNote.note.colorIndex = 6
-                  break
+              if (
+                [2,3,6,9,10,13,15].includes(focusNoteColorIndex) ||
+                !focusNote.noteTitle.match(/“.*”相关.*/)
+              ) {
+                switch (parentNoteType) {
+                  case "定义":
+                    focusNoteType = "definition"
+                    focusNote.note.colorIndex = 2
+                    break
+                  case "命题":
+                    focusNoteType = "theorem"
+                    focusNote.note.colorIndex = 10
+                    break
+                  case "反例":
+                    focusNoteType = "antiexample"
+                    focusNote.note.colorIndex = 3
+                    break
+                  case "例子":
+                    focusNoteType = "example"
+                    focusNote.note.colorIndex = 15
+                    break
+                  case "思想方法":
+                    focusNoteType = "method"
+                    focusNote.note.colorIndex = 9
+                    break
+                  case "问题":
+                    focusNoteType = "question"
+                    focusNote.note.colorIndex = 13
+                    break
+                  case "应用":
+                    focusNoteType = "application"
+                    focusNote.note.colorIndex = 6
+                    break
+                }
+              }
+              
+              if ([2, 3, 6, 9, 10, 13, 15].includes(focusNote.note.colorIndex)) {
+                MNUtil.excuteCommand("AddToReview")
               }
 
               /* 开始制卡 */
@@ -4122,7 +4340,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 - 反例类型的是“反例及证明：”
                 - 思想方法类型的是“原理：”
               */
-              if (focusNoteType !== "definition" && focusNoteType !== "outline") {
+              if (focusNoteType !== "definition" && focusNoteType !== "classification") {
                 try {
                   toolbarUtils.makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType)
                 } catch (error) {
@@ -4139,7 +4357,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                   MNUtil.showHUD(error);
                 }
               }
-            })
+            }
           })
         } catch (error) {
           MNUtil.showHUD(error)
@@ -4491,20 +4709,21 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         }
         break;
       case "chatAI":
-        if (des.prompt) {
-          MNUtil.postNotification("customChat",{prompt:des.prompt})
-          break;
-        }
-        if(des.user){
-          let question = {user:des.user}
-          if (des.system) {
-            question.system = des.system
-          }
-          MNUtil.postNotification("customChat",question)
-          // MNUtil.showHUD("Not supported yet...")
-          break;
-        }
-        MNUtil.showHUD("No valid argument!")
+        toolbarUtils.chatAI()
+        // if (des.prompt) {
+        //   MNUtil.postNotification("customChat",{prompt:des.prompt})
+        //   break;
+        // }
+        // if(des.user){
+        //   let question = {user:des.user}
+        //   if (des.system) {
+        //     question.system = des.system
+        //   }
+        //   MNUtil.postNotification("customChat",question)
+        //   // MNUtil.showHUD("Not supported yet...")
+        //   break;
+        // }
+        // MNUtil.showHUD("No valid argument!")
         break
       case "addImageComment":
         let source = des.source ?? "photo"
