@@ -4728,10 +4728,10 @@ static template(action) {
         //   "action": "renewBookSeriesNotes",
         //   "menuTitle": "书作系列卡片更新",
         // },
-        {
-          "action": "renewBookNotes",
-          "menuTitle": "书作卡片更新",
-        },
+        // {
+        //   "action": "renewBookNotes",
+        //   "menuTitle": "书作卡片更新",
+        // },
         {
           "action": "menu",
           "menuTitle": "➡️ 🧠文献学习",
@@ -5009,6 +5009,25 @@ static template(action) {
         },
       ]
       break;
+    case "menu_text":
+      config.action = "menu"
+      config.menuItems = [
+        {
+          "action": "menu",
+          "menuTitle": "→ 文档中选中的文本",
+          "menuItems": [
+            {
+              "action": "titleCase",
+              "menuTitle": "titleCase"
+            },
+            // {
+            //   "action": "",
+            //   "menuTitle": ""
+            // }
+          ]
+        },
+      ]
+      break;
     case "menu_card":
       config.action = "menu"
       config.menuItems = [
@@ -5147,12 +5166,11 @@ static getActions() {
     "custom1":{name:"制卡",image:"makeCards",description: this.template("makeCards")},
     "custom2":{name:"学习",image:"study",description: this.template("menu_study")},
     "custom3":{name:"增加模板",image:"addTemplate",description: this.template("addTemplate")},
-    "custom4":{name:"卡片",image:"card",description: this.template("menu_card")},
-    // "custom4":{name:"修改子卡片前缀",image:"changePrefix",description: this.template("changePrefix")},
-    "custom5":{name:"文献",image:"reference",description: this.template("menu_reference")},
-    // "custom6":{name:"标题",image:"title",description: this.template("menu_title")},
-    "custom6":{name:"隐藏插件栏",image:"hideAddonBar",description: this.template("hideAddonBar")},
-    "custom7":{name:"测试",image:"test",description: this.template("test")},
+    "custom4":{name:"文献",image:"reference",description: this.template("menu_reference")},
+    "custom5":{name:"卡片",image:"card",description: this.template("menu_card")},
+    "custom6":{name:"文本",image:"text",description: this.template("menu_text")},
+    "custom7":{name:"隐藏插件栏",image:"hideAddonBar",description: this.template("hideAddonBar")},
+    "custom8":{name:"测试",image:"test",description: this.template("test")},
     "execute":{name:"execute",image:"execute",description:"let focusNote = MNNote.getFocusNote()\nMNUtil.showHUD(focusNote.noteTitle)"},
     "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
     "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})},
