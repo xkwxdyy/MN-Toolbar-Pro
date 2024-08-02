@@ -3355,15 +3355,58 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                         if (idsArr.length > 0) {
                           // 找到了共有的链接
                           let resultLibraryNote = MNNote.new("F1FAEB86-179E-454D-8ECB-53C3BB098701")
-                          let resultNote = MNNote.clone("DE4455DB-5C55-49F8-8C83-68D6D958E586")
-                          resultNote.noteTitle += keywordArr.join(" + ")
-                          idsArr.forEach(
-                            id => {
-                              resultNote.appendNoteLink(MNNote.new(id), "To")
+                          if (!resultLibraryNote) {
+                            // 没有的话就放在“关键词库”下方
+                            resultLibraryNote = MNNote.new("3BA9E467-9443-4E5B-983A-CDC3F14D51DA")
+                          }
+                          let findResultNote = false
+                          let resultNote
+                          let combinations = toolbarUtils.generateArrayCombinations(keywordArr," + "); // 生成所有可能的组合
+                          // MNUtil.showHUD(combinations)
+                          for (let i = 0; i <= resultLibraryNote.childNotes.length-1; i++) {
+                            let childNote = resultLibraryNote.childNotes[i]
+                            
+                            findResultNote = false; // 用于标记是否找到匹配的笔记
+                            
+                            // 遍历所有组合进行匹配
+                            for (let combination of combinations) {
+                              if (childNote.noteTitle.match(/【.*】(.*)/)[1] === combination) { // 这里假设childNote已经定义且存在noteTitle属性
+                                resultNote = childNote; // 更新匹配的笔记对象
+                                findResultNote = true; // 设置找到匹配的笔记标记为true
+                                break; // 如果找到了匹配项则跳出循环
+                              }
                             }
-                          )
-                          resultLibraryNote.addChild(resultNote.note)
-                          resultNote.focusInFloatMindMap(0.5)
+                          }
+                          // if (!findResultNote){
+                          //   MNUtil.showHUD("false")
+                          // } else {
+                          //   MNUtil.showHUD("true")
+                          // }
+                          try {
+                            if (!findResultNote) {
+                              resultNote = MNNote.clone("DE4455DB-5C55-49F8-8C83-68D6D958E586")
+                              resultNote.noteTitle = "【根据关键词筛选文献】" + keywordArr.join(" + ")
+                              resultLibraryNote.addChild(resultNote.note)
+                            } else {
+                              // 清空 resultNote 的所有评论
+                              // resultNote.comments.forEach((comment, index)=>{
+                              //   resultNote.removeCommentByIndex(0)
+                              // })
+                              for (let i = resultNote.comments.length-1; i >= 0; i--) {
+                                focusNote.removeCommentByIndex(i)
+                              }
+                              // 重新合并模板
+                              cloneAndMerge(resultNote,"DE4455DB-5C55-49F8-8C83-68D6D958E586")
+                            }
+                            idsArr.forEach(
+                              id => {
+                                resultNote.appendNoteLink(MNNote.new(id), "To")
+                              }
+                            )
+                            resultNote.focusInFloatMindMap(0.5)
+                          } catch (error) {
+                            MNUtil.showHUD(error);
+                          }
                         } else {
                           MNUtil.showHUD("没有文献同时有关键词「" + keywordArr.join("; ") + "」")
                         }
