@@ -4249,7 +4249,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
               /* 预处理 */
               /* 只对淡蓝色、淡粉色、深绿色、深蓝色、淡紫色的卡片进行制卡 */
               if (
-                [0, 2, 3, 4, 6, 9, 10, 13, 15].includes(focusNoteColorIndex) &&
+                [0, 1, 2, 3, 4, 6, 9, 10, 13, 15].includes(focusNoteColorIndex) &&
                 !focusNote.noteTitle.startsWith("【文献")  // 防止文献卡片被制卡
               ) {
 
@@ -4276,7 +4276,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
 
               let parentNoteType = toolbarUtils.getClassificationNoteTypeByTitle(parentNote.noteTitle)
               if (
-                [2,3,6,9,10,13,15].includes(focusNoteColorIndex) ||
+                [1,2,3,6,9,10,13,15].includes(focusNoteColorIndex) ||
                 !focusNote.noteTitle.match(/“.*”相关.*/)
               ) {
                 switch (parentNoteType) {
