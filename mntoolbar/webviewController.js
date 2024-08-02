@@ -2217,6 +2217,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                           classificationNote = MNNote.clone("C24C2604-4B3A-4B6F-97E6-147F3EC67143")
                           classificationNote.noteTitle = 
                             "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
+                        } else {
+                          // 如果找到的话就更新一下标题
+                          // 因为可能会出现偶尔忘记写作者导致的 No author 
+                          classificationNote.noteTitle = 
+                            "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
                         }
                         refedNote.addChild(classificationNote.note)
                         // 移动链接到“引用：”
@@ -2312,6 +2317,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                         if (!findClassificationNote) {
                           // 没有的话就创建一个
                           classificationNote = MNNote.clone("C24C2604-4B3A-4B6F-97E6-147F3EC67143")
+                          classificationNote.noteTitle = 
+                            "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
+                        } else {
+                          // 如果找到的话就更新一下标题
+                          // 因为可能会出现偶尔忘记写作者导致的 No author 
                           classificationNote.noteTitle = 
                             "「" + refSourceNoteTitle + " - " + refSourceNoteAuthor +"」引用" + "「[" + refNum + "] " + refedNoteTitle + " - " + refedNoteAuthor + "」情况"
                         }
@@ -2930,20 +2940,14 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "renewBookNotes":
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{
-            let htmlCommentsIndexArr = []
-            focusNote.comments.forEach(
-              (comment, index) => {
-                if (
-                  comment.type == "HtmlNote"
-                ) {
-                  htmlCommentsIndexArr.push(index)
-                }
-              }
-            )
-            for (let i = focusNote.comments.length-1; i >= htmlCommentsIndexArr[0]; i--) {
-              focusNote.removeCommentByIndex(i)
+            let title = focusNote.noteTitle
+            let yearMatch = toolbarUtils.isFourDigitNumber(toolbarUtils.getFirstKeywordFromTitle(title))
+            if (yearMatch) {
+              // MNUtil.showHUD(toolbarUtils.getFirstKeywordFromTitle(title))
+              let year = toolbarUtils.getFirstKeywordFromTitle(title)
+              toolbarUtils.referenceYear(focusNote, year)
+              focusNote.noteTitle = title.replace("; "+year, "")
             }
-            cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
           })
         })
         break;
@@ -3258,6 +3262,27 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           }
         )
         break;
+      case "referenceInfoYear":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "增加年份",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                year = alert.textFieldAtIndex(0).text;
+                if (buttonIndex === 1) {
+                  toolbarUtils.referenceInfoYear(focusNote, year)
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
       case "referenceKeywordsAddRelatedKeywords":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "增加相关关键词",
@@ -3272,7 +3297,6 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 let keywordArr = toolbarUtils.splitStringByFourSeparators(userInput)
                 let findKeyword = false
                 let targetKeywordNote
-                let relatedReferenceHtmlCommentIndex = focusNote.getCommentIndex("相关文献：", true)
                 let focusNoteIndexInTargetKeywordNote
                 if (buttonIndex === 1) {
                   let keywordLibraryNote = MNNote.new("3BA9E467-9443-4E5B-983A-CDC3F14D51DA")
