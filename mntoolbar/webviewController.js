@@ -15,7 +15,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
     self.maxButtonNumber = 20
-    self.buttonNumber = 15
+    self.buttonNumber = 16
       // MNUtil.copy("refreshHeight: "+self.buttonNumber)
     if (self.dynamicWindow) {
       // self.maxButtonNumber = 9
@@ -1829,6 +1829,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "titleCase":
+        MNUtil.showHUD(MNUtil.selectionText.toTitleCase())
+        MNUtil.copy(MNUtil.selectionText.toTitleCase())
+        break;
       case "proofAddMethodComment":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "输入方法数",
@@ -2682,6 +2686,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             if (focusNote.excerptText) {
               toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
             }
+            focusNote.note.colorIndex = 15
             if (focusNote.noteTitle.startsWith("【文献：")) {
               // 把  focusNote.noteTitle 开头的【.*】 删掉
               let reg = new RegExp("^【.*】")
@@ -2705,6 +2710,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             if (focusNote.excerptText) {
               toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
             }
+            focusNote.note.colorIndex = 15
             if (focusNote.noteTitle.startsWith("【文献：")) {
               // 把  focusNote.noteTitle 开头的【.*】 删掉
               let reg = new RegExp("^【.*】")
@@ -2767,6 +2773,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             if (focusNote.excerptText) {
               toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
             } else {
+              focusNote.note.colorIndex = 15
               UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
                 "整卷期刊",
                 "输入期刊名",
@@ -3296,6 +3303,75 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 year = alert.textFieldAtIndex(0).text;
                 if (buttonIndex === 1) {
                   toolbarUtils.referenceInfoYear(focusNote, year)
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "referenceGetRelatedReferencesByKeywords":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "根据关键词进行文献筛选",
+          "若多个关键词，用\n- 中文分号；\n- 英文分号;\n- 中文逗号，\n- 英文逗号,\n之一隔开",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                userInput = alert.textFieldAtIndex(0).text;
+                let keywordArr = toolbarUtils.splitStringByFourSeparators(userInput)
+                let findKeyword = false
+                let targetKeywordNoteArr = []
+                if (buttonIndex === 1) {
+                  let keywordLibraryNote = MNNote.new("3BA9E467-9443-4E5B-983A-CDC3F14D51DA")
+                  // MNUtil.showHUD(keywordArr)
+                  for (let j = 0; j <= keywordArr.length-1; j++) {
+                    let keyword = keywordArr[j]
+                    findKeyword = false
+                    for (let i = 0; i <= keywordLibraryNote.childNotes.length-1; i++) {
+                      if (
+                        keywordLibraryNote.childNotes[i].noteTitle.includes(keyword) ||
+                        keywordLibraryNote.childNotes[i].noteTitle.includes(keyword.toLowerCase())
+                      ) {
+                        targetKeywordNoteArr.push(keywordLibraryNote.childNotes[i])
+                        findKeyword = true
+                        break;
+                      }
+                    }
+                    if (!findKeyword) {
+                      MNUtil.showHUD("关键词：「" + keyword + "」不存在！")
+                      break;
+                    } 
+                  }
+                  
+                  try {
+                    MNUtil.undoGrouping(()=>{
+                      if (findKeyword) {
+                        // MNUtil.showHUD(toolbarUtils.findCommonComments(targetKeywordNoteArr, "相关文献："))
+                        let idsArr = toolbarUtils.findCommonComments(targetKeywordNoteArr, "相关文献：")
+                        if (idsArr.length > 0) {
+                          // 找到了共有的链接
+                          let resultLibraryNote = MNNote.new("F1FAEB86-179E-454D-8ECB-53C3BB098701")
+                          let resultNote = MNNote.clone("DE4455DB-5C55-49F8-8C83-68D6D958E586")
+                          resultNote.noteTitle += keywordArr.join(" + ")
+                          idsArr.forEach(
+                            id => {
+                              resultNote.appendNoteLink(MNNote.new(id), "To")
+                            }
+                          )
+                          resultLibraryNote.addChild(resultNote.note)
+                          resultNote.focusInFloatMindMap(0.5)
+                        } else {
+                          MNUtil.showHUD("没有文献同时有关键词「" + keywordArr.join("; ") + "」")
+                        }
+                      }
+                    })
+                  } catch (error) {
+                    MNUtil.showHUD(error);
+                  }
                 }
               })
             } catch (error) {
@@ -4249,7 +4325,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
               /* 预处理 */
               /* 只对淡蓝色、淡粉色、深绿色、深蓝色、淡紫色的卡片进行制卡 */
               if (
-                [0, 2, 3, 4, 6, 9, 10, 13, 15].includes(focusNoteColorIndex) &&
+                [0, 1, 2, 3, 4, 6, 9, 10, 13, 15].includes(focusNoteColorIndex) &&
                 !focusNote.noteTitle.startsWith("【文献")  // 防止文献卡片被制卡
               ) {
 
@@ -4276,7 +4352,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
 
               let parentNoteType = toolbarUtils.getClassificationNoteTypeByTitle(parentNote.noteTitle)
               if (
-                [2,3,6,9,10,13,15].includes(focusNoteColorIndex) ||
+                [1,2,3,6,9,10,13,15].includes(focusNoteColorIndex) ||
                 !focusNote.noteTitle.match(/“.*”相关.*/)
               ) {
                 switch (parentNoteType) {
@@ -4802,3 +4878,64 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     // MNUtil.showHUD(error)
   }
 }
+
+/* 夏大鱼羊 - start */
+
+String.prototype.toTitleCase = function () {
+  'use strict'
+  let smallWords = /^(a|an|and|as|at|but|by|en|for|if|in|nor|of|on|or|per|the|to|v.?|vs.?|via)$/i;
+  let alphanumericPattern = /([A-Za-z0-9\u00C0-\u00FF])/;
+  /* note there is a capturing group, so the separators will also be included in the returned list */
+  let wordSeparators = /([ :–—-])/;
+  let lowerBar = /_/g;
+  /* regular expression: remove the space character, punctuation (.,;:!?), 
+     dash and lower bar at both ends of the string */
+  let trimBeginEndPattern = /^[\s.,;:!?_\-]*([a-zA-Z0-9].*[a-zA-Z0-9])[\s.,;:!?_\-]*$/g;
+  let romanNumberPattern = /^(I|II|III|IV|V|VI|VII|VIII|IX|X)$/i;
+
+  return this.toLowerCase().replace(trimBeginEndPattern,"$1")
+    .replace(lowerBar, " ")
+    .split(wordSeparators)
+    .map(function (current, index, array) {
+      if (
+        /* Check for small words */
+        current.search(smallWords) > -1 &&
+        /* Skip first and last word */
+        index !== 0 &&
+        index !== array.length - 1 &&
+        /* cope with the situation such as: 1. the conjugation operator */
+        array.slice(0,index-1).join('').search(/[a-zA-Z]/) > -1 &&
+        /* Ignore title end and subtitle start */
+        array[index - 3] !== ':' &&
+        array[index + 1] !== ':' &&
+        /* Ignore small words that start a hyphenated phrase */
+        (array[index + 1] !== '-' ||
+          (array[index - 1] === '-' && array[index + 1] === '-'))
+      ) {
+        return current.toLowerCase()
+      }
+      
+      /* Uppercase roman numbers */
+      if (current.search(romanNumberPattern) > -1) {
+        return current.toUpperCase();
+      }
+
+      /* Ignore intentional capitalization */
+      if (current.substring(1).search(/[A-Z]|\../) > -1) {
+        return current;
+      }
+
+      /* Ignore URLs */
+      if (array[index + 1] === ':' && array[index + 2] !== '') {
+        return current;
+      }
+
+      /* Capitalize the first letter */
+      return current.replace(alphanumericPattern, function (match) {
+        return match.toUpperCase();
+      })
+    })
+    .join('') // convert the list into a string
+}
+
+/* 夏大鱼羊 - end*/
