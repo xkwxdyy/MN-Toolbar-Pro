@@ -2982,6 +2982,19 @@ class toolbarUtils {
     )
     this.app.refreshAfterDBChanged(notebookId)
   }
+  static async checkMNUtil(alert = false,delay = 0.01){
+    if (typeof MNUtil === 'undefined') {//如果MNUtil未被加载，则执行一次延时，然后再检测一次
+      //仅在MNUtil未被完全加载时执行delay
+      await toolbarUtils.delay(delay)
+      if (typeof MNUtil === 'undefined') {
+        if (alert) {
+          toolbarUtils.showHUD("MN ChatAI: Please install 'MN Utils' first!",5)
+        }
+        return false
+      }
+    }
+    return true
+  }
   /**
    * 
    * @param {MbBookNote|MNNote} currentNote 
@@ -3519,6 +3532,28 @@ class toolbarUtils {
       }
     }
   
+  }
+  static async chatAI(){
+    let des = toolbarConfig.getDescriptionByName("chatglm")
+    if (!des || !Object.keys(des).length) {
+      MNUtil.postNotification("customChat",{})
+      return
+    }
+    if (des.prompt) {
+      MNUtil.postNotification("customChat",{prompt:des.prompt})
+      return
+    }
+    if(des.user){
+      let question = {user:des.user}
+      if (des.system) {
+        question.system = des.system
+      }
+      MNUtil.postNotification("customChat",question)
+      // MNUtil.showHUD("Not supported yet...")
+      return;
+    }
+    MNUtil.postNotification("customChat",{})
+    // MNUtil.showHUD("No valid argument!")
   }
   static async ocr(){
     if (typeof ocrUtils === 'undefined') {
@@ -4402,7 +4437,8 @@ class toolbarConfig {
     sideMode:"",//固定工具栏下贴边模式
     splitMode:false,//固定工具栏下是否跟随分割线
     open:false,//固定工具栏是否默认常驻
-    dynamicButton:9//跟随模式下的工具栏显示的按钮数量
+    dynamicButton:9,//跟随模式下的工具栏显示的按钮数量,
+    frame:{x:0,y:0,width:40,height:415}
   }
   static imageConfigs = {}
   // static defaultConfig = {showEditorWhenEditingNote:false}
@@ -5230,7 +5266,7 @@ static checkCouldSave(actionName){
   if (actionName.includes("color")) {
     return true
   }
-  let whiteNamelist = ["ocr","edit","execute","searchInEudic"]
+  let whiteNamelist = ["chatglm","ocr","edit","execute","searchInEudic"]
   if (whiteNamelist.includes(actionName)) {
     return true
   }

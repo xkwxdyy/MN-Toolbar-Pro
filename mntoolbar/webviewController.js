@@ -16,9 +16,11 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.currentFrame = self.view.frame
     self.maxButtonNumber = 20
     self.buttonNumber = 15
+      // MNUtil.copy("refreshHeight: "+self.buttonNumber)
     if (self.dynamicWindow) {
       // self.maxButtonNumber = 9
       self.buttonNumber = toolbarConfig.getWindowState("dynamicButton");
+      // MNUtil.copy("refreshHeight: "+self.buttonNumber)
     }else{
       let lastFrame = toolbarConfig.getWindowState("frame")
       if (lastFrame) {
@@ -145,6 +147,9 @@ viewWillLayoutSubviews: function() {
   },
   changeScreen: function(sender) {
     let clickDate = Date.now()
+    if (self.dynamicWindow) {
+      return
+    }
     self.checkPopoverController()
     // if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
     var commandTable = [
@@ -483,12 +488,13 @@ try {
     }
   },
   chatglm: function () {
-    self.onClick = true
-    // let focusNote = MNNote.getFocusNote()
-    MNUtil.postNotification("customChat",{})
-    if (self.dynamicWindow) {
-      self.hideAfterDelay()
-    }
+    toolbarUtils.chatAI()
+    // self.onClick = true
+    // // let focusNote = MNNote.getFocusNote()
+    // MNUtil.postNotification("customChat",{})
+    // if (self.dynamicWindow) {
+    //   self.hideAfterDelay()
+    // }
   },
   search: function () {
     self.onClick = true
@@ -666,14 +672,13 @@ try {
     }else{
       self.splitMode = false
     }
-    if (self.custom) {
-      self.customMode = "None"
-      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(self.lastFrame.height,self.maxButtonNumber)}
-      self.currentFrame  = self.view.frame
-    }else{
-      self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(frame.height,self.maxButtonNumber)}
-      self.currentFrame  = self.view.frame
+    // MNUtil.showHUD(studyFrame.height+"message"+(y+self.lastFrame.height))
+    frame.height = 45*self.buttonNumber+15
+    if ((y+frame.height) > studyFrame.height) {
+      frame.height = studyFrame.height - y
     }
+    self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(frame.height,self.maxButtonNumber)}
+    self.currentFrame  = self.view.frame
     if (gesture.state === 3) {
       // self.resi
       MNUtil.studyView.bringSubviewToFront(self.view)
@@ -704,18 +709,21 @@ try {
     self.view.frame = {x:frame.x,y:frame.y,width:40,height:height}
     self.currentFrame  = self.view.frame
     if (gesture.state === 3) {
-      let buttomNumber = Math.floor(height/45)
-      // MNUtil.showHUD("message"+buttomNumbers)
-      self.view.bringSubviewToFront(self.screenButton)
-      let windowState = toolbarConfig.windowState
-      if (self.dynamicWindow) {
-        windowState.dynamicButton = buttomNumber
-        // toolbarConfig.save("MNToolbar_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
-      }else{
-        windowState.frame = self.view.frame
-        windowState.open = true
+      let buttonNumber = Math.floor(height/45)
+      //当用户拖拽距离过短时，不触发配置存储
+      if (self.buttonNumber !== buttonNumber) {
+        self.buttonNumber = buttonNumber
+        self.view.bringSubviewToFront(self.screenButton)
+        let windowState = toolbarConfig.windowState
+        if (self.dynamicWindow) {
+          windowState.dynamicButton = buttonNumber
+          // toolbarConfig.save("MNToolbar_windowState",{open:toolbarConfig.windowState.open,frame:self.view.frame})
+        }else{
+          windowState.frame = self.view.frame
+          windowState.open = true
+        }
+        toolbarConfig.save("MNToolbar_windowState",windowState)
       }
-      toolbarConfig.save("MNToolbar_windowState",windowState)
       self.onResize = false
     }
   },
@@ -948,6 +956,9 @@ try {
  * @this {toolbarController}
  */
 toolbarController.prototype.refreshHeight = function () {
+  try {
+    
+
   let lastFrame = this.view.frame
   let currentHeight = lastFrame.height
   if (currentHeight > 420 && !toolbarUtils.isSubscribed(false)) {
@@ -956,12 +967,22 @@ toolbarController.prototype.refreshHeight = function () {
     return
   }
   let height = 45*this.buttonNumber+15
-  // if (lastFrame.height > height) {
+  // MNUtil.copyJSON(lastFrame)
+  if (lastFrame.y+lastFrame.height > MNUtil.studyView.frame.height) {
+
+  // MNUtil.showHUD("message")
+    let remainHeight = MNUtil.studyView.frame.height - lastFrame.y
+    let remainButton = Math.floor(remainHeight/45)
+    lastFrame.height = 45*(remainButton)+15
+  }else{
     lastFrame.height = height
-  // }
+  }
   this.view.frame = lastFrame
   this.currentFrame = lastFrame
   // showHUD("number:"+height)
+  } catch (error) {
+    toolbarUtils.addErrorLog(error, "refreshHeight")
+  }
 }
 
 toolbarController.prototype.setToolbarLayout = function () {
@@ -4688,20 +4709,21 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         }
         break;
       case "chatAI":
-        if (des.prompt) {
-          MNUtil.postNotification("customChat",{prompt:des.prompt})
-          break;
-        }
-        if(des.user){
-          let question = {user:des.user}
-          if (des.system) {
-            question.system = des.system
-          }
-          MNUtil.postNotification("customChat",question)
-          // MNUtil.showHUD("Not supported yet...")
-          break;
-        }
-        MNUtil.showHUD("No valid argument!")
+        toolbarUtils.chatAI()
+        // if (des.prompt) {
+        //   MNUtil.postNotification("customChat",{prompt:des.prompt})
+        //   break;
+        // }
+        // if(des.user){
+        //   let question = {user:des.user}
+        //   if (des.system) {
+        //     question.system = des.system
+        //   }
+        //   MNUtil.postNotification("customChat",question)
+        //   // MNUtil.showHUD("Not supported yet...")
+        //   break;
+        // }
+        // MNUtil.showHUD("No valid argument!")
         break
       case "addImageComment":
         let source = des.source ?? "photo"

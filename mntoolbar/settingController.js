@@ -7,7 +7,7 @@ var settingController = JSB.defineClass('settingController : UIViewController <N
     let self = getSettingController()
 try {
     self.init()
-    self.view.frame = {x:50,y:50,width:365,height:450}
+    self.view.frame = {x:50,y:50,width:355,height:475}
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
     self.isMainWindow = true
@@ -20,9 +20,10 @@ try {
     self.view.layer.shadowOpacity = 0.5;
     self.view.layer.shadowColor = UIColor.colorWithWhiteAlpha(0.5, 1);
     self.view.layer.cornerRadius = 11
-    self.view.layer.opacity = 0.5
+    self.view.layer.opacity = 1.0
     self.view.layer.borderColor = MNUtil.hexColorAlpha("#9bb2d6",0.8)
     self.view.layer.borderWidth = 0
+    // self.view.backgroundColor = MNUtil.hexColorAlpha("#9bb2d6",0.8)
     self.config = {}
     if (!self.config.delay) {
       self.config.delay = 0
@@ -45,15 +46,15 @@ try {
     MNUtil.showHUD(error)
       
     }
-    self.createButton("closeButton","closeButtonTapped:")
-    self.closeButton.setTitleForState('✖️', 0);
-    self.closeButton.titleLabel.font = UIFont.systemFontOfSize(10);
+
 
     self.createButton("maxButton","maxButtonTapped:")
     self.maxButton.setTitleForState('➕', 0);
     self.maxButton.titleLabel.font = UIFont.systemFontOfSize(10);
+    MNButton.setColor(self.maxButton, "#3a81fb",0.5)
 
     self.createButton("moveButton")
+    MNButton.setColor(self.moveButton, "#3a81fb",0.5)
     try {
     self.settingViewLayout()
       
@@ -82,9 +83,9 @@ viewWillLayoutSubviews: function() {
     var viewFrame = self.view.bounds;
     var width    = viewFrame.width
     var height   = viewFrame.height
-    self.closeButton.frame = MNUtil.genFrame(width-18,0,18,18)
-    self.maxButton.frame = MNUtil.genFrame(width-43,0,18,18)
-    self.moveButton.frame = MNUtil.genFrame(width*0.5-75, 0, 150, 15)
+    self.closeButton.frame = MNUtil.genFrame(width-35,5,30,30)
+    self.maxButton.frame = MNUtil.genFrame(width*0.5+80,0,18,18)
+    self.moveButton.frame = MNUtil.genFrame(width*0.5-75, 0, 150, 17)
     height = height-36
     self.settingViewLayout()
     self.refreshLayout()
@@ -231,8 +232,8 @@ viewWillLayoutSubviews: function() {
     let frame = self.view.frame
     let width = locationToBrowser.x+baseframe.width*0.5
     let height = locationToBrowser.y+baseframe.height*0.5
-    if (width <= 330) {
-      width = 330
+    if (width <= 355) {
+      width = 355
     }
     if (height <= 475) {
       height = 475
@@ -257,8 +258,7 @@ viewWillLayoutSubviews: function() {
   configCopyTapped: async function (params) {
     // MNUtil.copy(self.selectedItem)
     let selected = self.selectedItem
-    if (!selected.includes("custom") && !selected.includes("color") && selected !== "ocr" && selected !== "edit" && selected !== "execute") {
-      MNUtil.showHUD("Only available for Custom Action!")
+    if (!toolbarConfig.checkCouldSave(selected)) {
       return
     }
     try {
@@ -271,8 +271,7 @@ viewWillLayoutSubviews: function() {
   configPasteTapped: async function (params) {
     // MNUtil.copy(self.selectedItem)
     let selected = self.selectedItem
-    if (!selected.includes("custom") && !selected.includes("color") && selected !== "ocr" && selected !== "edit" && selected !== "execute") {
-      MNUtil.showHUD("Only available for Custom Action!")
+    if (!toolbarConfig.checkCouldSave(selected)) {
       return
     }
     try {
@@ -305,7 +304,8 @@ viewWillLayoutSubviews: function() {
         self.setWebviewContent(input)
       }
     }else{
-      MNUtil.showHUD("Invalid JSON format!")
+      MNUtil.showHUD("Invalid JSON format: "+input)
+      MNUtil.copy("Invalid JSON format: "+input)
     }
     } catch (error) {
       toolbarUtils.addErrorLog(error, "configSaveTapped", info)
@@ -392,6 +392,10 @@ viewWillLayoutSubviews: function() {
       // self.runJavaScript(`document.getElementById('editor').innerHTML = document.body.innerText`)
       let code = toolbarConfig.getExecuteCode()
       toolbarSandbox.execute(code)
+      return
+    }
+    if (selected === "chatglm") {
+      toolbarUtils.chatAI()
       return
     }
     MNUtil.showHUD("Not supported")
@@ -498,38 +502,38 @@ settingController.prototype.createButton = function (buttonName,targetAction,sup
 settingController.prototype.settingViewLayout = function (){
     let viewFrame = this.view.bounds
     let width = viewFrame.width
-    let height = viewFrame.height
-    this.settingView.frame = {x:0,y:20,width:width,height:height-20}
-    this.configView.frame = MNUtil.genFrame(0,40,width-2,height-60)
-    this.advanceView.frame = MNUtil.genFrame(0,40,width-2,height-60)
-    this.webviewInput.frame = {x:10,y:215,width:width-20,height:height-320}
-    this.titleInput.frame = {x:10,y:175,width:width-20,height:35}
-    this.copyButton.frame = {x:10,y:height-100,width:70,height:30}
-    this.pasteButton.frame = {x:85,y:height-100,width:70,height:30}
+    let height = viewFrame.height-40
+    this.settingView.frame = {x:0,y:55,width:width,height:height-55}
+    this.configView.frame = MNUtil.genFrame(0,0,width-2,height-60)
+    this.advanceView.frame = MNUtil.genFrame(0,0,width-2,height-60)
+    this.webviewInput.frame = {x:5,y:205,width:width-10,height:height-300}
+    this.titleInput.frame = {x:5,y:165,width:width-50,height:35}
+    this.runButton.frame = {x:width-40,y:165,width:35,height:35}
+    this.copyButton.frame = {x:5,y:height-90,width:60,height:30}
+    this.pasteButton.frame = {x:70,y:height-90,width:60,height:30}
 
-    this.saveButton.frame = {x:width-80,y:height-100,width:70,height:30}
-    this.runButton.frame = {x:width-155,y:height-100,width:70,height:30}
-    this.scrollview.frame = {x:10,y:15,width:width-20,height:150}
+    this.saveButton.frame = {x:width-75,y:height-90,width:70,height:30}
+    this.scrollview.frame = {x:5,y:5,width:width-10,height:155}
     this.scrollview.contentSize = {width:width-20,height:height};
-    this.configReset.frame = {x:width-45,y:130,width:30,height:30}
-    this.moveTopButton.frame = {x:width-45,y:25,width:30,height:30}
-    this.moveUpButton.frame = {x:width-45,y:60,width:30,height:30}
-    this.moveDownButton.frame = {x:width-45,y:95,width:30,height:30}
+    this.moveTopButton.frame = {x:width-40,y:15,width:30,height:30}
+    this.moveUpButton.frame = {x:width-40,y:50,width:30,height:30}
+    this.moveDownButton.frame = {x:width-40,y:85,width:30,height:30}
+    this.configReset.frame = {x:width-40,y:120,width:30,height:30}
 
 
     let settingFrame = this.settingView.bounds
-    settingFrame.x = 5
-    settingFrame.y = 5
+    settingFrame.x = 0
+    settingFrame.y = 15
     settingFrame.height = 40
-    settingFrame.width = settingFrame.width-10
+    settingFrame.width = settingFrame.width
     this.tabView.frame = settingFrame
     settingFrame.width = 85
-    settingFrame.y = 10
-    settingFrame.x = 10
+    settingFrame.y = 5
+    settingFrame.x = 5
     settingFrame.height = 30
     this.configButton.frame = settingFrame
-    settingFrame.x = 100
-    settingFrame.width = 90
+    settingFrame.x = 95
+    settingFrame.width = 100
     this.advancedButton.frame = settingFrame
 
     this.editorButton.frame = MNUtil.genFrame(10, 15, (width-25)/2, 35)
@@ -550,28 +554,27 @@ settingController.prototype.createSettingView = function (){
 try {
   
 
-  this.creatView("settingView","view","#ffffff",1.0)
+  this.creatView("settingView","view","#ffffff",0.8)
   this.settingView.hidden = true
-  this.creatView("tabView","settingView")
+  // this.settingView.layer.opacity = 0.8
+  this.creatView("tabView","view","#9bb2d6",0.0)
   this.creatView("configView","settingView","#9bb2d6",0.0)
 
   this.creatView("advanceView","settingView","#9bb2d6",0.0)
   this.advanceView.hidden = true
 
 
-  this.createButton("configButton","configButtonTapped:","settingView")
-  MNButton.setColor(this.configButton, "#457bd3", 0.8)
-
-  this.configButton.layer.opacity = 1.0
-  this.configButton.setTitleForState("Buttons",0)
-  this.configButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
+  this.createButton("configButton","configButtonTapped:","tabView")
+  MNButton.setConfig(this.configButton, {color:"#457bd3",alpha:0.9,opacity:1.0,title:"Buttons",font:17,radius:10,bold:true})
 
 
-  this.createButton("advancedButton","advancedButtonTapped:","settingView")
-  this.advancedButton.layer.opacity = 1.0
-  this.advancedButton.setTitleForState("Advanced",0)
-  this.advancedButton.titleLabel.font = UIFont.boldSystemFontOfSize(16)
-  
+  this.createButton("advancedButton","advancedButtonTapped:","tabView")
+  MNButton.setConfig(this.advancedButton, {alpha:0.9,opacity:1.0,title:"Advanced",font:17,radius:10,bold:true})
+
+  this.createButton("closeButton","closeButtonTapped:","tabView")
+  MNButton.setConfig(this.closeButton, {color:"#e06c75",alpha:0.9,opacity:1.0,radius:10,bold:true})
+  MNButton.setImage(this.closeButton, MNUtil.getImage(toolbarConfig.mainPath+"/stop.png"))
+
   this.createButton("editorButton","toggleAddonLogo:","advanceView")
   this.editorButton.layer.opacity = 1.0
   this.editorButton.addon = "MNEditor"
@@ -651,10 +654,10 @@ try {
 
   this.createButton("moveUpButton","moveForwardTapped:","configView")
   this.moveUpButton.layer.opacity = 1.0
-  this.moveUpButton.setTitleForState("⬆",0)
+  this.moveUpButton.setTitleForState("🔼",0)
   this.createButton("moveDownButton","moveBackwardTapped:","configView")
   this.moveDownButton.layer.opacity = 1.0
-  this.moveDownButton.setTitleForState("⬇",0)
+  this.moveDownButton.setTitleForState("🔽",0)
   this.createButton("moveTopButton","moveTopTapped:","configView")
   this.moveTopButton.layer.opacity = 1.0
   this.moveTopButton.setTitleForState("🔝",0)
@@ -668,12 +671,12 @@ try {
   this.pasteButton.setTitleForState("Paste",0)
 
   this.createButton("saveButton","configSaveTapped:","configView")
-  this.saveButton.layer.opacity = 1.0
-  this.saveButton.setTitleForState("Save",0)
+  // this.saveButton.layer.opacity = 1.0
+  // this.saveButton.setTitleForState("Save",0)
+  MNButton.setConfig(this.saveButton, {opacity:0.8,color:"#e06c75",title:"Save",bold:true})
 
   this.createButton("runButton","configRunTapped:","configView")
-  this.runButton.layer.opacity = 1.0
-  this.runButton.setTitleForState("Run",0)
+  MNButton.setConfig(this.runButton, {opacity:0.8,title:"▶️",font:22})
   
   let color = ["#ffffb4","#ccfdc4","#b4d1fb","#f3aebe","#ffff54","#75fb4c","#55bbf9","#ea3323","#ef8733","#377e47","#173dac","#be3223","#ffffff","#dadada","#b4b4b4","#bd9fdc"]
 } catch (error) {

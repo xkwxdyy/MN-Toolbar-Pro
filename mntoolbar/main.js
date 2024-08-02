@@ -15,12 +15,9 @@ JSB.newAddon = function (mainPath) {
     'MNToolbar : JSExtension',
     { /* Instance members */
       sceneWillConnect: async function () { //Window initialize
-        await toolbarUtils.delay(0.01)
-        if (typeof MNUtil === 'undefined') {
-          Application.sharedInstance().showHUD("MN Toolbar: Please install 'MN Utils' first!",Application.sharedInstance().focusWindow,5)
-          return
-        }
+        if (!(await toolbarUtils.checkMNUtil(true))) return
         let self = getMNToolbarClass()
+        self.init(mainPath)
         // MNUtil.showHUD("mntoolbar")
         self.appInstance = Application.sharedInstance();
         // self.popUpNote
@@ -32,17 +29,6 @@ JSB.newAddon = function (mainPath) {
         self.dateNow = Date.now();
         self.rect = '{{0, 0}, {10, 10}}';
         self.arrow = 1;
-        try {
-        // toolbarConfig.remove("MNToolbar_actionConfig")
-        // toolbarConfig.remove("MNToolbar_action")
-        // toolbarConfig.remove("MNToolbar_windowState")
-        // toolbarConfig.remove("MNToolbar_dynamic")
-          toolbarUtils.init()
-          toolbarConfig.init(mainPath)
-        } catch (error) {
-          MNUtil.showHUD(error)
-          toolbarUtils.copy(error)
-        }
         MNUtil.addObserver(self, 'onPopupMenuOnNote:', 'PopupMenuOnNote')
         MNUtil.addObserver(self, 'onToggleDynamic:', 'toggleDynamic')
         MNUtil.addObserver(self, 'onClosePopupMenuOnNote:', 'ClosePopupMenuOnNote')
@@ -71,7 +57,9 @@ JSB.newAddon = function (mainPath) {
       },
 
       notebookWillOpen: async function (notebookid) {
-        if (typeof MNUtil === 'undefined') return
+        if (!(await toolbarUtils.checkMNUtil(false,0.1))) return
+        let self = getMNToolbarClass()
+        self.init(mainPath)
         let studyView = MNUtil.studyView
         if (MNUtil.studyMode < 3) {
           await MNUtil.delay(0.5)
@@ -107,22 +95,6 @@ JSB.newAddon = function (mainPath) {
           NSTimer.scheduledTimerWithTimeInterval(0.2, false, function () {
             MNUtil.studyController.becomeFirstResponder(); //For dismiss keyboard on iOS
           });
-          // if (toolbarConfig.dynamic && !self.testController) {
-          //   self.testController = toolbarController.new();
-          //   self.testController.mainPath = mainPath;
-          //   self.testController.dynamic = toolbarConfig.dynamic
-          //   self.testController.view.hidden = true
-          //   self.testController.dynamicWindow = true
-          //   self.testController.addonController = self.addonController
-          //   // self.testController.action = self.addonController.action
-          //   // showHUD(self.testController.action)
-          //   self.addonController.dynamicToolbar = self.testController
-          //   MNUtil.studyView.addSubview(self.testController.view);
-          //   let lastFrame = self.addonController.view.frame
-          //   let buttomNumber = toolbarConfig.windowState.dynamicButton??9
-          //   lastFrame.height = toolbarUtils.checkHeight(lastFrame.height,buttomNumber)
-          //   self.addonController.view.frame = lastFrame
-          // }
           
       },
 
@@ -172,22 +144,23 @@ JSB.newAddon = function (mainPath) {
           
         if (!self.testController) {
           self.testController = toolbarController.new();
+          self.testController.dynamicWindow = true
           self.testController.mainPath = mainPath;
           self.testController.dynamic = toolbarConfig.dynamic
           self.testController.view.hidden = true
-          self.testController.dynamicWindow = true
           self.testController.addonController = self.addonController
           // self.testController.action = self.addonController.action
           // showHUD(self.testController.action)
           self.addonController.dynamicToolbar = self.testController
           MNUtil.studyView.addSubview(self.testController.view);
           lastFrame = self.addonController.view.frame
-          let buttomNumber = toolbarConfig.getWindowState("dynamicButton")
-          lastFrame.height = 45*buttomNumber+15
-          // lastFrame.height = toolbarUtils.checkHeight(lastFrame.height,buttomNumber)
+          let buttonNumber = toolbarConfig.getWindowState("dynamicButton")
+          lastFrame.height = 45*buttonNumber+15
+          // lastFrame.height = toolbarUtils.checkHeight(lastFrame.height,buttonNumber)
         }else{
           self.testController.refreshHeight()
           lastFrame = self.testController.view.frame
+          // MNUtil.copyJSON(lastFrame)
         }
         } catch (error) {
           MNUtil.showHUD(error)
@@ -335,8 +308,8 @@ JSB.newAddon = function (mainPath) {
             return
           }
           let currentFrame = self.testController.currentFrame
-          let buttomNumber = toolbarConfig.getWindowState("dynamicButton");
-          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,buttomNumber)
+          let buttonNumber = toolbarConfig.getWindowState("dynamicButton");
+          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,buttonNumber)
           self.testController.view.frame = currentFrame
           self.testController.currentFrame = currentFrame
         }
@@ -670,6 +643,7 @@ try {
       },
 
       applicationWillEnterForeground: function () {
+        // toolbarUtils.addErrorLog("error", "applicationWillEnterForeground")
       },
 
       applicationDidEnterBackground: function () {
@@ -679,5 +653,17 @@ try {
       }
     }
   );
+  MNToolbarClass.prototype.init = function(mainPath){ 
+  try {
+
+    if (!this.initialized) {
+      toolbarUtils.init()
+      toolbarConfig.init(mainPath)
+      this.initialized = true
+    }
+  } catch (error) {
+    toolbarUtils.addErrorLog(error, "init")
+  }
+  }
   return MNToolbarClass;
 };
