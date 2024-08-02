@@ -32,6 +32,25 @@ class toolbarUtils {
   // TODO:
   // - 判断链接是否存在
 
+  static generateArrayCombinations(Arr, joinLabel) {
+    const combinations = [];
+    const permute = (result, used) => {
+      if (result.length === Arr.length) {
+        combinations.push(result.join(joinLabel)); // 保存当前组合
+        return;
+      }
+      for (let i = 0; i < Arr.length; i++) {
+        if (!used[i]) { // 检查当前元素是否已使用
+          used[i] = true; // 标记为已使用
+          permute(result.concat(Arr[i]), used); // 递归
+          used[i] = false; // 回溯，标记为未使用
+        }
+      }
+    };
+    permute([], Array(Arr.length).fill(false)); // 初始调用
+    return combinations;
+  }
+
   static findCommonComments(arr, startText) {
     let result = null;
 
