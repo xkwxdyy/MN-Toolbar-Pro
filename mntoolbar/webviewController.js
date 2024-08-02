@@ -3311,6 +3311,75 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           }
         )
         break;
+      case "referenceGetRelatedReferencesByKeywords":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "根据关键词进行文献筛选",
+          "若多个关键词，用\n- 中文分号；\n- 英文分号;\n- 中文逗号，\n- 英文逗号,\n之一隔开",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                userInput = alert.textFieldAtIndex(0).text;
+                let keywordArr = toolbarUtils.splitStringByFourSeparators(userInput)
+                let findKeyword = false
+                let targetKeywordNoteArr = []
+                if (buttonIndex === 1) {
+                  let keywordLibraryNote = MNNote.new("3BA9E467-9443-4E5B-983A-CDC3F14D51DA")
+                  // MNUtil.showHUD(keywordArr)
+                  for (let j = 0; j <= keywordArr.length-1; j++) {
+                    let keyword = keywordArr[j]
+                    findKeyword = false
+                    for (let i = 0; i <= keywordLibraryNote.childNotes.length-1; i++) {
+                      if (
+                        keywordLibraryNote.childNotes[i].noteTitle.includes(keyword) ||
+                        keywordLibraryNote.childNotes[i].noteTitle.includes(keyword.toLowerCase())
+                      ) {
+                        targetKeywordNoteArr.push(keywordLibraryNote.childNotes[i])
+                        findKeyword = true
+                        break;
+                      }
+                    }
+                    if (!findKeyword) {
+                      MNUtil.showHUD("关键词：「" + keyword + "」不存在！")
+                      break;
+                    } 
+                  }
+                  
+                  try {
+                    MNUtil.undoGrouping(()=>{
+                      if (findKeyword) {
+                        // MNUtil.showHUD(toolbarUtils.findCommonComments(targetKeywordNoteArr, "相关文献："))
+                        let idsArr = toolbarUtils.findCommonComments(targetKeywordNoteArr, "相关文献：")
+                        if (idsArr.length > 0) {
+                          // 找到了共有的链接
+                          let resultLibraryNote = MNNote.new("F1FAEB86-179E-454D-8ECB-53C3BB098701")
+                          let resultNote = MNNote.clone("DE4455DB-5C55-49F8-8C83-68D6D958E586")
+                          resultNote.noteTitle += keywordArr.join(" + ")
+                          idsArr.forEach(
+                            id => {
+                              resultNote.appendNoteLink(MNNote.new(id), "To")
+                            }
+                          )
+                          resultLibraryNote.addChild(resultNote.note)
+                          resultNote.focusInFloatMindMap(0.5)
+                        } else {
+                          MNUtil.showHUD("没有文献同时有关键词「" + keywordArr.join("; ") + "」")
+                        }
+                      }
+                    })
+                  } catch (error) {
+                    MNUtil.showHUD(error);
+                  }
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
       case "referenceKeywordsAddRelatedKeywords":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "增加相关关键词",

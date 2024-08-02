@@ -32,6 +32,26 @@ class toolbarUtils {
   // TODO:
   // - 判断链接是否存在
 
+  static findCommonComments(arr, startText) {
+    let result = null;
+
+    arr.forEach((note, index) => {
+      const fromIndex = note.getCommentIndex(startText, true) + 1;
+      const subArray = note.comments.slice(fromIndex);
+      const texts = subArray.map(comment => comment.text); // 提取 text
+  
+      if (result === null) {
+        result = new Set(texts);
+      } else {
+        result = new Set([...result].filter(comment => texts.includes(comment)));
+      }
+  
+      if (result.size === 0) return; // 提前退出
+    });
+  
+    return result ? Array.from(result) : [];
+  }
+
   // 检测 str 是不是一个 4 位的数字
   static isFourDigitNumber(str) {
     // 使用正则表达式检查
@@ -5001,10 +5021,10 @@ static template(action) {
               "action": "referenceKeywordsAddRelatedKeywords",
               "menuTitle": "➕相关关键词"
             },
-            // {
-            //   "action": "",
-            //   "menuTitle": ""
-            // }
+            {
+              "action": "referenceGetRelatedReferencesByKeywords",
+              "menuTitle": "根据关键词筛选文献"
+            }
           ]
         },
       ]
