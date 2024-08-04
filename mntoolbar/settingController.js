@@ -83,9 +83,7 @@ viewWillLayoutSubviews: function() {
     var viewFrame = self.view.bounds;
     var width    = viewFrame.width
     var height   = viewFrame.height
-    self.closeButton.frame = MNUtil.genFrame(width-35,5,30,30)
-    self.maxButton.frame = MNUtil.genFrame(width*0.5+80,0,18,18)
-    self.moveButton.frame = MNUtil.genFrame(width*0.5-75, 0, 150, 17)
+
     height = height-36
     self.settingViewLayout()
     self.refreshLayout()
@@ -149,31 +147,34 @@ viewWillLayoutSubviews: function() {
     if (self.customMode === "full") {
       self.customMode = "none"
       self.custom = false;
-      self.hideAllButton()
-      UIView.animateWithDurationAnimationsCompletion(0.3,()=>{
+      // self.hideAllButton()
+      self.onAnimate = true
+      MNUtil.animate(()=>{
         self.view.frame = self.lastFrame
         self.currentFrame = self.lastFrame
-      },
-      ()=>{
-        self.showAllButton()
-      
+        self.settingViewLayout()
+      },0.3).then(()=>{
+        self.onAnimate = false
+        // self.showAllButton()
+        self.settingViewLayout()
       })
       return
     }
-    const frame = toolbarUtils.studyController().view.bounds
+    const frame = MNUtil.studyView.bounds
     self.lastFrame = self.view.frame
     self.customMode = "full"
     self.custom = true;
     self.dynamic = false;
-    self.hideAllButton()
-
-
-    UIView.animateWithDurationAnimationsCompletion(0.3,()=>{
-      self.view.frame = {x:40,y:50,width:frame.width-80,height:frame.height-70}
-      self.currentFrame = {x:40,y:50,width:frame.width-80,height:frame.height-70}
-    },
-    ()=>{
-      self.showAllButton()
+    self.onAnimate = true
+    // self.hideAllButton()
+    MNUtil.animate(()=>{
+      self.currentFrame = {x:40,y:0,width:frame.width-80,height:frame.height}
+      self.view.frame = {x:40,y:0,width:frame.width-80,height:frame.height}
+      self.settingViewLayout()
+    },0.3).then(()=>{
+      self.onAnimate = false
+      // self.showAllButton()
+      self.settingViewLayout()
     })
   },
   onMoveGesture:function (gesture) {
@@ -213,10 +214,11 @@ viewWillLayoutSubviews: function() {
     if (self.custom) {
       // Application.sharedInstance().showHUD(self.custom, self.view.window, 2);
       self.customMode = "None"
-      UIView.animateWithDurationAnimations(0.2,()=>{
+      MNUtil.animate(()=>{
         self.view.frame = MNUtil.genFrame(x,y,self.lastFrame.width,self.lastFrame.height)
         self.currentFrame  = self.view.frame
-      })
+        self.settingViewLayout()
+      },0.1)
     }else{
       self.view.frame = MNUtil.genFrame(x,y,frame.width,frame.height)
       self.currentFrame  = self.view.frame
@@ -463,7 +465,7 @@ settingController.prototype.init = function () {
 settingController.prototype.changeButtonOpacity = function(opacity) {
     this.moveButton.layer.opacity = opacity
     this.maxButton.layer.opacity = opacity
-    this.closeButton.layer.opacity = opacity
+    // this.closeButton.layer.opacity = opacity
 }
 settingController.prototype.setButtonLayout = function (button,targetAction) {
     button.autoresizingMask = (1 << 0 | 1 << 3);
@@ -502,23 +504,41 @@ settingController.prototype.createButton = function (buttonName,targetAction,sup
 settingController.prototype.settingViewLayout = function (){
     let viewFrame = this.view.bounds
     let width = viewFrame.width
-    let height = viewFrame.height-40
+    let height = viewFrame.height
+    this.maxButton.frame = MNUtil.genFrame(width*0.5+80,0,18,18)
+    this.moveButton.frame = MNUtil.genFrame(width*0.5-75, 0, 150, 17)
     this.settingView.frame = {x:0,y:55,width:width,height:height-55}
     this.configView.frame = MNUtil.genFrame(0,0,width-2,height-60)
     this.advanceView.frame = MNUtil.genFrame(0,0,width-2,height-60)
-    this.webviewInput.frame = {x:5,y:205,width:width-10,height:height-300}
-    this.titleInput.frame = {x:5,y:165,width:width-50,height:35}
-    this.runButton.frame = {x:width-40,y:165,width:35,height:35}
-    this.copyButton.frame = {x:5,y:height-90,width:60,height:30}
-    this.pasteButton.frame = {x:70,y:height-90,width:60,height:30}
+    if (width < 650) {
+      this.webviewInput.frame = {x:5,y:205,width:width-10,height:height-300}
+      this.titleInput.frame = {x:5,y:165,width:width-50,height:35}
+      this.runButton.frame = {x:width-40,y:165,width:35,height:35}
+      this.copyButton.frame = {x:5,y:height-90,width:60,height:30}
+      this.pasteButton.frame = {x:70,y:height-90,width:60,height:30}
 
-    this.saveButton.frame = {x:width-75,y:height-90,width:70,height:30}
-    this.scrollview.frame = {x:5,y:5,width:width-10,height:155}
-    this.scrollview.contentSize = {width:width-20,height:height};
-    this.moveTopButton.frame = {x:width-40,y:15,width:30,height:30}
-    this.moveUpButton.frame = {x:width-40,y:50,width:30,height:30}
-    this.moveDownButton.frame = {x:width-40,y:85,width:30,height:30}
-    this.configReset.frame = {x:width-40,y:120,width:30,height:30}
+      this.saveButton.frame = {x:width-75,y:height-90,width:70,height:30}
+      this.scrollview.frame = {x:5,y:5,width:width-10,height:155}
+      this.scrollview.contentSize = {width:width-20,height:height};
+      this.moveTopButton.frame = {x:width-40,y:15,width:30,height:30}
+      this.moveUpButton.frame = {x:width-40,y:50,width:30,height:30}
+      this.moveDownButton.frame = {x:width-40,y:85,width:30,height:30}
+      this.configReset.frame = {x:width-40,y:120,width:30,height:30}
+    }else{
+      this.webviewInput.frame = {x:355,y:45,width:width-360,height:height-140}
+      this.titleInput.frame = {x:355,y:5,width:width-400,height:35}
+      this.runButton.frame = {x:width-40,y:5,width:35,height:35}
+      this.copyButton.frame = {x:355,y:height-90,width:60,height:30}
+      this.pasteButton.frame = {x:420,y:height-90,width:60,height:30}
+
+      this.saveButton.frame = {x:width-75,y:height-90,width:70,height:30}
+      this.scrollview.frame = {x:5,y:5,width:345,height:height-65}
+      this.scrollview.contentSize = {width:345,height:height};
+      this.moveTopButton.frame = {x:315,y:15,width:30,height:30}
+      this.moveUpButton.frame = {x:315,y:50,width:30,height:30}
+      this.moveDownButton.frame = {x:315,y:85,width:30,height:30}
+      this.configReset.frame = {x:315,y:120,width:30,height:30}
+    }
 
 
     let settingFrame = this.settingView.bounds
@@ -535,6 +555,9 @@ settingController.prototype.settingViewLayout = function (){
     settingFrame.x = 95
     settingFrame.width = 100
     this.advancedButton.frame = settingFrame
+    settingFrame.x = width-35
+    settingFrame.width = 30
+    this.closeButton.frame = settingFrame
 
     this.editorButton.frame = MNUtil.genFrame(10, 15, (width-25)/2, 35)
     this.chatAIButton.frame = MNUtil.genFrame(15+(width-25)/2, 15, (width-25)/2, 35)
@@ -801,12 +824,12 @@ settingController.prototype.refreshLayout = function () {
 
 settingController.prototype.hideAllButton = function (frame) {
   this.moveButton.hidden = true
-  this.closeButton.hidden = true
+  // this.closeButton.hidden = true
   this.maxButton.hidden = true
 }
 settingController.prototype.showAllButton = function (frame) {
   this.moveButton.hidden = false
-  this.closeButton.hidden = false
+  // this.closeButton.hidden = false
   this.maxButton.hidden = false
 }
 /**

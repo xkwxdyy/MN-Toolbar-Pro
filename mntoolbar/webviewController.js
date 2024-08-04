@@ -95,6 +95,12 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
   },
   viewWillDisappear: function(animated) {
   },
+// onPencilDoubleTap(){
+//   MNUtil.showHUD("message")
+// },
+// onPencilDoubleTapPerform(perform){
+//   MNUtil.showHUD("message")
+// },
 viewWillLayoutSubviews: function() {
   if (self.onAnimate) {
     return
