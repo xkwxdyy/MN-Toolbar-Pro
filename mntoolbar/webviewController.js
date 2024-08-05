@@ -234,6 +234,7 @@ try {
       }
       return
     }
+    MNUtil.copyJSON(des)
     self.customActionByDes(des)
     // self.customAction(actionName)
   },
@@ -1002,6 +1003,7 @@ toolbarController.prototype.setToolbarLayout = function () {
     var yBottom   = yTop + viewFrame.height
     // this.moveButton.frame = {x: 0 ,y: 0,width: 40,height: 15};
     this.screenButton.frame = {x: 0 ,y: yBottom-15,width: 40,height: 15};
+    this.view.bringSubviewToFront(this.screenButton)
 
     let initX = 0
     let initY = 0
@@ -1011,6 +1013,7 @@ toolbarController.prototype.setToolbarLayout = function () {
       initY = initY+45
       this["ColorButton"+index].hidden = (initY > yBottom)
     }
+
 }
 toolbarController.prototype.checkPopoverController = function () {
   if (this.view.popoverController) {this.view.popoverController.dismissPopoverAnimated(true);}
@@ -4897,6 +4900,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           MNUtil.postNotification("toggleMindmapToolbar", {target:des.target})
         }
         break
+      case "export":
+        let docPath = MNUtil.getDocById(focusNote.note.docMd5).fullPathFileName
+        MNUtil.saveFile(docPath, ["public.pdf"])
+        break;
       case "setButtonImage":
         MNUtil.showHUD("setButtonImage")
         await MNUtil.delay(0.01)

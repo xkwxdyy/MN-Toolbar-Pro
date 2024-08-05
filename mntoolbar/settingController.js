@@ -378,7 +378,8 @@ viewWillLayoutSubviews: function() {
       return
     }
     if (selected.includes("custom")) {
-      self.toolbarController.customAction(selected)
+      let des = toolbarConfig.getDescriptionByName(selected)
+      self.toolbarController.customActionByDes(des)
       return
     }
     if (selected.includes("color")) {
