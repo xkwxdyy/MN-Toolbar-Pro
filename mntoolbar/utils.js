@@ -1962,7 +1962,7 @@ class toolbarUtils {
         contentInTitle = ''; // 或者抛出错误
       }
     } else {
-      const matchResult = focusNote.noteTitle.match(/【(.*)：(.*)】(.*)/);
+      const matchResult = focusNote.noteTitle.match(/【(.*?)：(.*)】(.*)/);
       if (matchResult) {
         contentInTitle = matchResult[2]; // 获取第二个匹配组，即括号内的内容
       } else {
