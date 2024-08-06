@@ -1838,6 +1838,25 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "handleSelectionSpaces":
+        MNUtil.showHUD(Pangu.spacing(MNUtil.selectionText))
+        MNUtil.copy(Pangu.spacing(MNUtil.selectionText))
+        break;
+      case "handleTitleSpaces":
+        try {
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(
+              focusNote => {
+                focusNote.noteTitle = Pangu.spacing(focusNote.noteTitle)
+                focusNote.refresh()
+                focusNote.refreshAll()
+              }
+            )
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
       case "focusInMindMap":
         MNUtil.undoGrouping(()=>{
           focusNote.focusInMindMap()
@@ -4500,6 +4519,8 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 }
               }
               focusNote.refresh()
+              // 处理卡片标题空格
+              focusNote.noteTitle = Pangu.spacing(focusNote.noteTitle)
               if (focusNotes.length == 1) {
                 try {
                   // MNUtil.undoGrouping(()=>{
