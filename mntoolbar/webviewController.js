@@ -3840,6 +3840,13 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           focusNote.moveComment(focusNote.comments.length-1,thoughtHtmlCommentIndex)
         })
         break;
+      case "moveLastCommentToProof":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            toolbarUtils.moveLastCommentToProof(focusNote)
+          })
+        })
+        break;
       case "moveLastCommentToThought":
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{
@@ -3851,6 +3858,13 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{
             toolbarUtils.referenceMoveLastCommentToThought(focusNote)
+          })
+        })
+        break;
+      case "moveLastTwoCommentsToProof":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            toolbarUtils.moveLastTwoCommentsToProof(focusNote)
           })
         })
         break;

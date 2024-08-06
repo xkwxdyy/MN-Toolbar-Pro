@@ -1561,10 +1561,23 @@ class toolbarUtils {
     focusNote.moveComment(focusNote.comments.length-1, finalIndex)
   }
 
+  static moveLastCommentToProof(focusNote){
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    let finalIndex = thoughtHtmlCommentIndex
+    focusNote.moveComment(focusNote.comments.length-1, finalIndex)
+  }
+
   static moveLastTwoCommentsToThought(focusNote){
     let linkHtmlCommentIndex = focusNote.getCommentIndex("相关链接：", true)
     let keywordsHtmlCommentIndex = focusNote.getIncludingCommentIndex("关键词：", true)
     let finalIndex = (keywordsHtmlCommentIndex == -1)? linkHtmlCommentIndex : keywordsHtmlCommentIndex
+    focusNote.moveComment(focusNote.comments.length-1, finalIndex)
+    focusNote.moveComment(focusNote.comments.length-1, finalIndex)
+  }
+
+  static moveLastTwoCommentsToProof(focusNote){
+    let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+    let finalIndex = thoughtHtmlCommentIndex
     focusNote.moveComment(focusNote.comments.length-1, finalIndex)
     focusNote.moveComment(focusNote.comments.length-1, finalIndex)
   }
@@ -4752,10 +4765,18 @@ static template(action) {
               "action" : "renewProof",
               "menuTitle" : "更新证明"
             },
+            // {
+            //   "action" : "moveLastLinkToProof",
+            //   "menuTitle" : "最后🔗⬆️证明"
+            // }
             {
-              "action" : "moveLastLinkToProof",
-              "menuTitle" : "最后🔗⬆️证明"
-            }
+              "action" : "moveLastCommentToProof",
+              "menuTitle" : "最后1️⃣💬⬆️证明"
+            },
+            {
+              "action" : "moveLastTwoCommentsToProof",
+              "menuTitle" : "最后2️⃣💬⬆️证明"
+            },
           ]
         },
       ]
