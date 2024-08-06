@@ -9,6 +9,7 @@ JSB.newAddon = function (mainPath) {
   }
   JSB.require('webviewController');
   JSB.require('settingController');
+  // JSB.require('UIPencilInteraction');
   /** @return {MNToolbarClass} */
   const getMNToolbarClass = ()=>self  
   var MNToolbarClass = JSB.defineClass(
@@ -313,7 +314,7 @@ JSB.newAddon = function (mainPath) {
           self.testController.view.frame = currentFrame
           self.testController.currentFrame = currentFrame
         }
-        if (self.addonController.settingController) {
+        if (self.addonController.settingController && !self.addonController.settingController.onAnimate) {
           let currentFrame = self.addonController.settingController.currentFrame
           // currentFrame.height = toolbarUtils.checkHeight(currentFrame.height)
           self.addonController.settingController.view.frame = currentFrame

@@ -95,6 +95,12 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
   },
   viewWillDisappear: function(animated) {
   },
+// onPencilDoubleTap(){
+//   MNUtil.showHUD("message")
+// },
+// onPencilDoubleTapPerform(perform){
+//   MNUtil.showHUD("message")
+// },
 viewWillLayoutSubviews: function() {
   if (self.onAnimate) {
     return
@@ -228,6 +234,7 @@ try {
       }
       return
     }
+    MNUtil.copyJSON(des)
     self.customActionByDes(des)
     // self.customAction(actionName)
   },
@@ -996,6 +1003,7 @@ toolbarController.prototype.setToolbarLayout = function () {
     var yBottom   = yTop + viewFrame.height
     // this.moveButton.frame = {x: 0 ,y: 0,width: 40,height: 15};
     this.screenButton.frame = {x: 0 ,y: yBottom-15,width: 40,height: 15};
+    this.view.bringSubviewToFront(this.screenButton)
 
     let initX = 0
     let initY = 0
@@ -1005,6 +1013,7 @@ toolbarController.prototype.setToolbarLayout = function () {
       initY = initY+45
       this["ColorButton"+index].hidden = (initY > yBottom)
     }
+
 }
 toolbarController.prototype.checkPopoverController = function () {
   if (this.view.popoverController) {this.view.popoverController.dismissPopoverAnimated(true);}
@@ -1829,6 +1838,35 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "handleSelectionSpaces":
+        MNUtil.showHUD(Pangu.spacing(MNUtil.selectionText))
+        MNUtil.copy(Pangu.spacing(MNUtil.selectionText))
+        break;
+      case "handleTitleSpaces":
+        try {
+          MNUtil.undoGrouping(()=>{
+            focusNotes.forEach(
+              focusNote => {
+                focusNote.noteTitle = Pangu.spacing(focusNote.noteTitle)
+                focusNote.refresh()
+                focusNote.refreshAll()
+              }
+            )
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
+      case "focusInMindMap":
+        MNUtil.undoGrouping(()=>{
+          focusNote.focusInMindMap()
+        })
+        break;
+      case "focusInFloatMindMap":
+        MNUtil.undoGrouping(()=>{
+          focusNote.focusInFloatMindMap()
+        })
+        break;
       case "titleCase":
         MNUtil.showHUD(MNUtil.selectionText.toTitleCase())
         MNUtil.copy(MNUtil.selectionText.toTitleCase())
@@ -3831,6 +3869,13 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           focusNote.moveComment(focusNote.comments.length-1,thoughtHtmlCommentIndex)
         })
         break;
+      case "moveLastCommentToProof":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            toolbarUtils.moveLastCommentToProof(focusNote)
+          })
+        })
+        break;
       case "moveLastCommentToThought":
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{
@@ -3842,6 +3887,13 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{
             toolbarUtils.referenceMoveLastCommentToThought(focusNote)
+          })
+        })
+        break;
+      case "moveLastTwoCommentsToProof":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            toolbarUtils.moveLastTwoCommentsToProof(focusNote)
           })
         })
         break;
@@ -4467,6 +4519,8 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 }
               }
               focusNote.refresh()
+              // 处理卡片标题空格
+              focusNote.noteTitle = Pangu.spacing(focusNote.noteTitle)
               if (focusNotes.length == 1) {
                 try {
                   // MNUtil.undoGrouping(()=>{
@@ -4891,6 +4945,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           MNUtil.postNotification("toggleMindmapToolbar", {target:des.target})
         }
         break
+      case "export":
+        let docPath = MNUtil.getDocById(focusNote.note.docMd5).fullPathFileName
+        MNUtil.saveFile(docPath, ["public.pdf"])
+        break;
       case "setButtonImage":
         MNUtil.showHUD("setButtonImage")
         await MNUtil.delay(0.01)
