@@ -1838,6 +1838,16 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "focusInMindMap":
+        MNUtil.undoGrouping(()=>{
+          focusNote.focusInMindMap()
+        })
+        break;
+      case "focusInFloatMindMap":
+        MNUtil.undoGrouping(()=>{
+          focusNote.focusInFloatMindMap()
+        })
+        break;
       case "titleCase":
         MNUtil.showHUD(MNUtil.selectionText.toTitleCase())
         MNUtil.copy(MNUtil.selectionText.toTitleCase())

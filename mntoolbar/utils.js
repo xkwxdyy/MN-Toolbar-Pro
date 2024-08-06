@@ -5092,6 +5092,18 @@ static template(action) {
       config.action = "menu"
       config.menuItems = [
         {
+          "action": "focusInMindMap",
+          "menuTitle": "focus In 主视图",
+        },
+        {
+          "action": "focusInFloatMindMap",
+          "menuTitle": "focus In 浮窗",
+        },
+        {
+          "action": "changePrefix",
+          "menuTitle": "✂️ 修改卡片前缀",
+        },
+        {
           "action": "convertNoteToNonexcerptVersion",
           "menuTitle": "→非摘录版本",
         },
@@ -5102,10 +5114,6 @@ static template(action) {
         {
           "action": "refreshCardsAndAncestorsAndDescendants",
           "menuTitle": "刷新卡片及其所有父子卡片",
-        },
-        {
-          "action": "changePrefix",
-          "menuTitle": "✂️ 修改卡片前缀",
         },
         {
           "action": "cardCopyNoteId",
