@@ -2415,7 +2415,7 @@ class toolbarUtils {
                         focusNote.childNotes.forEach(childNote => {
                           childNote.refresh()
                         })
-                        this.changePrefix(focusNote)
+                        this.changeChildNotesPrefix(focusNote)
                       } else {
                         // focusNote 是知识点卡片
                         if (
@@ -2844,10 +2844,9 @@ class toolbarUtils {
     focusNote.refresh()
   }
 
-  static changePrefix(focusNote) {
+  static changeChildNotesPrefix(focusNote) {
     let focusNoteColorIndex = focusNote.note.colorIndex
     let prefix
-    let type
     const contentCardRegex = /【(.*?)：(.*?)(：.*)?】(.*)/;  // 注意前面的两个要加 ? 变成非贪婪模式
     if (focusNoteColorIndex == 1) {
       // 淡绿色卡片
@@ -2894,18 +2893,6 @@ class toolbarUtils {
           }
         }
       })
-      // todo: focusNote 的链接，因为被链接的标题改变了，所以变成了空白，而且无法自己刷新
-      // 目前的暂时解决办法是添加评论再删除
-      // focusNote.appendMarkdownComment("")
-      // focusNote.removeCommentByIndex(focusNote.note.comments.length-1)
-      // focusNote.descendantNodes.descendant.forEach(descendantNote => {
-      //   descendantNote.appendMarkdownComment("")
-      //   descendantNote.removeCommentByIndex(descendantNote.note.comments.length-1)
-      // })
-      // focusNote.ancestorNodes.forEach(ancestorNote => {
-      //   ancestorNote.appendMarkdownComment("")
-      //   ancestorNote.removeCommentByIndex(ancestorNote.note.comments.length-1)
-      // })
       focusNote.refreshAll()
     } else {
       if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
@@ -2976,20 +2963,20 @@ class toolbarUtils {
             }
           }
         })
-        // focusNote.appendMarkdownComment("")
-        // focusNote.removeCommentByIndex(focusNote.note.comments.length-1)
-        // focusNote.descendantNodes.descendant.forEach(descendantNote => {
-        //   descendantNote.appendMarkdownComment("")
-        //   descendantNote.removeCommentByIndex(descendantNote.note.comments.length-1)
-        // })
-        // focusNote.ancestorNodes.forEach(ancestorNote => {
-        //   ancestorNote.appendMarkdownComment("")
-        //   ancestorNote.removeCommentByIndex(ancestorNote.note.comments.length-1)
-        // })
         focusNote.refreshAll()
       }
     }
   }
+
+  static renewChildNotesPrefix(focusNote) {
+    focusNote.childNotes.forEach(
+      childNote => {
+        childNote.noteTitle = childNote.noteTitle.replace(/(^【.*】)/g,"")
+      }
+    )
+    this.changeChildNotesPrefix(focusNote)
+  }
+
 
   static achieveCards(focusNote) {
     if (!focusNote.noteTitle.includes("存档")) {
@@ -4880,6 +4867,14 @@ static template(action) {
       config.action = "menu"
       config.menuItems = [
         {
+          "action": "changeChildNotesPrefix",
+          "menuTitle": "✂️ 修改子卡片前缀",
+        },
+        {
+          "action": "renewChildNotesPrefix",
+          "menuTitle": "✂️ 重新设置子卡片前缀",
+        },
+        {
           "action": "menu",
           "menuTitle": "➡️ 链接 🔗",
           "menuWidth": 400,
@@ -5305,10 +5300,6 @@ static template(action) {
         {
           "action": "focusInFloatMindMap",
           "menuTitle": "focus In 浮窗",
-        },
-        {
-          "action": "changePrefix",
-          "menuTitle": "✂️ 修改卡片前缀",
         },
         {
           "action": "convertNoteToNonexcerptVersion",
