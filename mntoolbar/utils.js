@@ -1752,6 +1752,17 @@ class toolbarUtils {
     focusNote.moveComment(focusNote.comments.length-1, finalIndex)
   }
 
+  static moveLastTwoCommentsInBiLinkNotesToThought(focusNote){
+    let keywordsHtmlCommentIndexInFocusNote = focusNote.getIncludingCommentIndex("关键词：", true)
+    let targetNoteId = focusNote.comments[focusNote.comments.length-1].text.match(/marginnote4app:\/\/note\/(.*)/)[1]
+    let targetNote = MNNote.new(targetNoteId)
+    let keywordsHtmlCommentIndexInTargetNote = targetNote.getIncludingCommentIndex("关键词：", true)
+    focusNote.moveComment(focusNote.comments.length-1, keywordsHtmlCommentIndexInFocusNote)
+    focusNote.moveComment(focusNote.comments.length-1, keywordsHtmlCommentIndexInFocusNote)
+    targetNote.moveComment(targetNote.comments.length-1, keywordsHtmlCommentIndexInTargetNote)
+    targetNote.moveComment(targetNote.comments.length-1, keywordsHtmlCommentIndexInTargetNote)
+  }
+
   static moveLastTwoCommentsToProof(focusNote){
     let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
     let finalIndex = thoughtHtmlCommentIndex
@@ -4885,6 +4896,7 @@ static template(action) {
         {
           "action": "menu",
           "menuTitle": "➡️ 思考",
+          "menuWidth": 330,
           "menuItems": [
             {
               "action" : "moveUpThoughtPoints",
@@ -4905,6 +4917,10 @@ static template(action) {
             {
               "action" : "moveLastTwoCommentsToThought",
               "menuTitle" : "最后2️⃣💬⬆️思考"
+            },
+            {
+              "action": "moveLastTwoCommentsInBiLinkNotesToThought",
+              "menuTitle": "双向链接的两张卡片同时最后2️⃣💬⬆️思考",
             },
           ]
         },
@@ -4942,10 +4958,10 @@ static template(action) {
               "action" : "renewProof",
               "menuTitle" : "更新证明"
             },
-            // {
-            //   "action" : "moveLastLinkToProof",
-            //   "menuTitle" : "最后🔗⬆️证明"
-            // }
+            {
+              "action" : "addProofFromClipboard",
+              "menuTitle" : "从剪切板增加证明"
+            },
             {
               "action" : "moveLastCommentToProof",
               "menuTitle" : "最后1️⃣💬⬆️证明"
@@ -5254,11 +5270,25 @@ static template(action) {
           "menuTitle": "→ 文档中选中的文本",
           "menuItems": [
             {
-              "action": "titleCase",
+              "action": "selectionTextToTitleCase",
               "menuTitle": "标题规范"
             },
             {
-              "action": "handleSelectionSpaces",
+              "action": "selectionTextHandleSpaces",
+              "menuTitle": "处理空格"
+            }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "→ 复制的文本",
+          "menuItems": [
+            {
+              "action": "copiedTextToTitleCase",
+              "menuTitle": "标题规范"
+            },
+            {
+              "action": "copiedTextHandleSpaces",
               "menuTitle": "处理空格"
             }
           ]

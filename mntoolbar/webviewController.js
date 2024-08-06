@@ -1838,9 +1838,25 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
-      case "handleSelectionSpaces":
+      case "addProofFromClipboard":
+        try {
+          MNUtil.undoGrouping(()=>{
+            MNUtil.excuteCommand("EditPaste")
+            MNUtil.delay(0.1).then(()=>{
+              toolbarUtils.moveLastCommentToProof(focusNote)
+            })
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
+      case "copiedTextHandleSpaces":
         MNUtil.showHUD(Pangu.spacing(MNUtil.selectionText))
         MNUtil.copy(Pangu.spacing(MNUtil.selectionText))
+        break;
+      case "selectionTextHandleSpaces":
+        MNUtil.showHUD(Pangu.spacing(MNUtil.clipboardText))
+        MNUtil.copy(Pangu.spacing(MNUtil.clipboardText))
         break;
       case "handleTitleSpaces":
         try {
@@ -1867,9 +1883,13 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           focusNote.focusInFloatMindMap()
         })
         break;
-      case "titleCase":
+      case "selectionTextToTitleCase":
         MNUtil.showHUD(MNUtil.selectionText.toTitleCase())
         MNUtil.copy(MNUtil.selectionText.toTitleCase())
+        break;
+      case "copiedTextToTitleCase":
+        MNUtil.showHUD(MNUtil.clipboardText.toTitleCase())
+        MNUtil.copy(MNUtil.clipboardText.toTitleCase())
         break;
       case "proofAddMethodComment":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
@@ -3901,6 +3921,13 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(focusNote=>{
             toolbarUtils.moveLastTwoCommentsToThought(focusNote)
+          })
+        })
+        break;
+      case "moveLastTwoCommentsInBiLinkNotesToThought":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            toolbarUtils.moveLastTwoCommentsInBiLinkNotesToThought(focusNote)
           })
         })
         break;
