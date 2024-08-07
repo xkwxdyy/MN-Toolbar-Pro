@@ -7,28 +7,30 @@ import filecmp
 # 列出当前目录下所有的 .mnaddon 文件
 addon_files = [f for f in os.listdir('.') if os.path.isfile(f) and f.endswith('.mnaddon')]
 
-# 初始化最大的 x 和 y
-max_x = 0
-max_y = 0
+# 定义正则表达式来匹配文件名格式
+pattern = r"mntoolbar_v(\d+)_(\d+)_(\d+)(?:_alpha(\d+))?\.mnaddon"
+
+max_x = max_y = max_z = -1
 target_addon = None
 
-# 定义正则表达式来匹配文件名格式
-pattern = r"mntoolbar_v0_0_(\d+)_alpha(\d+)\.mnaddon"
-
-# 遍历每个 .mnaddon 文件，找到 x 和 y 最大的
 for addon_file in addon_files:
     match = re.match(pattern, addon_file)
     if match:
         x = int(match.group(1))
         y = int(match.group(2))
-        
-        if x == max_x:
-            if y > max_y:
-                max_y = y
-                target_addon = addon_file
-        elif x > max_x:
-            max_x = x
-            max_y = y
+        z = int(match.group(3))
+        w = int(match.group(4)) if match.group(4) else None
+
+        is_alpha = w is not None  # 是否是 alpha 版本
+
+        if (x > max_x or 
+            (x == max_x and y > max_y) or 
+            (x == max_x and y == max_y and z > max_z) or 
+            (x == max_x and y == max_y and z == max_z and 
+             (not is_alpha and (target_addon is None or re.search(r"alpha", target_addon)) or 
+              (is_alpha and target_addon is not None and not re.search(r"alpha", target_addon))))):
+
+            max_x, max_y, max_z = x, y, z
             target_addon = addon_file
 
 # 将找到的目标插件赋值给 target_addon
@@ -70,7 +72,7 @@ if not os.path.isdir(newVersion_path):
 
 # 将 newVersion_path 中的 .js 文件和 .html 文件复制到 oldVersion_path 中 
 for file in os.listdir(newVersion_path):
-    if file.endswith('.js') or file.endswith('.html'):
+    if file.endswith('.js') or file.endswith('.html') or file.endswith('.json'):
         new_file = os.path.join(newVersion_path, file)
         old_file = os.path.join(oldVersion_path, file)
         if os.path.exists(old_file):
