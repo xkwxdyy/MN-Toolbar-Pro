@@ -1,3 +1,3 @@
 {
-  "include": ["main.js","webviewController.js","settingController.js","index.d.ts","utils.js","/Users/linlifei/extension/MNUtil/utils.js"]
+  "include": ["main.js","webviewController.js","settingController.js","/Users/linlifei/extension/FeliksPro/.out/index.d.ts","utils.js"]
 }
