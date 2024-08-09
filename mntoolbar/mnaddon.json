@@ -2,7 +2,7 @@
     "addonid": "marginnote.extension.mntoolbarpro",
     "author": "Xiakangwei and Linlifei",
     "title": "MN Toolbar Pro",
-    "version": "0.0.9.alpha0805",
+    "version": "0.0.9.alpha0807",
     "marginnote_version_min": "3.7.11",
     "cert_key": ""
 }
