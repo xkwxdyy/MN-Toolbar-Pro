@@ -3,10 +3,7 @@ let referenceIds = {}
 JSB.newAddon = function (mainPath) {
   JSB.require('utils')
   JSB.require('pinyin')
-  if (!toolbarUtils.checkMNUtilsFolder(mainPath)) {
-    Application.sharedInstance().showHUD("MN Toolbar: Please install 'MN Utils' first!",Application.sharedInstance().focusWindow,5)
-    return undefined
-  }
+  if (!toolbarUtils.checkMNUtilsFolder(mainPath)) {return undefined}
   JSB.require('webviewController');
   JSB.require('settingController');
   // JSB.require('UIPencilInteraction');
@@ -36,6 +33,7 @@ JSB.newAddon = function (mainPath) {
         MNUtil.addObserver(self, 'onRemoveMNToolbar:', 'removeMNToolbar')
         MNUtil.addObserver(self, 'onToggleMindmapToolbar:', 'toggleMindmapToolbar')
         MNUtil.addObserver(self, 'onRefreshToolbarButton:', 'refreshToolbarButton')
+        MNUtil.addObserver(self, 'onOpenToolbarSetting:', 'openToolbarSetting')
         MNUtil.addObserver(self, 'onTextDidBeginEditing:', 'UITextViewTextDidBeginEditingNotification')
       },
 
@@ -48,6 +46,7 @@ JSB.newAddon = function (mainPath) {
         MNUtil.removeObserver(self,'removeMNToolbar')
         MNUtil.removeObserver(self,'UITextViewTextDidBeginEditingNotification')
         MNUtil.removeObserver(self,'refreshToolbarButton')
+        MNUtil.removeObserver(self,'openToolbarSetting')
         // MNUtil.showHUD("remove")
       },
 
@@ -59,43 +58,20 @@ JSB.newAddon = function (mainPath) {
 
       notebookWillOpen: async function (notebookid) {
         if (!(await toolbarUtils.checkMNUtil(false,0.1))) return
-        let self = getMNToolbarClass()
-        self.init(mainPath)
-        let studyView = MNUtil.studyView
         if (MNUtil.studyMode < 3) {
+          let self = getMNToolbarClass()
+          self.init(mainPath)
           await MNUtil.delay(0.5)
-          // toolbarUtils.refreshSubscriptionStatus()
-          if (!self.addonController) {
-            self.addonController = toolbarController.new();
-            self.addonController.mainPath = mainPath;
-          }
-          studyView.addSubview(self.addonController.view);
+          self.ensureView(true)
           MNUtil.refreshAddonCommands();
-          self.addonController.view.hidden = true;
           self.addonController.dynamic = toolbarConfig.dynamic
           self.addonController.notebookid = notebookid
           self.notebookid = notebookid
           toolbarUtils.notebookId = notebookid
-          if (self.lastFrame) {
-            self.addonController.view.frame = self.lastFrame
-            self.addonController.currentFrame = self.lastFrame
-          }else{
-            self.addonController.view.frame = MNUtil.genFrame(10,10,40,200)
-            self.addonController.currentFrame = MNUtil.genFrame(10,10,40,200)
-          }
-          if (toolbarConfig.windowState.frame) {
-            self.addonController.view.frame = toolbarConfig.windowState.frame;
-            self.addonController.currentFrame = toolbarConfig.windowState.frame;
-            // self.addonController.view.hidden = !toolbarConfig.windowState.open;
-            self.addonController.view.hidden = !toolbarConfig.getWindowState("open");
-            toolbarConfig.isFirst = false
-          }else{
-            toolbarConfig.windowState={}
-          }
-          }
-          NSTimer.scheduledTimerWithTimeInterval(0.2, false, function () {
-            MNUtil.studyController.becomeFirstResponder(); //For dismiss keyboard on iOS
-          });
+        }
+        MNUtil.delay(0.2).then(()=>{
+          MNUtil.studyView.becomeFirstResponder(); //For dismiss keyboard on iOS
+        })
           
       },
 
@@ -326,6 +302,7 @@ JSB.newAddon = function (mainPath) {
         // MNUtil.showHUD("queryAddonCommandStatus")
         if (typeof MNUtil === 'undefined') return null
         if (MNUtil.studyMode < 3) {
+          self.ensureView(false)
           if (self.addonController) {
             self.addonController.setToolbarButton()
           }
@@ -339,6 +316,13 @@ JSB.newAddon = function (mainPath) {
         } else {
           return null;
         }
+      },
+      onOpenToolbarSetting:function (params) {
+        if (typeof MNUtil === 'undefined') return
+        if (self.window !== MNUtil.currentWindow) {
+          return
+        }
+        self.openSetting()
       },
       onToggleDynamic:function (sender) {
         
@@ -598,6 +582,8 @@ try {
       },
       toggleAddon:function (sender) {
         if (typeof MNUtil === 'undefined') return
+        self.init(mainPath)
+        self.ensureView(true)
         if (!self.addonBar) {
           self.addonBar = sender.superview.superview
           self.addonController.addonBar = self.addonBar
@@ -666,5 +652,59 @@ try {
     toolbarUtils.addErrorLog(error, "init")
   }
   }
+  MNToolbarClass.prototype.ensureView = function (refresh = true) {
+  try {
+    if (!this.addonController) {
+      this.addonController = toolbarController.new();
+      this.addonController.view.hidden = true;
+      MNUtil.studyView.addSubview(this.addonController.view);
+    }
+    if (!MNUtil.isDescendantOfStudyView(this.addonController.view)) {
+      MNUtil.studyView.addSubview(this.addonController.view)
+      this.addonController.view.hidden = true
+      if (refresh) {
+        MNUtil.refreshAddonCommands()
+      }
+    }
+    if (this.lastFrame) {
+      this.addonController.view.frame = this.lastFrame
+      this.addonController.currentFrame = this.lastFrame
+    }else{
+      this.addonController.view.frame = MNUtil.genFrame(10,10,40,200)
+      this.addonController.currentFrame = MNUtil.genFrame(10,10,40,200)
+    }
+    if (toolbarConfig.windowState.frame) {
+      this.addonController.view.frame = toolbarConfig.windowState.frame;
+      this.addonController.currentFrame = toolbarConfig.windowState.frame;
+      // this.addonController.view.hidden = !toolbarConfig.windowState.open;
+      this.addonController.view.hidden = !toolbarConfig.getWindowState("open");
+      toolbarConfig.isFirst = false
+    }else{
+      toolbarConfig.windowState={}
+    }
+      } catch (error) {
+      toolbarUtils.showHUD(error,5)
+  }
+  }
+  /**
+   * 
+   * @this {MNToolbarClass} 
+   */
+  MNToolbarClass.prototype.openSetting = function () {
+    try {
+    if (!this.settingController) {
+      this.settingController = settingController.new();
+      this.settingController.toolbarController = this.addonController
+      this.settingController.mainPath = toolbarConfig.mainPath;
+      this.settingController.action = toolbarConfig.action
+      // this.settingController.dynamicToolbar = this.dynamicToolbar
+      MNUtil.studyView.addSubview(this.settingController.view)
+      // toolbarUtils.studyController().view.addSubview(this.settingController.view)
+    }
+    this.settingController.show()
+    } catch (error) {
+      toolbarUtils.addErrorLog(error, "openSetting")
+    }
+}
   return MNToolbarClass;
 };

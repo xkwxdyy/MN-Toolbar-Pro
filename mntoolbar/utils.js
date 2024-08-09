@@ -4451,7 +4451,11 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
   }
   static checkMNUtilsFolder(fullPath){
     let extensionFolder = this.getExtensionFolder(fullPath)
-    return NSFileManager.defaultManager().fileExistsAtPath(extensionFolder+"/marginnote.extension.mnutils/main.js")
+    let folderExists = NSFileManager.defaultManager().fileExistsAtPath(extensionFolder+"/marginnote.extension.mnutils/main.js")
+    if (!folderExists) {
+      this.showHUD("MN Toolbar: Please install 'MN Utils' first!")
+    }
+    return folderExists
   }
   /**
    * 
@@ -5439,6 +5443,7 @@ static getActions() {
     "custom4":{name:"文献",image:"reference",description: this.template("menu_reference")},
     "custom5":{name:"卡片",image:"card",description: this.template("menu_card")},
     "custom6":{name:"文本",image:"text",description: this.template("menu_text")},
+    "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
     "custom7":{name:"隐藏插件栏",image:"hideAddonBar",description: this.template("hideAddonBar")},
     "custom8":{name:"测试",image:"test",description: this.template("test")},
     "execute":{name:"execute",image:"execute",description:"let focusNote = MNNote.getFocusNote()\nMNUtil.showHUD(focusNote.noteTitle)"},
@@ -5447,7 +5452,6 @@ static getActions() {
     "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
     "search":{name:"Search",image:"search",description:"Search"},
     "bigbang":{name:"Bigbang",image:"bigbang",description:"Bigbang"},
-    "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
     "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"},
     // "setting":{name:"Setting",image:"setting",description:"Setting"}
   }

@@ -153,9 +153,9 @@ viewWillLayoutSubviews: function() {
   },
   changeScreen: function(sender) {
     let clickDate = Date.now()
-    if (self.dynamicWindow) {
-      return
-    }
+    // if (self.dynamicWindow) {
+    //   return
+    // }
     self.checkPopoverController()
     // if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
     var commandTable = [
@@ -234,7 +234,6 @@ try {
       }
       return
     }
-    MNUtil.copyJSON(des)
     self.customActionByDes(des)
     // self.customAction(actionName)
   },
@@ -570,24 +569,25 @@ try {
     toolbarUtils.ocr()
   },
   setting: function () {
-    let self = getToolbarController()
-    self.checkPopoverController()
-    // if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
-    try {
-    if (!self.settingController) {
-      self.settingController = settingController.new();
-      self.settingController.toolbarController = self
-      self.settingController.mainPath = toolbarConfig.mainPath;
-      self.settingController.action = toolbarConfig.action
-      // self.settingController.dynamicToolbar = self.dynamicToolbar
-      MNUtil.studyView.addSubview(self.settingController.view)
-      // toolbarUtils.studyController().view.addSubview(self.settingController.view)
-    }
+    MNUtil.postNotification("openToolbarSetting", {})
+    // let self = getToolbarController()
+    // self.checkPopoverController()
+    // // if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
+    // try {
+    // if (!self.settingController) {
+    //   self.settingController = settingController.new();
+    //   self.settingController.toolbarController = self
+    //   self.settingController.mainPath = toolbarConfig.mainPath;
+    //   self.settingController.action = toolbarConfig.action
+    //   // self.settingController.dynamicToolbar = self.dynamicToolbar
+    //   MNUtil.studyView.addSubview(self.settingController.view)
+    //   // toolbarUtils.studyController().view.addSubview(self.settingController.view)
+    // }
       
-    self.settingController.show()
-    } catch (error) {
-      MNUtil.showHUD(error)
-    }
+    // self.settingController.show()
+    // } catch (error) {
+    //   MNUtil.showHUD(error)
+    // }
   },
   pasteAsTitle:function (button) {
     self.onClick = true
