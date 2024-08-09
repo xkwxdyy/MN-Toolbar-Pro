@@ -73,6 +73,7 @@ JSB.newAddon = function (mainPath) {
             this.note.removeCommentByIndex(this.note.comments.length-1)
           }
           MNNote.prototype.refreshAll = function() {
+            this.note.refresh()
             if (this.descendantNodes.descendant.length > 0) {
               this.descendantNodes.descendant.forEach(descendantNote => {
                 descendantNote.refresh()
