@@ -2469,6 +2469,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         try {
           MNUtil.undoGrouping(()=>{
             focusNotes.forEach(focusNote=>{
+              focusNote.refresh()
               focusNote.refreshAll()
             })
           })
