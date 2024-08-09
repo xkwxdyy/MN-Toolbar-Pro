@@ -95,7 +95,7 @@ const SUBSCRIPT_CJK = /([\u2080-\u2099])(?=[\u4e00-\u9fa5])/g
 const SUPERSCRIPT_CJK = /([\u2070-\u209F\u1D56\u1D50\u207F\u1D4F\u1D57])(?=[\u4e00-\u9fa5])/g
 // 特殊字符
 // \u221E: ∞
-const SPECIAL = /([\u221E])/g
+const SPECIAL = /([\u221E])(?!\s)/g  // (?!\s) 是为了当后面没有空格才加空格，防止出现多个空格
 class Pangu {
   version
   static convertToFullwidth(symbols) {
