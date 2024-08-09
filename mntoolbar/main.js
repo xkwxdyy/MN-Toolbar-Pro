@@ -68,6 +68,72 @@ JSB.newAddon = function (mainPath) {
           self.addonController.notebookid = notebookid
           self.notebookid = notebookid
           toolbarUtils.notebookId = notebookid
+          MNNote.prototype.refresh = function () {
+            this.note.appendMarkdownComment("")
+            this.note.removeCommentByIndex(this.note.comments.length-1)
+          }
+          MNNote.prototype.refreshAll = function() {
+            if (this.descendantNodes.descendant.length > 0) {
+              this.descendantNodes.descendant.forEach(descendantNote => {
+                descendantNote.refresh()
+              })
+            }
+            if (this.ancestorNodes.length > 0) {
+              this.ancestorNodes.forEach(ancestorNote => {
+                ancestorNote.refresh()
+              })
+            }
+          }
+          MNNote.prototype.getIncludingCommentIndex = function(comment,includeHtmlComment = false) {
+            const comments = this.note.comments
+            for (let i = 0; i < comments.length; i++) {
+              const _comment = comments[i]
+              if (typeof comment == "string") {
+                if (includeHtmlComment) {
+                  if ((_comment.type == "TextNote" || _comment.type == "HtmlNote" )&& _comment.text.includes(comment)) return i
+                }else{
+                  if (_comment.type == "TextNote" && _comment.text.includes(comment)) return i
+                }
+              } else if (
+                _comment.type == "LinkNote" &&
+                _comment.noteid == comment.noteId
+              )
+                return i
+            }
+            return -1
+          }
+        }
+        MNNote.prototype.moveComment = function (fromIndex, toIndex) {
+          try {
+            let length = this.comments.length;
+            let arr = Array.from({ length: length }, (_, i) => i);
+            let from = fromIndex
+            let to = toIndex
+            if (fromIndex < 0) {
+              from = 0
+            }
+            if (fromIndex > (arr.length-1)) {
+              from = arr.length-1
+            }
+            if (toIndex < 0) {
+              to = 0
+            }
+            if (toIndex > (arr.length-1)) {
+              to = arr.length-1
+            }
+            if (from == to) {
+              // MNUtil.showHUD("No change")
+              return
+            }
+            // 取出要移动的元素
+            const element = arr.splice(to, 1)[0];
+            // 将元素插入到目标位置
+            arr.splice(from, 0, element);
+            let targetArr = arr
+            this.sortCommentsByNewIndices(targetArr)
+            } catch (error) {
+            MNUtil.showHUD(error)
+          }
         }
         MNUtil.delay(0.2).then(()=>{
           MNUtil.studyView.becomeFirstResponder(); //For dismiss keyboard on iOS
