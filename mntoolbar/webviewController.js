@@ -4156,6 +4156,26 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           MNUtil.showHUD(error)
         }
         break;
+      case "clearAllMN3Links":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+              for (let i = focusNote.comments.length-1; i >= 0; i--) {
+                let comment = focusNote.comments[i]
+                if (
+                  comment.type == "TextNote" &&
+                  comment.text.includes("marginnote3app://note/")
+                ) {
+                  focusNote.removeCommentByIndex(i)
+                }
+              }
+            })
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
       case "clearContentKeepExcerptAndHandwritingAndImage":
         try {
           MNUtil.undoGrouping(()=>{

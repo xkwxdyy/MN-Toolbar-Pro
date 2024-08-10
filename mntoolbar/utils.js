@@ -5387,6 +5387,10 @@ static template(action) {
               "menuTitle" : "🔄 更新旧卡片"
             },
             {
+              "action": "clearAllMN3Links",
+              "menuTitle": "❌ mn3 链接",
+            },
+            {
               "action": "clearAllLinks",
               "menuTitle": "❌ 链接",
             },
