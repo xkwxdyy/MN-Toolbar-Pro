@@ -2949,9 +2949,9 @@ class toolbarUtils {
 
   static changeChildNotesPrefix(focusNote) {
     let focusNoteColorIndex = focusNote.note.colorIndex
-    let prefix
+    let prefix, type
     const contentCardRegex = /【(.*?)：(.*?)(：.*)?】(.*)/;  // 注意前面的两个要加 ? 变成非贪婪模式
-    if (focusNoteColorIndex == 1) {
+    if (focusNote.note.colorIndex == 1) {
       // 淡绿色卡片
       prefix = focusNote.noteTitle.match(/“(.*)”相关.*/)[1]
       type = focusNote.noteTitle.match(/“.*”相关(.*)/)[1]
