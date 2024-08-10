@@ -4071,6 +4071,17 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           MNUtil.showHUD(error)
         }
         break;
+      case "convertMN3LinkToMN4Link":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.convertMN3LinkToMN4Link(focusNote)
+            })
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
       case "addThought":
         MNUtil.undoGrouping(()=>{
           try {
@@ -4156,10 +4167,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           MNUtil.showHUD(error)
         }
         break;
-      case "clearAllMN3Links":
+      case "clearAllFailedMN3Links":
         MNUtil.undoGrouping(()=>{
           try {
             focusNotes.forEach(focusNote=>{
+              toolbarUtils.convertMN3LinkToMN4Link(focusNote)
               // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
               for (let i = focusNote.comments.length-1; i >= 0; i--) {
                 let comment = focusNote.comments[i]
@@ -4171,6 +4183,37 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 }
               }
             })
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      case "clearAllFailedLinks":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.clearAllFailedLinks(focusNote)
+            })
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      case "reappendAllLinksInNote":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.reappendAllLinksInNote(focusNote)
+            })
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      case "mergeInParentAndReappendAllLinks":
+        MNUtil.undoGrouping(()=>{
+          try {
+            toolbarUtils.mergeInParentAndReappendAllLinks(focusNote)
           } catch (error) {
             MNUtil.showHUD(error);
           }
@@ -4577,6 +4620,8 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
               focusNote.refresh()
               // 处理卡片标题空格
               focusNote.noteTitle = Pangu.spacing(focusNote.noteTitle)
+              toolbarUtils.removeDuplicateKeywordsInTitle(focusNote)
+              
               if (focusNotes.length == 1) {
                 try {
                   // MNUtil.undoGrouping(()=>{

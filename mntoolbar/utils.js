@@ -211,6 +211,107 @@ class toolbarUtils {
   // TODO:
   // - 判断链接是否存在
 
+
+  static removeDuplicateKeywordsInTitle(note){
+    // 获取关键词数组，如果noteTitle的格式为【xxxx】yyyyy，则默认返回一个空数组
+    let keywordsArray = note.noteTitle.match(/【.*】(.*)/) && note.noteTitle.match(/【.*】(.*)/)[1].split("; ");
+    if (!keywordsArray || keywordsArray.length === 0) return; // 如果无关键词或关键词数组为空，则直接返回不做处理
+    
+    // 将关键词数组转化为集合以去除重复项，然后转回数组
+    let uniqueKeywords = Array.from(new Set(keywordsArray));
+    
+    // 构建新的标题字符串，保留前缀和去重后的关键词列表
+    let newTitle = `【${note.noteTitle.match(/【(.*)】.*/)[1]}】${uniqueKeywords.join("; ")}`;
+    
+    // 更新note对象的noteTitle属性
+    note.noteTitle = newTitle;
+  }
+
+  static mergeInParentAndReappendAllLinks(focusNote) {
+    let parentNote = focusNote.parentNote
+
+    for (let i = focusNote.comments.length-1; i >= 0; i--) {
+      let comment = focusNote.comments[i]
+      if (
+        comment.type == "TextNote" &&
+        comment.text.includes("marginnote4app://note/")
+      ) {
+        let targetNoteId = comment.text.match(/marginnote4app:\/\/note\/(.*)/)[1]
+        let targetNote = MNNote.new(targetNoteId)
+        if (targetNote) {
+          let focusNoteIndexInTargetNote = targetNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+          if (focusNoteIndexInTargetNote !== -1) {
+            // 加个判断，防止是单向链接
+            targetNote.removeCommentByIndex(focusNoteIndexInTargetNote)
+            targetNote.appendNoteLink(parentNote, "To")
+            targetNote.moveComment(targetNote.comments.length-1, focusNoteIndexInTargetNote)
+          }
+        }
+      }
+    }
+    // 合并到父卡片
+    parentNote.merge(focusNote.note)
+
+    // 最后更新父卡片（也就是合并后的卡片）里的链接
+    this.reappendAllLinksInNote(parentNote)
+  }
+
+
+  static reappendAllLinksInNote(focusNote) {
+    this.clearAllFailedLinks(focusNote)
+    for (let i = focusNote.comments.length-1; i >= 0; i--) {
+      let comment = focusNote.comments[i]
+      if (
+        comment.type == "TextNote" &&
+        comment.text.includes("marginnote4app://note/")
+      ) {
+        let targetNoteId = comment.text.match(/marginnote4app:\/\/note\/(.*)/)[1]
+        let targetNote = MNNote.new(targetNoteId)
+        focusNote.removeCommentByIndex(i)
+        focusNote.appendNoteLink(targetNote, "To")
+        focusNote.moveComment(focusNote.comments.length-1,i)
+      }
+    }
+  }
+  static clearAllFailedLinks(focusNote) {
+    this.convertMN3LinkToMN4Link(focusNote)
+    // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+    for (let i = focusNote.comments.length-1; i >= 0; i--) {
+      let comment = focusNote.comments[i]
+      if (
+        comment.type == "TextNote" &&
+        comment.text.includes("marginnote3app://note/")
+      ) {
+        focusNote.removeCommentByIndex(i)
+      } else if (
+        comment.type == "TextNote" &&
+        comment.text.includes("marginnote4app://note/")
+      ) {
+        let targetNoteId = comment.text.match(/marginnote4app:\/\/note\/(.*)/)[1]
+        let targetNote = MNNote.new(targetNoteId)
+        if (!targetNote) {
+          focusNote.removeCommentByIndex(i)
+        }
+      }
+    }
+  }
+
+  static convertMN3LinkToMN4Link(focusNote) {
+    focusNote.comments.forEach((comment, index) => {
+      if (
+        comment.type == "TextNote" &&
+        comment.text.startsWith("marginnote3app://note/")
+      ) {
+        let targetNoteId = comment.text.match(/marginnote3app:\/\/note\/(.*)/)[1]
+        let targetNote = MNNote.new(targetNoteId)
+        if (targetNote) {
+          focusNote.removeCommentByIndex(index)
+          focusNote.appendNoteLink(targetNote, "To")
+          focusNote.moveComment(focusNote.comments.length-1, index)
+        }
+      }
+    })
+  }
   static generateArrayCombinations(Arr, joinLabel) {
     const combinations = [];
     const permute = (result, used) => {
@@ -5298,7 +5399,12 @@ static template(action) {
       break;
     case "menu_card":
       config.action = "menu"
+      config.menuWidth = 250
       config.menuItems = [
+        {
+          "action": "mergeInParentAndReappendAllLinks",
+          "menuTitle": "合并卡片到父卡片并更新所有链接",
+        },
         {
           "action": "focusInMindMap",
           "menuTitle": "focus In 主视图",
@@ -5309,15 +5415,15 @@ static template(action) {
         },
         {
           "action": "convertNoteToNonexcerptVersion",
-          "menuTitle": "→非摘录版本",
+          "menuTitle": "➡️ 非摘录版本",
         },
         {
           "action": "refreshNotes",
-          "menuTitle": "刷新卡片",
+          "menuTitle": "🔄 刷新卡片",
         },
         {
           "action": "refreshCardsAndAncestorsAndDescendants",
-          "menuTitle": "刷新卡片及其所有父子卡片",
+          "menuTitle": "🔄 刷新卡片及其所有父子卡片",
         },
         {
           "action": "cardCopyNoteId",
@@ -5387,8 +5493,20 @@ static template(action) {
               "menuTitle" : "🔄 更新旧卡片"
             },
             {
-              "action": "clearAllMN3Links",
-              "menuTitle": "❌ mn3 链接",
+              "action": "reappendAllLinksInNote",
+              "menuTitle": "🔄 （合并后）更新卡片所有链接",
+            },
+            {
+              "action": "convertMN3LinkToMN4Link",
+              "menuTitle": "mn3 链接 → mn4 链接",
+            },
+            {
+              "action": "clearAllFailedLinks",
+              "menuTitle": "❌ 失效的链接",
+            },
+            {
+              "action": "clearAllFailedMN3Links",
+              "menuTitle": "❌ 失效的 mn3 链接",
             },
             {
               "action": "clearAllLinks",
