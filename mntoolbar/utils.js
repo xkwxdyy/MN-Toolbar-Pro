@@ -95,7 +95,7 @@ const SUBSCRIPT_CJK = /([\u2080-\u2099])(?=[\u4e00-\u9fa5])/g
 const SUPERSCRIPT_CJK = /([\u2070-\u209F\u1D56\u1D50\u207F\u1D4F\u1D57])(?=[\u4e00-\u9fa5])/g
 // 特殊字符
 // \u221E: ∞
-const SPECIAL = /([\u221E])(?!\s)/g  // (?!\s) 是为了当后面没有空格才加空格，防止出现多个空格
+const SPECIAL = /([\u221E])(?!\s|[\(\[])/g  // (?!\s) 是为了当后面没有空格才加空格，防止出现多个空格
 class Pangu {
   version
   static convertToFullwidth(symbols) {
@@ -170,6 +170,8 @@ class Pangu {
     newText = newText.replace(SUPERSCRIPT_CJK, "$1 ")
     // 特殊字符
     newText = newText.replace(SPECIAL, "$1 ")
+    // 处理 C[a,b] 这种单独字母紧跟括号的情形，不加空格
+    newText = newText.replace(/([A-Z])\s([\(\[])/g, "$1$2")
     // DEBUG
     // String.prototype.replace = String.prototype.rawReplace;
     return newText
