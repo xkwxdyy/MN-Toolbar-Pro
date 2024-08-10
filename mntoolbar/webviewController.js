@@ -1138,8 +1138,8 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
         }
         break;
       case "changeChildNotesPrefix":
-        try {
-          MNUtil.undoGrouping(()=>{
+        MNUtil.undoGrouping(()=>{
+          try {
             toolbarUtils.changeChildNotesPrefix(focusNote)
             focusNote.descendantNodes.descendant.forEach(descendantNote => {
               if ([0, 1, 4].includes(descendantNote.note.colorIndex)) {
@@ -1152,10 +1152,10 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                 }
               }
             })
-          })
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
         break;
       case "moveUpLinkNotes":
         try {

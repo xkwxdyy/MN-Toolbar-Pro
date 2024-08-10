@@ -168,10 +168,14 @@ class Pangu {
     // 去掉下标和中文之间的空格
     newText = newText.replace(SUBSCRIPT_CJK, "$1 ")
     newText = newText.replace(SUPERSCRIPT_CJK, "$1 ")
+    /* 特殊处理 */
     // 特殊字符
     newText = newText.replace(SPECIAL, "$1 ")
     // 处理 C[a,b] 这种单独字母紧跟括号的情形，不加空格
     newText = newText.replace(/([A-Z])\s([\(\[])/g, "$1$2")
+    newText = newText.replace(/([\)\]])\s([A-Z])/g, "$1$2")
+    // ”后面不加空格
+    newText = newText.replace(/”\s/g, "”")
     // DEBUG
     // String.prototype.replace = String.prototype.rawReplace;
     return newText
