@@ -172,8 +172,8 @@ class Pangu {
     // 特殊字符
     newText = newText.replace(SPECIAL, "$1 ")
     // 处理 C[a,b] 这种单独字母紧跟括号的情形，不加空格
-    newText = newText.replace(/([A-Z])\s([\(\[])/g, "$1$2")
-    newText = newText.replace(/([\)\]])\s([A-Z])/g, "$1$2")
+    newText = newText.replace(/([A-Za-z])\s([\(\[])/g, "$1$2")
+    newText = newText.replace(/([\)\]])\s([A-Za-z])/g, "$1$2")
     // ”后面不加空格
     newText = newText.replace(/”\s/g, "”")
     // DEBUG
@@ -270,10 +270,12 @@ class toolbarUtils {
         comment.text.includes("marginnote4app://note/")
       ) {
         let targetNoteId = comment.text.match(/marginnote4app:\/\/note\/(.*)/)[1]
-        let targetNote = MNNote.new(targetNoteId)
-        focusNote.removeCommentByIndex(i)
-        focusNote.appendNoteLink(targetNote, "To")
-        focusNote.moveComment(focusNote.comments.length-1,i)
+        if (!targetNoteId.includes("/summary/")) {  // 防止把概要的链接处理了
+          let targetNote = MNNote.new(targetNoteId)
+          focusNote.removeCommentByIndex(i)
+          focusNote.appendNoteLink(targetNote, "To")
+          focusNote.moveComment(focusNote.comments.length-1,i)
+        }
       }
     }
   }
@@ -292,9 +294,11 @@ class toolbarUtils {
         comment.text.includes("marginnote4app://note/")
       ) {
         let targetNoteId = comment.text.match(/marginnote4app:\/\/note\/(.*)/)[1]
-        let targetNote = MNNote.new(targetNoteId)
-        if (!targetNote) {
-          focusNote.removeCommentByIndex(i)
+        if (!targetNoteId.includes("/summary/")) {  // 防止把概要的链接处理了
+          let targetNote = MNNote.new(targetNoteId)
+          if (!targetNote) {
+            focusNote.removeCommentByIndex(i)
+          }
         }
       }
     }
@@ -1228,7 +1232,7 @@ class toolbarUtils {
         }
       });
     });
-  
+
     return duplicates;
   }
 
@@ -2960,59 +2964,16 @@ class toolbarUtils {
       prefix = focusNote.noteTitle.match(/“(.*)”相关.*/)[1]
       type = focusNote.noteTitle.match(/“.*”相关(.*)/)[1]
       focusNote.childNotes.forEach(childNote => {
-        if (childNote.note.colorIndex == 0 || childNote.note.colorIndex == 4) {
-          // childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
-          childNote.noteTitle = childNote.noteTitle.replace(/“(.*?)”：“(.*?)”相关(.*)/, function(match, p1, p2, p3) {
-            // 替换 yyy 中的 xxx 为 prefix
-            let newP2 = p2.replace(new RegExp(p1, "g"), prefix);
-            // 返回替换后的结果
-            return `“${prefix}”：“${newP2}”相关${p3}`;
-          });
-
-          // 确保有双向链接了
-          let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
-          if (childNoteIdIndexInFocusNote == -1) {
-            focusNote.appendNoteLink(childNote, "To")
-          }
-          let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
-          if (focusNoteIdIndexInChildNote == -1) {
-            childNote.removeCommentByIndex(1)
-            childNote.appendNoteLink(focusNote, "To")
-            childNote.moveComment(childNote.note.comments.length-1, 1)
-          }
-        } else {
-          // childNote.noteTitle = childNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`)
-          this.makeCardsAuxChangefocusNotePrefix(childNote, focusNote)
-          // 确保有双向链接了
-          let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
-          if (childNoteIdIndexInFocusNote == -1) {
-            focusNote.appendNoteLink(childNote, "To")
-          }
-          let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
-          if (focusNoteIdIndexInChildNote == -1) {
-            // let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
-            let linkHtmlCommentIndex = Math.max(childNote.getCommentIndex("相关链接：",true), childNote.getCommentIndex("所属：",true))
-            if (childNote.comments[linkHtmlCommentIndex+1] && childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
-              childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
-            }
-            childNote.appendNoteLink(focusNote, "To")
-            childNote.moveComment(childNote.comments.length-1, linkHtmlCommentIndex+1)
-          }
-        }
-      })
-      focusNote.refreshAll()
-    } else {
-      if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
-        // 淡黄色或黄色
-        prefix = focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]
-        focusNote.childNotes.forEach(childNote => {
-          if (childNote.colorIndex == 0 || childNote.colorIndex == 4) {
+        if (childNote.getCommentIndex("相关思考：",true) !== -1 || childNote.getCommentIndex("包含：",true) !== -1) {
+          if (childNote.note.colorIndex == 0 || childNote.note.colorIndex == 4) {
+            // childNote.noteTitle = childNote.noteTitle.replace(/“(.*)”(：“.*”相关.*)/, "“" + prefix + "”" + "$2")
             childNote.noteTitle = childNote.noteTitle.replace(/“(.*?)”：“(.*?)”相关(.*)/, function(match, p1, p2, p3) {
               // 替换 yyy 中的 xxx 为 prefix
               let newP2 = p2.replace(new RegExp(p1, "g"), prefix);
               // 返回替换后的结果
               return `“${prefix}”：“${newP2}”相关${p3}`;
             });
+  
             // 确保有双向链接了
             let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
             if (childNoteIdIndexInFocusNote == -1) {
@@ -3022,51 +2983,98 @@ class toolbarUtils {
             if (focusNoteIdIndexInChildNote == -1) {
               childNote.removeCommentByIndex(1)
               childNote.appendNoteLink(focusNote, "To")
-              childNote.moveComment(childNote.comments.length-1, 1)
+              childNote.moveComment(childNote.note.comments.length-1, 1)
             }
           } else {
-            // 其余颜色的内容卡片
-            try {
-              // childNote.noteTitle = childNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`);
-              this.makeCardsAuxChangefocusNotePrefix(childNote,focusNote)
-              let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
-              if (focusNoteIdIndexInChildNote == -1) {
-                // let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
-                let linkHtmlCommentIndex = Math.max(childNote.getCommentIndex("相关链接：",true), childNote.getCommentIndex("所属：",true))
-                if (childNote.comments[linkHtmlCommentIndex+1] && childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
-                  childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
-                }
-                childNote.appendNoteLink(focusNote, "To")
-                childNote.moveComment(childNote.comments.length-1, linkHtmlCommentIndex+1)
+            // childNote.noteTitle = childNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`)
+            this.makeCardsAuxChangefocusNotePrefix(childNote, focusNote)
+            // 确保有双向链接了
+            let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
+            if (childNoteIdIndexInFocusNote == -1) {
+              focusNote.appendNoteLink(childNote, "To")
+            }
+            let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+            if (focusNoteIdIndexInChildNote == -1) {
+              // let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
+              let linkHtmlCommentIndex = Math.max(childNote.getCommentIndex("相关链接：",true), childNote.getCommentIndex("所属：",true))
+              if (childNote.comments[linkHtmlCommentIndex+1] && childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
+                childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
               }
+              childNote.appendNoteLink(focusNote, "To")
+              childNote.moveComment(childNote.comments.length-1, linkHtmlCommentIndex+1)
+            }
+          }
+        }
+      })
+      focusNote.refreshAll()
+    } else {
+      if (focusNoteColorIndex == 0 || focusNoteColorIndex == 4) {
+        // 淡黄色或黄色
+        prefix = focusNote.noteTitle.match(/“(.*)”：“(.*)”相关.*/)[2]
+        focusNote.childNotes.forEach(childNote => {
+          if (childNote.getCommentIndex("相关思考：",true) !== -1 || childNote.getCommentIndex("包含：",true) !== -1) {
+            if (childNote.colorIndex == 0 || childNote.colorIndex == 4) {
+              childNote.noteTitle = childNote.noteTitle.replace(/“(.*?)”：“(.*?)”相关(.*)/, function(match, p1, p2, p3) {
+                // 替换 yyy 中的 xxx 为 prefix
+                let newP2 = p2.replace(new RegExp(p1, "g"), prefix);
+                // 返回替换后的结果
+                return `“${prefix}”：“${newP2}”相关${p3}`;
+              });
+              // 确保有双向链接了
               let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
               if (childNoteIdIndexInFocusNote == -1) {
                 focusNote.appendNoteLink(childNote, "To")
               }
-
-
-              if (childNote.descendantNodes.descendant.length > 0) {
-                childNote.descendantNodes.descendant.forEach(descendantNote => {
-                  descendantNote.noteTitle = descendantNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`);
-                  let focusNoteIdIndexInDescendantNote = descendantNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
-                  if (focusNoteIdIndexInDescendantNote == -1) {
-                    // let linkHtmlCommentIndex = descendantNote.getCommentIndex("相关链接：", true)
-                    let linkHtmlCommentIndex = Math.max(descendantNote.getCommentIndex("相关链接：",true), descendantNote.getCommentIndex("所属：",true))
-                    // MNUtil.showHUD("linkHtmlCommentIndex: " + linkHtmlCommentIndex)
-                    if (descendantNote.comments[linkHtmlCommentIndex+1] && descendantNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
-                      descendantNote.removeCommentByIndex(linkHtmlCommentIndex+1)
-                    }
-                    descendantNote.appendNoteLink(focusNote, "To")
-                    descendantNote.moveComment(descendantNote.comments.length-1, linkHtmlCommentIndex+1)
-                  }
-                  let descendantNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + descendantNote.noteId)
-                  if (descendantNoteIdIndexInFocusNote == -1) {
-                    focusNote.appendNoteLink(descendantNote, "To")
-                  }
-                })
+              let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+              if (focusNoteIdIndexInChildNote == -1) {
+                childNote.removeCommentByIndex(1)
+                childNote.appendNoteLink(focusNote, "To")
+                childNote.moveComment(childNote.comments.length-1, 1)
               }
-            } catch (error) {
-              MNUtil.showHUD(error);
+            } else {
+              // 其余颜色的内容卡片
+              try {
+                // childNote.noteTitle = childNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`);
+                this.makeCardsAuxChangefocusNotePrefix(childNote,focusNote)
+                let focusNoteIdIndexInChildNote = childNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                if (focusNoteIdIndexInChildNote == -1) {
+                  // let linkHtmlCommentIndex = childNote.getCommentIndex("相关链接：", true)
+                  let linkHtmlCommentIndex = Math.max(childNote.getCommentIndex("相关链接：",true), childNote.getCommentIndex("所属：",true))
+                  if (childNote.comments[linkHtmlCommentIndex+1] && childNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
+                    childNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+                  }
+                  childNote.appendNoteLink(focusNote, "To")
+                  childNote.moveComment(childNote.comments.length-1, linkHtmlCommentIndex+1)
+                }
+                let childNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + childNote.noteId)
+                if (childNoteIdIndexInFocusNote == -1) {
+                  focusNote.appendNoteLink(childNote, "To")
+                }
+  
+  
+                if (childNote.descendantNodes.descendant.length > 0) {
+                  childNote.descendantNodes.descendant.forEach(descendantNote => {
+                    descendantNote.noteTitle = descendantNote.noteTitle.replace(contentCardRegex, `【$1：${prefix}$3】$4`);
+                    let focusNoteIdIndexInDescendantNote = descendantNote.getCommentIndex("marginnote4app://note/" + focusNote.noteId)
+                    if (focusNoteIdIndexInDescendantNote == -1) {
+                      // let linkHtmlCommentIndex = descendantNote.getCommentIndex("相关链接：", true)
+                      let linkHtmlCommentIndex = Math.max(descendantNote.getCommentIndex("相关链接：",true), descendantNote.getCommentIndex("所属：",true))
+                      // MNUtil.showHUD("linkHtmlCommentIndex: " + linkHtmlCommentIndex)
+                      if (descendantNote.comments[linkHtmlCommentIndex+1] && descendantNote.comments[linkHtmlCommentIndex+1].type !== "HtmlNote") {
+                        descendantNote.removeCommentByIndex(linkHtmlCommentIndex+1)
+                      }
+                      descendantNote.appendNoteLink(focusNote, "To")
+                      descendantNote.moveComment(descendantNote.comments.length-1, linkHtmlCommentIndex+1)
+                    }
+                    let descendantNoteIdIndexInFocusNote = focusNote.getCommentIndex("marginnote4app://note/" + descendantNote.noteId)
+                    if (descendantNoteIdIndexInFocusNote == -1) {
+                      focusNote.appendNoteLink(descendantNote, "To")
+                    }
+                  })
+                }
+              } catch (error) {
+                MNUtil.showHUD(error);
+              }
             }
           }
         })
@@ -4978,69 +4986,6 @@ static template(action) {
       config.action = "menu"
       config.menuItems = [
         {
-          "action": "changeChildNotesPrefix",
-          "menuTitle": "✂️ 修改子卡片前缀",
-        },
-        {
-          "action": "renewChildNotesPrefix",
-          "menuTitle": "✂️ 重新设置子卡片前缀",
-        },
-        {
-          "action": "menu",
-          "menuTitle": "➡️ 链接 🔗",
-          "menuWidth": 400,
-          "menuItems": [
-            // {
-            //   "menuTitle": "🔽 "
-            // },
-            {
-              "action": "renewLinksBetweenClassificationNoteAndExtensionNote",
-              "menuTitle": "更新1️⃣次「归类卡片」与「概念or归类卡片」之间的🔗"
-            },
-          ]
-        },
-        {
-          "action": "menu",
-          "menuTitle": "➡️ 思考",
-          "menuWidth": 330,
-          "menuItems": [
-            {
-              "action" : "moveUpThoughtPoints",
-              "menuTitle" : "思考点⬆️"
-            },
-            {
-              "action" : "addThoughtPoint",
-              "menuTitle" : "➕思考点"
-            },
-            {
-              "action": "addThoughtPointAndMoveLastCommentToThought",
-              "menuTitle": "➕思考点&最后🔗⬆️思考",
-            },
-            {
-              "action" : "moveLastCommentToThought",
-              "menuTitle" : "最后1️⃣💬⬆️思考"
-            },
-            {
-              "action" : "moveLastTwoCommentsToThought",
-              "menuTitle" : "最后2️⃣💬⬆️思考"
-            },
-            {
-              "action": "moveLastTwoCommentsInBiLinkNotesToThought",
-              "menuTitle": "双向链接的两张卡片同时最后2️⃣💬⬆️思考",
-            },
-          ]
-        },
-        {
-          "action": "menu",
-          "menuTitle": "➡️ 摘录",
-          "menuItems": [
-            {
-              "action" : "moveUpLinkNotes",
-              "menuTitle" : "摘录⬆️"
-            }
-          ]
-        },
-        {
           "action": "menu",
           "menuTitle": "➡️ 证明",
           "menuItems": [
@@ -5076,6 +5021,58 @@ static template(action) {
               "action" : "moveLastTwoCommentsToProof",
               "menuTitle" : "最后2️⃣💬⬆️证明"
             },
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 思考",
+          "menuWidth": 330,
+          "menuItems": [
+            {
+              "action" : "moveUpThoughtPoints",
+              "menuTitle" : "思考点⬆️"
+            },
+            {
+              "action" : "addThoughtPoint",
+              "menuTitle" : "➕思考点"
+            },
+            {
+              "action": "addThoughtPointAndMoveLastCommentToThought",
+              "menuTitle": "➕思考点&最后💬⬆️思考",
+            },
+            {
+              "action" : "moveLastCommentToThought",
+              "menuTitle" : "最后1️⃣💬⬆️思考"
+            },
+            {
+              "action" : "moveLastTwoCommentsToThought",
+              "menuTitle" : "最后2️⃣💬⬆️思考"
+            },
+            {
+              "action": "moveLastTwoCommentsInBiLinkNotesToThought",
+              "menuTitle": "双向链接的两张卡片同时最后2️⃣💬⬆️思考",
+            },
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 链接 🔗",
+          "menuWidth": 400,
+          "menuItems": [
+            {
+              "action": "renewLinksBetweenClassificationNoteAndExtensionNote",
+              "menuTitle": "更新1️⃣次「归类卡片」与「概念or归类卡片」之间的🔗"
+            },
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 摘录",
+          "menuItems": [
+            {
+              "action" : "moveUpLinkNotes",
+              "menuTitle" : "摘录⬆️"
+            }
           ]
         },
       ]
@@ -5353,9 +5350,6 @@ static template(action) {
           "action": "menu",
           "menuTitle": "➡️ 📌关键词卡片",
           "menuItems": [
-            // {
-            //   "menuTitle": "🔽 "
-            // },
             {
               "action": "referenceKeywordsAddRelatedKeywords",
               "menuTitle": "➕相关关键词"
@@ -5406,8 +5400,87 @@ static template(action) {
       config.menuWidth = 250
       config.menuItems = [
         {
+          "action": "changeChildNotesPrefix",
+          "menuTitle": "✂️ 修改子卡片前缀",
+        },
+        {
+          "action": "renewChildNotesPrefix",
+          "menuTitle": "✂️ 重新设置子卡片前缀",
+        },
+        {
+          "action": "refreshNotes",
+          "menuTitle": "🔄 刷新卡片",
+        },
+        {
+          "action": "refreshCardsAndAncestorsAndDescendants",
+          "menuTitle": "🔄 刷新卡片及其所有父子卡片",
+        },
+        {
           "action": "mergeInParentAndReappendAllLinks",
           "menuTitle": "合并卡片到父卡片并更新所有链接",
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 处理旧卡片",
+          "menuWidth":250,
+          "menuItems": [
+            {
+              "action" : "renewCards",
+              "menuTitle" : "🔄 更新旧卡片"
+            },
+            {
+              "action": "reappendAllLinksInNote",
+              "menuTitle": "🔄 卡片的所有链接重新链接",
+            },
+            // {
+            //   "action": "convertMN3LinkToMN4Link",
+            //   "menuTitle": "mn3 链接 → mn4 链接",
+            // },
+            {
+              "action": "clearAllFailedLinks",
+              "menuTitle": "❌ 处理旧链接、失效的链接",
+            },
+            // {
+            //   "action": "clearAllFailedMN3Links",
+            //   "menuTitle": "❌ 失效的 mn3 链接",
+            // },
+            {
+              "action": "clearAllLinks",
+              "menuTitle": "❌ 所有链接",
+            },
+            {
+              "action": "clearContentKeepExcerptWithTitle",
+              "menuTitle": "✅ 摘录 ✅ 标题",
+            },
+            {
+              "action": "clearContentKeepExcerpt",
+              "menuTitle": "✅ 摘录 ❌ 标题",
+            },
+            {
+              "action": "clearContentKeepHandwritingAndImage",
+              "menuTitle": "✅ 手写、图片 ❌ 标题",
+            },
+            {
+              "action" : "clearContentKeepExcerptAndHandwritingAndImage",
+              "menuTitle" : "✅ 摘录、手写和图片 ❌ 标题",
+            },
+            {
+              "action" : "clearContentKeepMarkdownText",
+              "menuTitle" : "✅ Markdown 文本 ❌ 标题"
+            },
+            {
+              "action" : "clearContentKeepHtmlText",
+              "menuTitle" : "✅ HTML 文本 ❌ 标题"
+            },
+            {
+              "action" : "clearContentKeepText",
+              "menuTitle" : "✅ MD & HTML 文本 ❌ 标题"
+            },
+            {
+              "action" : "achieveCards",
+              "menuTitle" : "📦 存档旧卡片"
+            }
+          ]
         },
         {
           "action": "focusInMindMap",
@@ -5420,14 +5493,6 @@ static template(action) {
         {
           "action": "convertNoteToNonexcerptVersion",
           "menuTitle": "➡️ 非摘录版本",
-        },
-        {
-          "action": "refreshNotes",
-          "menuTitle": "🔄 刷新卡片",
-        },
-        {
-          "action": "refreshCardsAndAncestorsAndDescendants",
-          "menuTitle": "🔄 刷新卡片及其所有父子卡片",
         },
         {
           "action": "cardCopyNoteId",
@@ -5487,69 +5552,6 @@ static template(action) {
             }
           ]
         },
-        {
-          "action": "menu",
-          "menuTitle": "➡️ 处理旧卡片",
-          "menuWidth":250,
-          "menuItems": [
-            {
-              "action" : "renewCards",
-              "menuTitle" : "🔄 更新旧卡片"
-            },
-            {
-              "action": "reappendAllLinksInNote",
-              "menuTitle": "🔄 （合并后）更新卡片所有链接",
-            },
-            {
-              "action": "convertMN3LinkToMN4Link",
-              "menuTitle": "mn3 链接 → mn4 链接",
-            },
-            {
-              "action": "clearAllFailedLinks",
-              "menuTitle": "❌ 失效的链接",
-            },
-            {
-              "action": "clearAllFailedMN3Links",
-              "menuTitle": "❌ 失效的 mn3 链接",
-            },
-            {
-              "action": "clearAllLinks",
-              "menuTitle": "❌ 链接",
-            },
-            {
-              "action": "clearContentKeepExcerptWithTitle",
-              "menuTitle": "✅ 摘录 ✅ 标题",
-            },
-            {
-              "action": "clearContentKeepExcerpt",
-              "menuTitle": "✅ 摘录 ❌ 标题",
-            },
-            {
-              "action": "clearContentKeepHandwritingAndImage",
-              "menuTitle": "✅ 手写、图片 ❌ 标题",
-            },
-            {
-              "action" : "clearContentKeepExcerptAndHandwritingAndImage",
-              "menuTitle" : "✅ 摘录、手写和图片 ❌ 标题",
-            },
-            {
-              "action" : "clearContentKeepMarkdownText",
-              "menuTitle" : "✅ Markdown 文本 ❌ 标题"
-            },
-            {
-              "action" : "clearContentKeepHtmlText",
-              "menuTitle" : "✅ HTML 文本 ❌ 标题"
-            },
-            {
-              "action" : "clearContentKeepText",
-              "menuTitle" : "✅ MD & HTML 文本 ❌ 标题"
-            },
-            {
-              "action" : "achieveCards",
-              "menuTitle" : "📦 存档旧卡片"
-            }
-          ]
-        }
       ]
       break;
     default:
