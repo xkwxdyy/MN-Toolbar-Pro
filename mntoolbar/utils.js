@@ -5063,6 +5063,10 @@ static template(action) {
               "action": "renewLinksBetweenClassificationNoteAndExtensionNote",
               "menuTitle": "更新1️⃣次「归类卡片」与「概念or归类卡片」之间的🔗"
             },
+            {
+              "action": "moveUpLinkToBelonging",
+              "menuTitle": "最后1️⃣💬⬆️所属",
+            },
           ]
         },
         {
@@ -5074,6 +5078,10 @@ static template(action) {
               "menuTitle" : "摘录⬆️"
             }
           ]
+        },
+        {
+          "action": "addOldNoteKeyword",
+          "menuTitle": "（旧卡片）➕关键词",
         },
       ]
       break;

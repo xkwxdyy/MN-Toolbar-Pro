@@ -1838,6 +1838,23 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "moveUpLinkToBelonging":
+        MNUtil.undoGrouping(()=>{
+          let type = focusNote.title.match(/“.*”：“.*”相关(.*)/)[1]
+          if (type) {
+            let targetIndex = focusNote.getCommentIndex("相关"+type+"：",true)
+            if (targetIndex !== -1) {
+              focusNote.moveComment(focusNote.comments.length-1,targetIndex)
+            }
+          }
+        })
+        break;
+      case "addOldNoteKeyword":
+        MNUtil.undoGrouping(()=>{
+          let keywordsHtmlCommentIndex = focusNote.getCommentIndex("关键词：",true)
+          focusNote.appendMarkdownComment("-",keywordsHtmlCommentIndex+1)
+        })
+        break;
       case "addProofFromClipboard":
         try {
           MNUtil.undoGrouping(()=>{
