@@ -1838,6 +1838,79 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "htmlCommentToProofTop":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入注释",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let comment = alert.textFieldAtIndex(0).text;
+                if (buttonIndex == 1) {
+                  let targetIndex = focusNote.getCommentIndex("证明：",true) + 1
+                  focusNote.appendMarkdownComment(
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
+                    targetIndex
+                  )
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "htmlCommentToBottom":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入注释",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let comment = alert.textFieldAtIndex(0).text;
+                if (buttonIndex == 1) {
+                  focusNote.appendMarkdownComment(
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>'
+                  )
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "htmlCommentToProofBottom":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入注释",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let comment = alert.textFieldAtIndex(0).text;
+                if (buttonIndex == 1) {
+                  let targetIndex = focusNote.getCommentIndex("相关思考：",true)
+                  focusNote.appendMarkdownComment(
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
+                    targetIndex
+                  )
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
       case "moveUpLinkToBelonging":
         MNUtil.undoGrouping(()=>{
           let type = focusNote.title.match(/“.*”：“.*”相关(.*)/)[1]
@@ -1971,6 +2044,46 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             }
           }
         )
+        break;
+      case "proofAddNewAntiexampleWithComment":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入此反例的注释",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let antiexampleComment = alert.textFieldAtIndex(0).text;
+                if (antiexampleComment == "") {
+                  antiexampleComment = "- - - - - - - - - - - - - - -"
+                }
+                if (buttonIndex == 1) {
+                  let antiexampleNum = 0
+                  focusNote.comments.forEach(comment=>{
+                    if (
+                      comment.text &&
+                      comment.text.startsWith("<span") &&
+                      comment.text.includes("反例")
+                    ) {
+                      antiexampleNum++
+                    }
+                  })
+                  let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：",true)
+                  let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：",true)
+                  let targetIndex = (antiexampleNum == 0)?proofHtmlCommentIndex+1:thoughtHtmlCommentIndex
+                  focusNote.appendMarkdownComment(
+                    '<span style="font-weight: bold; color: #081F3C; background-color: #B9EDD0; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 反例'+ toolbarUtils.numberToChinese(antiexampleNum+1) +'：'+ antiexampleComment +'</span>',
+                    targetIndex
+                  )
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
         break
       case "proofAddNewMethodWithComment":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
@@ -1998,9 +2111,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                     }
                   })
                   let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：",true)
+                  let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：",true)
+                  let targetIndex = (methodNum == 0)?proofHtmlCommentIndex+1:thoughtHtmlCommentIndex
                   focusNote.appendMarkdownComment(
-                    '<span style="font-weight: bold; color: #014f9c; background-color: #ecf5fc; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 方法'+ toolbarUtils.numberToChinese(methodNum+1) +'：'+ methodComment +'</span>',
-                    thoughtHtmlCommentIndex
+                    '<span style="font-weight: bold; color: #081F3C; background-color: #B9EDD0; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 方法'+ toolbarUtils.numberToChinese(methodNum+1) +'：'+ methodComment +'</span>',
+                    targetIndex
                   )
                 }
               })
@@ -2010,6 +2125,31 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           }
         )
         break
+      case "proofAddNewAntiexample":
+        try {
+          MNUtil.undoGrouping(()=>{
+            let antiexampleNum = 0
+            focusNote.comments.forEach(comment=>{
+              if (
+                comment.text &&
+                comment.text.startsWith("<span") &&
+                comment.text.includes("反例")
+              ) {
+                antiexampleNum++
+              }
+            })
+            let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：",true)
+            let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：",true)
+            let targetIndex = (antiexampleNum == 0)?proofHtmlCommentIndex+1:thoughtHtmlCommentIndex
+            focusNote.appendMarkdownComment(
+              '<span style="font-weight: bold; color: #081F3C; background-color: #B9EDD0; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 反例'+ toolbarUtils.numberToChinese(antiexampleNum+1) +'：- - - - - - - - - - - - - - - </span>',
+              targetIndex
+            )
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
       case "proofAddNewMethod":
         try {
           MNUtil.undoGrouping(()=>{
@@ -2024,15 +2164,17 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
               }
             })
             let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：",true)
+            let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：",true)
+            let targetIndex = (methodNum == 0)?proofHtmlCommentIndex+1:thoughtHtmlCommentIndex
             focusNote.appendMarkdownComment(
-              '<span style="font-weight: bold; color: #014f9c; background-color: #ecf5fc; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 方法'+ toolbarUtils.numberToChinese(methodNum+1) +'：- - - - - - - - - - - - - - - </span>',
-              thoughtHtmlCommentIndex
+              '<span style="font-weight: bold; color: #081F3C; background-color: #B9EDD0; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 方法'+ toolbarUtils.numberToChinese(methodNum+1) +'：- - - - - - - - - - - - - - - </span>',
+              targetIndex
             )
           })
         } catch (error) {
           MNUtil.showHUD(error);
         }
-        break
+        break;
       case "renewLinksBetweenClassificationNoteAndExtensionNote":
         try {
           MNUtil.undoGrouping(()=>{

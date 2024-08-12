@@ -4987,6 +4987,24 @@ static template(action) {
       config.menuItems = [
         {
           "action": "menu",
+          "menuTitle": "➡️ 注释",
+          "menuItems": [
+            {
+              "action": "htmlCommentToBottom",
+              "menuTitle": "➕卡片末尾"
+            },
+            {
+              "action": "htmlCommentToProofBottom",
+              "menuTitle": "⬆️证明末尾"
+            },
+            {
+              "action": "htmlCommentToProofTop",
+              "menuTitle": "⬆️证明开始"
+            }
+          ]
+        },
+        {
+          "action": "menu",
           "menuTitle": "➡️ 证明",
           "menuItems": [
             {
@@ -4999,11 +5017,11 @@ static template(action) {
             },
             {
               "action": "proofAddNewMethod",
-              "menuTitle": "➕证明方法（无补充）",
+              "menuTitle": "➕证明方法（无注释）",
             },
             {
               "action": "proofAddMethodComment",
-              "menuTitle": "补充证明方法的注释",
+              "menuTitle": "补充某证明方法的注释",
             },
             {
               "action" : "renewProof",
@@ -5076,6 +5094,20 @@ static template(action) {
             {
               "action" : "moveUpLinkNotes",
               "menuTitle" : "摘录⬆️"
+            }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 反例",
+          "menuItems": [
+            {
+              "action": "proofAddNewAntiexample",
+              "menuTitle": "➕反例（无注释）"
+            },
+            {
+              "action": "proofAddNewAntiexampleWithComment",
+              "menuTitle": "➕反例（补充注释）"
             }
           ]
         },
