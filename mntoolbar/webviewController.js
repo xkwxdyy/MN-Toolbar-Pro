@@ -1138,8 +1138,8 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
         }
         break;
       case "changeChildNotesPrefix":
-        try {
-          MNUtil.undoGrouping(()=>{
+        MNUtil.undoGrouping(()=>{
+          try {
             toolbarUtils.changeChildNotesPrefix(focusNote)
             focusNote.descendantNodes.descendant.forEach(descendantNote => {
               if ([0, 1, 4].includes(descendantNote.note.colorIndex)) {
@@ -1152,10 +1152,10 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
                 }
               }
             })
-          })
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
         break;
       case "moveUpLinkNotes":
         try {
@@ -1838,6 +1838,96 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "htmlCommentToProofTop":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入注释",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let comment = alert.textFieldAtIndex(0).text;
+                if (buttonIndex == 1) {
+                  let targetIndex = focusNote.getCommentIndex("证明：",true) + 1
+                  focusNote.appendMarkdownComment(
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
+                    targetIndex
+                  )
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "htmlCommentToBottom":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入注释",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let comment = alert.textFieldAtIndex(0).text;
+                if (buttonIndex == 1) {
+                  focusNote.appendMarkdownComment(
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>'
+                  )
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "htmlCommentToProofBottom":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入注释",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let comment = alert.textFieldAtIndex(0).text;
+                if (buttonIndex == 1) {
+                  let targetIndex = focusNote.getCommentIndex("相关思考：",true)
+                  focusNote.appendMarkdownComment(
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
+                    targetIndex
+                  )
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
+        break;
+      case "moveUpLinkToBelonging":
+        MNUtil.undoGrouping(()=>{
+          let type = focusNote.title.match(/“.*”：“.*”相关(.*)/)[1]
+          if (type) {
+            let targetIndex = focusNote.getCommentIndex("相关"+type+"：",true)
+            if (targetIndex !== -1) {
+              focusNote.moveComment(focusNote.comments.length-1,targetIndex)
+            }
+          }
+        })
+        break;
+      case "addOldNoteKeyword":
+        MNUtil.undoGrouping(()=>{
+          let keywordsHtmlCommentIndex = focusNote.getCommentIndex("关键词：",true)
+          focusNote.appendMarkdownComment("-",keywordsHtmlCommentIndex+1)
+        })
+        break;
       case "addProofFromClipboard":
         try {
           MNUtil.undoGrouping(()=>{
@@ -1954,6 +2044,46 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             }
           }
         )
+        break;
+      case "proofAddNewAntiexampleWithComment":
+        UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+          "输入此反例的注释",
+          "",
+          2,
+          "取消",
+          ["确定"],
+          (alert, buttonIndex) => {
+            try {
+              MNUtil.undoGrouping(()=>{
+                let antiexampleComment = alert.textFieldAtIndex(0).text;
+                if (antiexampleComment == "") {
+                  antiexampleComment = "- - - - - - - - - - - - - - -"
+                }
+                if (buttonIndex == 1) {
+                  let antiexampleNum = 0
+                  focusNote.comments.forEach(comment=>{
+                    if (
+                      comment.text &&
+                      comment.text.startsWith("<span") &&
+                      comment.text.includes("反例")
+                    ) {
+                      antiexampleNum++
+                    }
+                  })
+                  let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：",true)
+                  let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：",true)
+                  let targetIndex = (antiexampleNum == 0)?proofHtmlCommentIndex+1:thoughtHtmlCommentIndex
+                  focusNote.appendMarkdownComment(
+                    '<span style="font-weight: bold; color: #081F3C; background-color: #B9EDD0; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 反例'+ toolbarUtils.numberToChinese(antiexampleNum+1) +'：'+ antiexampleComment +'</span>',
+                    targetIndex
+                  )
+                }
+              })
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          }
+        )
         break
       case "proofAddNewMethodWithComment":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
@@ -1981,9 +2111,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                     }
                   })
                   let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：",true)
+                  let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：",true)
+                  let targetIndex = (methodNum == 0)?proofHtmlCommentIndex+1:thoughtHtmlCommentIndex
                   focusNote.appendMarkdownComment(
-                    '<span style="font-weight: bold; color: #014f9c; background-color: #ecf5fc; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 方法'+ toolbarUtils.numberToChinese(methodNum+1) +'：'+ methodComment +'</span>',
-                    thoughtHtmlCommentIndex
+                    '<span style="font-weight: bold; color: #081F3C; background-color: #B9EDD0; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 方法'+ toolbarUtils.numberToChinese(methodNum+1) +'：'+ methodComment +'</span>',
+                    targetIndex
                   )
                 }
               })
@@ -1993,6 +2125,31 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           }
         )
         break
+      case "proofAddNewAntiexample":
+        try {
+          MNUtil.undoGrouping(()=>{
+            let antiexampleNum = 0
+            focusNote.comments.forEach(comment=>{
+              if (
+                comment.text &&
+                comment.text.startsWith("<span") &&
+                comment.text.includes("反例")
+              ) {
+                antiexampleNum++
+              }
+            })
+            let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：",true)
+            let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：",true)
+            let targetIndex = (antiexampleNum == 0)?proofHtmlCommentIndex+1:thoughtHtmlCommentIndex
+            focusNote.appendMarkdownComment(
+              '<span style="font-weight: bold; color: #081F3C; background-color: #B9EDD0; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 反例'+ toolbarUtils.numberToChinese(antiexampleNum+1) +'：- - - - - - - - - - - - - - - </span>',
+              targetIndex
+            )
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
       case "proofAddNewMethod":
         try {
           MNUtil.undoGrouping(()=>{
@@ -2007,15 +2164,17 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
               }
             })
             let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：",true)
+            let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：",true)
+            let targetIndex = (methodNum == 0)?proofHtmlCommentIndex+1:thoughtHtmlCommentIndex
             focusNote.appendMarkdownComment(
-              '<span style="font-weight: bold; color: #014f9c; background-color: #ecf5fc; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 方法'+ toolbarUtils.numberToChinese(methodNum+1) +'：- - - - - - - - - - - - - - - </span>',
-              thoughtHtmlCommentIndex
+              '<span style="font-weight: bold; color: #081F3C; background-color: #B9EDD0; font-size: 1.15em; padding-top: 5px; padding-bottom: 5px"> 方法'+ toolbarUtils.numberToChinese(methodNum+1) +'：- - - - - - - - - - - - - - - </span>',
+              targetIndex
             )
           })
         } catch (error) {
           MNUtil.showHUD(error);
         }
-        break
+        break;
       case "renewLinksBetweenClassificationNoteAndExtensionNote":
         try {
           MNUtil.undoGrouping(()=>{
@@ -4241,100 +4400,118 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         }
         break;
       case "clearContentKeepExcerptWithTitle":
-        try {
-          MNUtil.undoGrouping(()=>{
-            // MNUtil.copy(focusNote.noteTitle)
-            // focusNote.noteTitle = ""
-            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-            for (let i = focusNote.comments.length-1; i >= 0; i--) {
-              let comment = focusNote.comments[i]
-              if (
-                (comment.type !== "LinkNote")
-              ) {
-                focusNote.removeCommentByIndex(i)
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(
+              focusNote=>{
+                 // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+                for (let i = focusNote.comments.length-1; i >= 0; i--) {
+                  let comment = focusNote.comments[i]
+                  if (
+                    (comment.type !== "LinkNote")
+                  ) {
+                    focusNote.removeCommentByIndex(i)
+                  }
+                }
               }
-            }
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
+            )
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
         break;
       case "clearContentKeepExcerpt":
-        try {
-          MNUtil.undoGrouping(()=>{
-            MNUtil.copy(focusNote.noteTitle)
-            focusNote.noteTitle = ""
-            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-            for (let i = focusNote.comments.length-1; i >= 0; i--) {
-              let comment = focusNote.comments[i]
-              if (
-                (comment.type !== "LinkNote")
-              ) {
-                focusNote.removeCommentByIndex(i)
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(
+              focusNote=>{
+                MNUtil.copy(focusNote.noteTitle)
+                focusNote.noteTitle = ""
+                // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+                for (let i = focusNote.comments.length-1; i >= 0; i--) {
+                  let comment = focusNote.comments[i]
+                  if (
+                    (comment.type !== "LinkNote")
+                  ) {
+                    focusNote.removeCommentByIndex(i)
+                  }
+                }
               }
-            }
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
+            )
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
         break;
       case "clearContentKeepHandwritingAndImage":
-        try {
-          MNUtil.undoGrouping(()=>{
-            MNUtil.copy(focusNote.noteTitle)
-            focusNote.noteTitle = ""
-            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-            for (let i = focusNote.comments.length-1; i >= 0; i--) {
-              let comment = focusNote.comments[i]
-              if (
-                (comment.type !== "PaintNote")
-              ) {
-                focusNote.removeCommentByIndex(i)
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(
+              focusNote=>{
+                MNUtil.copy(focusNote.noteTitle)
+                focusNote.noteTitle = ""
+                // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+                for (let i = focusNote.comments.length-1; i >= 0; i--) {
+                  let comment = focusNote.comments[i]
+                  if (
+                    (comment.type !== "PaintNote")
+                  ) {
+                    focusNote.removeCommentByIndex(i)
+                  }
+                }
               }
-            }
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
+            )
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
         break;
       case "clearContentKeepHtmlText":
-        try {
-          MNUtil.undoGrouping(()=>{
-            MNUtil.copy(focusNote.noteTitle)
-            focusNote.noteTitle = ""
-            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-            for (let i = focusNote.comments.length-1; i >= 0; i--) {
-              let comment = focusNote.comments[i]
-              if (
-                (comment.type !== "HtmlNote")
-              ) {
-                focusNote.removeCommentByIndex(i)
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(
+              focusNote=>{
+                MNUtil.copy(focusNote.noteTitle)
+                focusNote.noteTitle = ""
+                // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+                for (let i = focusNote.comments.length-1; i >= 0; i--) {
+                  let comment = focusNote.comments[i]
+                  if (
+                    (comment.type !== "HtmlNote")
+                  ) {
+                    focusNote.removeCommentByIndex(i)
+                  }
+                }
               }
-            }
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
+            )
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
         break;
       case "clearContentKeepText":
-        try {
-          MNUtil.undoGrouping(()=>{
-            MNUtil.copy(focusNote.noteTitle)
-            focusNote.noteTitle = ""
-            // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
-            for (let i = focusNote.comments.length-1; i >= 0; i--) {
-              let comment = focusNote.comments[i]
-              if (
-                (comment.type !== "HtmlNote") &&
-                (comment.type !== "TextNote") 
-              ) {
-                focusNote.removeCommentByIndex(i)
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(
+              focusNote=>{
+                MNUtil.copy(focusNote.noteTitle)
+                focusNote.noteTitle = ""
+                // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+                for (let i = focusNote.comments.length-1; i >= 0; i--) {
+                  let comment = focusNote.comments[i]
+                  if (
+                    (comment.type !== "HtmlNote") &&
+                    (comment.type !== "TextNote") 
+                  ) {
+                    focusNote.removeCommentByIndex(i)
+                  }
+                }
               }
-            }
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
+            )
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
         break;
       case "addTopic":
         try {
@@ -4547,7 +4724,8 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
               let parentNoteType = toolbarUtils.getClassificationNoteTypeByTitle(parentNote.noteTitle)
               if (
                 [1,2,3,6,9,10,13,15].includes(focusNoteColorIndex) ||
-                !focusNote.noteTitle.match(/“.*”相关.*/)
+                !focusNote.noteTitle.match(/“.*”相关.*/) ||
+                !focusNote.noteTitle.match(/“.*”：“.*”相关.*/)
               ) {
                 switch (parentNoteType) {
                   case "定义":
