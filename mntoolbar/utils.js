@@ -258,6 +258,11 @@ class toolbarUtils {
 
     // 最后更新父卡片（也就是合并后的卡片）里的链接
     this.reappendAllLinksInNote(parentNote)
+
+    // 处理合并到概要卡片的情形
+    if (parentNote.title.startsWith("Summary")) {
+      parentNote.title = parentNote.title.replace(/(Summary; )(.*)/, "$2")
+    }
   }
 
 
@@ -4989,6 +4994,10 @@ static template(action) {
           "action": "menu",
           "menuTitle": "➡️ 注释",
           "menuItems": [
+            {
+              "action": "htmlCommentToProofFromClipboard",
+              "menuTitle": "从剪切板粘贴到证明中"
+            },
             {
               "action": "htmlCommentToBottom",
               "menuTitle": "➕卡片末尾"

@@ -1852,7 +1852,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 if (buttonIndex == 1) {
                   let targetIndex = focusNote.getCommentIndex("证明：",true) + 1
                   focusNote.appendMarkdownComment(
-                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1.18em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
                     targetIndex
                   )
                 }
@@ -1862,6 +1862,27 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             }
           }
         )
+        break;
+      case "htmlCommentToProofFromClipboard":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let dotCommentIndex = (focusNote.getCommentIndex("-") == -1)?focusNote.getCommentIndex("- "):focusNote.getCommentIndex("-")
+            if (dotCommentIndex !== -1) {
+              focusNote.removeCommentByIndex(dotCommentIndex)
+              focusNote.appendMarkdownComment(
+                '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1.1.8em; padding-top: 5px; padding-bottom: 5px">'+ MNUtil.clipboardText +'</span>'
+                , dotCommentIndex
+              )
+            } else {
+              focusNote.appendMarkdownComment(
+                '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1.1.8em; padding-top: 5px; padding-bottom: 5px">'+ MNUtil.clipboardText +'</span>'
+                , focusNote.getCommentIndex("相关思考：",true)
+              )
+            }
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
         break;
       case "htmlCommentToBottom":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
@@ -1876,7 +1897,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 let comment = alert.textFieldAtIndex(0).text;
                 if (buttonIndex == 1) {
                   focusNote.appendMarkdownComment(
-                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>'
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1.1.8em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>'
                   )
                 }
               })
@@ -1900,7 +1921,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 if (buttonIndex == 1) {
                   let targetIndex = focusNote.getCommentIndex("相关思考：",true)
                   focusNote.appendMarkdownComment(
-                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1.18em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
                     targetIndex
                   )
                 }
