@@ -5168,12 +5168,20 @@ static template(action) {
           "menuTitle": "➡️ 证明",
           "menuItems": [
             {
+              "action" : "moveLastCommentToProofStart",
+              "menuTitle" : "最后1️⃣💬⬆️证明「开始」"
+            },
+            {
               "action": "moveProofToStart",
               "menuTitle": "证明⬆️证明开始",
             },
             {
+              "action" : "addProofToStartFromClipboard",
+              "menuTitle" : "从剪切板增加证明⬆️证明「开始」"
+            },
+            {
               "action" : "addProofFromClipboard",
-              "menuTitle" : "从剪切板增加证明"
+              "menuTitle" : "从剪切板增加证明⬆️证明「末尾」"
             },
             {
               "action": "moveProofToMethod",
@@ -5197,11 +5205,11 @@ static template(action) {
             },
             {
               "action" : "moveLastCommentToProof",
-              "menuTitle" : "最后1️⃣💬⬆️证明"
+              "menuTitle" : "最后1️⃣💬⬆️证明「末尾」"
             },
             {
               "action" : "moveLastTwoCommentsToProof",
-              "menuTitle" : "最后2️⃣💬⬆️证明"
+              "menuTitle" : "最后2️⃣💬⬆️证明「末尾」"
             },
           ]
         },

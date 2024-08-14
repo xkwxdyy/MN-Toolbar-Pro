@@ -1838,6 +1838,16 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "moveLastCommentToProofStart":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let targetIndex = toolbarUtils.getProofHtmlCommentIndex(focusNote) + 1
+            focusNote.moveComment(focusNote.comments.length-1,targetIndex)
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
       case "moveProofToStart":
         MNUtil.undoGrouping(()=>{
           try {
@@ -2025,6 +2035,19 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           let keywordsHtmlCommentIndex = focusNote.getCommentIndex("关键词：",true)
           focusNote.appendMarkdownComment("-",keywordsHtmlCommentIndex+1)
         })
+        break;
+      case "addProofFromClipboard":
+        try {
+          MNUtil.undoGrouping(()=>{
+            MNUtil.excuteCommand("EditPaste")
+            MNUtil.delay(0.1).then(()=>{
+              let targetIndex = toolbarUtils.getProofHtmlCommentIndex(focusNote) + 1
+              focusNote.moveComment(focusNote.comments.length-1,targetIndex)
+            })
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
         break;
       case "addProofFromClipboard":
         try {
