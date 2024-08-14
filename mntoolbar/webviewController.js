@@ -1838,6 +1838,83 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "moveProofToStart":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let targetIndex = toolbarUtils.getProofHtmlCommentIndex(focusNote) + 1
+            toolbarUtils.moveProofToIndex(focusNote, targetIndex)
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      case "renewCommentsInProofToHtmlType":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(
+              focusNote=>{
+                let proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+                let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
+                if (
+                  proofHtmlCommentIndex !== -1 &&
+                  thoughtHtmlCommentIndex !== -1
+                ) {
+                  focusNote.comments.forEach(
+                    (comment, index) => {
+                      if (
+                        proofHtmlCommentIndex < index < thoughtHtmlCommentIndex &&
+                        comment.type == "TextNote" &&
+                        comment.text.startsWith("- ")
+                      ) {
+                        let commentContent = comment.text.slice(2).trim()
+                        focusNote.removeCommentByIndex(index)
+                        focusNote.appendMarkdownComment(
+                          '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1.18em; padding-top: 5px; padding-bottom: 5px">'+ commentContent +'</span>',
+                          index
+                        )
+                      }
+                    }
+                  )
+                }
+              }
+            )
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      case "linkRemoveDuplicatesAfterApplication":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(
+              focusNote=>{
+                let applicationHtmlCommentIndex = Math.max(
+                  focusNote.getIncludingCommentIndex("应用：", true),
+                  focusNote.getIncludingCommentIndex("的应用")
+                )
+                toolbarUtils.linkRemoveDuplicatesAfterIndex(focusNote,applicationHtmlCommentIndex)
+              }
+            )
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      case "moveOneCommentToLinkNote":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let proofHtmlCommentIndex = Math.max(
+              focusNote.getCommentIndex("原理：", true),
+              focusNote.getCommentIndex("反例及证明：", true),
+              focusNote.getCommentIndex("证明：", true)
+            )
+            let targetIndex = (proofHtmlCommentIndex == -1)?focusNote.getCommentIndex("相关思考：",true):proofHtmlCommentIndex
+            focusNote.moveComment(focusNote.comments.length-1,targetIndex)
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
       case "htmlCommentToProofTop":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
           "输入注释",
@@ -1852,7 +1929,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 if (buttonIndex == 1) {
                   let targetIndex = focusNote.getCommentIndex("证明：",true) + 1
                   focusNote.appendMarkdownComment(
-                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1.18em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
                     targetIndex
                   )
                 }
@@ -1862,6 +1939,27 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             }
           }
         )
+        break;
+      case "htmlCommentToProofFromClipboard":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let dotCommentIndex = (focusNote.getCommentIndex("-") == -1)?focusNote.getCommentIndex("- "):focusNote.getCommentIndex("-")
+            if (dotCommentIndex !== -1) {
+              focusNote.removeCommentByIndex(dotCommentIndex)
+              focusNote.appendMarkdownComment(
+                '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1.18em; padding-top: 5px; padding-bottom: 5px">'+ MNUtil.clipboardText +'</span>'
+                , dotCommentIndex
+              )
+            } else {
+              focusNote.appendMarkdownComment(
+                '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1.18em; padding-top: 5px; padding-bottom: 5px">'+ MNUtil.clipboardText +'</span>'
+                , focusNote.getCommentIndex("相关思考：",true)
+              )
+            }
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
         break;
       case "htmlCommentToBottom":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
@@ -1876,7 +1974,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 let comment = alert.textFieldAtIndex(0).text;
                 if (buttonIndex == 1) {
                   focusNote.appendMarkdownComment(
-                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>'
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1.18em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>'
                   )
                 }
               })
@@ -1900,7 +1998,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 if (buttonIndex == 1) {
                   let targetIndex = focusNote.getCommentIndex("相关思考：",true)
                   focusNote.appendMarkdownComment(
-                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
+                    '<span style="font-weight: bold; color: #1A6584; background-color: #e8e9eb; font-size: 1.18em; padding-top: 5px; padding-bottom: 5px">'+ comment +'</span>',
                     targetIndex
                   )
                 }
@@ -2889,7 +2987,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 focusNote.removeCommentByIndex(i)
               }
             }
-            cloneAndMerge(focusNote, "782A91F4-421E-456B-80E6-2B34D402911A")
+            toolbarUtils.cloneAndMerge(focusNote, "782A91F4-421E-456B-80E6-2B34D402911A")
             focusNote.moveComment(focusNote.comments.length-1,0)
             focusNote.moveComment(focusNote.comments.length-1,0)
             focusNote.moveComment(focusNote.comments.length-1,0)
@@ -2913,7 +3011,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             }
             let referenceInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
             if (referenceInfoHtmlCommentIndex == -1) {
-              cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
+              toolbarUtils.cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
             }
             let paperLibraryNote = MNNote.new("785225AC-5A2A-41BA-8760-3FEF10CF4AE0")
             paperLibraryNote.addChild(focusNote.note)
@@ -2937,7 +3035,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             }
             let referenceInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
             if (referenceInfoHtmlCommentIndex == -1) {
-              cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
+              toolbarUtils.cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
             }
             let bookLibraryNote = MNNote.new("49102A3D-7C64-42AD-864D-55EDA5EC3097")
             bookLibraryNote.addChild(focusNote.note)
@@ -3020,7 +3118,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                       }
                       let journalInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
                       if (journalInfoHtmlCommentIndex == -1) {
-                        cloneAndMerge(focusNote, "1C976BDD-A04D-46D0-8790-34CE0F6671A4")
+                        toolbarUtils.cloneAndMerge(focusNote, "1C976BDD-A04D-46D0-8790-34CE0F6671A4")
                       }
                       UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
                         "卷号",
@@ -3147,7 +3245,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             focusNote.removeCommentByIndex(0)
             focusNote.removeCommentByIndex(0)
             focusNote.removeCommentByIndex(0)
-            cloneAndMerge(focusNote, "129EB4D6-D57A-4367-8087-5C89864D3595")
+            toolbarUtils.cloneAndMerge(focusNote, "129EB4D6-D57A-4367-8087-5C89864D3595")
             focusNote.moveComment(focusNote.comments.length-1,0)
             focusNote.moveComment(focusNote.comments.length-1,0)
             focusNote.moveComment(focusNote.comments.length-1,0)
@@ -3163,7 +3261,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
             focusNote.removeCommentByIndex(0)
             focusNote.removeCommentByIndex(0)
             focusNote.removeCommentByIndex(0)
-            cloneAndMerge(focusNote, "1E34F27B-DB2D-40BD-B0A3-9D47159E68E7")
+            toolbarUtils.cloneAndMerge(focusNote, "1E34F27B-DB2D-40BD-B0A3-9D47159E68E7")
             focusNote.moveComment(focusNote.comments.length-1,0)
             focusNote.moveComment(focusNote.comments.length-1,0)
             focusNote.moveComment(focusNote.comments.length-1,0)
@@ -3613,7 +3711,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                                 focusNote.removeCommentByIndex(i)
                               }
                               // 重新合并模板
-                              cloneAndMerge(resultNote,"DE4455DB-5C55-49F8-8C83-68D6D958E586")
+                              toolbarUtils.cloneAndMerge(resultNote,"DE4455DB-5C55-49F8-8C83-68D6D958E586")
                             }
                             idsArr.forEach(
                               id => {
@@ -4639,9 +4737,8 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         )
         break
       case "makeCards":
-        try {
-          // MNUtil.showHUD("制卡")
-          MNUtil.undoGrouping(()=>{
+        MNUtil.undoGrouping(()=>{
+          try {
             // focusNotes.forEach(focusNote=>{
             for (let i = 0; i < focusNotes.length; i++) {
               focusNote = focusNotes[i]
@@ -4810,10 +4907,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 }
               }
             }
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
         break;
       /* 夏大鱼羊定制 - end */
       case "cloneAndMerge":

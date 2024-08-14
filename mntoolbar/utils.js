@@ -215,6 +215,133 @@ class toolbarUtils {
   // TODO:
   // - 判断链接是否存在
 
+  static getProofHtmlCommentIndex(focusNote, includeMethod = false, methodNum = 0) {
+    let focusNoteType = this.getKnowledgeNoteTypeByColorIndex(focusNote.colorIndex)
+    let proofHtmlCommentIndex
+    switch (focusNoteType) {
+      case "method":
+        proofHtmlCommentIndex = focusNote.getCommentIndex("原理：", true)
+        break;
+      case "antiexample":
+        proofHtmlCommentIndex = focusNote.getCommentIndex("反例及证明：", true)
+        break;
+      default:
+        if (includeMethod) {
+          proofHtmlCommentIndex = (focusNote.getIncludingCommentIndex('方法'+ this.numberToChinese(methodNum) +'：', true) == -1)?focusNote.getCommentIndex("证明：", true):focusNote.getIncludingCommentIndex('方法'+ this.numberToChinese(methodNum) +'：', true)
+        } else {
+          proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+        }
+        break;
+    }
+    return proofHtmlCommentIndex
+  }
+
+  // 将证明移动到某个 index
+  static moveProofToIndex(focusNote, targetIndex, includeMethod = false , methodNum = 0) {
+    let focusNoteComments = focusNote.note.comments
+    let focusNoteCommentLength = focusNoteComments.length
+    let nonLinkNoteCommentsIndex = []
+    let focusNoteType
+    switch (focusNote.colorIndex) {
+      case 0: // 淡黄色
+        focusNoteType = "classification"
+        break;
+      case 2: // 淡蓝色：定义类
+        focusNoteType = "definition"
+        break;
+      case 3: // 淡粉色：反例
+        focusNoteType = "antiexample"
+        break;
+      case 4: // 黄色：归类
+        focusNoteType = "classification"
+        break;
+      case 6: // 蓝色：应用
+        focusNoteType = "application"
+        break;
+      case 9: // 深绿色：思想方法
+        focusNoteType = "method"
+        break;
+      case 10: // 深蓝色：定理命题
+        focusNoteType = "theorem"
+        break;
+      case 13: // 淡灰色：问题
+        focusNoteType = "question"
+        break;
+      case 15: // 淡紫色：例子
+        focusNoteType = "example"
+        break;
+    }
+    let proofHtmlCommentIndex
+    switch (focusNoteType) {
+      case "method":
+        proofHtmlCommentIndex = focusNote.getCommentIndex("原理：", true)
+        break;
+      case "antiexample":
+        proofHtmlCommentIndex = focusNote.getCommentIndex("反例及证明：", true)
+        break;
+      default:
+        if (includeMethod) {
+          proofHtmlCommentIndex = (focusNote.getIncludingCommentIndex('方法'+ this.numberToChinese(methodNum) +'：', true) == -1)?focusNote.getCommentIndex("证明：", true):focusNote.getIncludingCommentIndex('方法'+ this.numberToChinese(methodNum) +'：', true)
+        } else {
+          proofHtmlCommentIndex = focusNote.getCommentIndex("证明：", true)
+        }
+        break;
+    }
+    let applicationHtmlCommentIndex = focusNote.getCommentIndex("应用：", true)
+    let applicationHtmlCommentIndexArr = []
+    if (applicationHtmlCommentIndex !== -1) {
+      focusNote.comments.forEach((comment, index) => {
+        if (
+          comment.text &&
+          (
+            comment.text.includes("应用：") ||
+            comment.text.includes("的应用")
+          )
+        ) {
+          applicationHtmlCommentIndexArr.push(index)
+        }
+      })
+      applicationHtmlCommentIndex = applicationHtmlCommentIndexArr[applicationHtmlCommentIndexArr.length-1]
+    }
+    focusNoteComments.forEach((comment, index) => {
+      if (index > applicationHtmlCommentIndex) {
+        if (
+          comment.type == "PaintNote" || comment.type == "LinkNote" ||
+          (
+            comment.text &&
+            !comment.text.includes("marginnote4app") && !comment.text.includes("marginnote3app") 
+          )
+        ) {
+          nonLinkNoteCommentsIndex.push(index)
+        }
+      }
+    })
+
+    for (let i = focusNoteCommentLength-1; i >= nonLinkNoteCommentsIndex[0]; i--) {
+      focusNote.moveComment(focusNoteCommentLength-1, targetIndex);
+    }
+  }
+
+  // 从 startIndex 下一个 comment 开始，删除重复的链接
+  static linkRemoveDuplicatesAfterIndex(note, startIndex){
+    let links = new Set()
+    if (startIndex < note.comments.length-1) {
+      // 下面先有内容才处理
+      for (let i = note.comments.length-1; i > startIndex; i--){
+        let comment = note.comments[i]
+        if (
+          comment.type = "TextNote" &&
+          comment.text.includes("marginnote4app://note/")
+        ) {
+          if (links.has(comment.text)) {
+            note.removeCommentByIndex(i)
+          } else {
+            links.add(comment.text)
+          }
+        }
+      }
+    }
+  }
 
   static removeDuplicateKeywordsInTitle(note){
     // 获取关键词数组，如果noteTitle的格式为【xxxx】yyyyy，则默认返回一个空数组
@@ -258,6 +385,11 @@ class toolbarUtils {
 
     // 最后更新父卡片（也就是合并后的卡片）里的链接
     this.reappendAllLinksInNote(parentNote)
+
+    // 处理合并到概要卡片的情形
+    if (parentNote.title.startsWith("Summary")) {
+      parentNote.title = parentNote.title.replace(/(Summary; )(.*)/, "$2")
+    }
   }
 
 
@@ -498,7 +630,7 @@ class toolbarUtils {
         }
         let referenceInfoHtmlCommentIndex = focusNote.getCommentIndex("文献信息：", true)
         if (referenceInfoHtmlCommentIndex == -1) {
-          cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
+          toolbarUtils.cloneAndMerge(focusNote, "F09C0EEB-4FB5-476C-8329-8CC5AEFECC43")
         }
         let seriesTextIndex = focusNote.getIncludingCommentIndex("- 系列", true)
         let thoughtHtmlCommentIndex = focusNote.getCommentIndex("相关思考：", true)
@@ -1288,31 +1420,31 @@ class toolbarUtils {
       switch (focusNoteType) {
         case "definition":
           templateNoteId = "C1052FDA-3343-45C6-93F6-61DCECF31A6D"
-          cloneAndMerge(focusNote, templateNoteId)
+          toolbarUtils.cloneAndMerge(focusNote, templateNoteId)
           break;
         case "theorem":
           templateNoteId = "C4B464CD-B8C6-42DE-B459-55B48EB31AD8"
-          cloneAndMerge(focusNote, templateNoteId)
+          toolbarUtils.cloneAndMerge(focusNote, templateNoteId)
           break;
         case "example":
           templateNoteId = "C4B464CD-B8C6-42DE-B459-55B48EB31AD8"
-          cloneAndMerge(focusNote, templateNoteId)
+          toolbarUtils.cloneAndMerge(focusNote, templateNoteId)
           break;
         case "antiexample":
           templateNoteId = "E64BDC36-DD8D-416D-88F5-0B3FCBE5D151"
-          cloneAndMerge(focusNote, templateNoteId)
+          toolbarUtils.cloneAndMerge(focusNote, templateNoteId)
           break;
         case "method":
           templateNoteId = "EC68EDFE-580E-4E53-BA1B-875F3BEEFE62"
-          cloneAndMerge(focusNote, templateNoteId)
+          toolbarUtils.cloneAndMerge(focusNote, templateNoteId)
           break;
         case "question":
           templateNoteId = "C4B464CD-B8C6-42DE-B459-55B48EB31AD8"
-          cloneAndMerge(focusNote, templateNoteId)
+          toolbarUtils.cloneAndMerge(focusNote, templateNoteId)
           break;
         case "application":
           templateNoteId = "C4B464CD-B8C6-42DE-B459-55B48EB31AD8"
-          cloneAndMerge(focusNote, templateNoteId)
+          toolbarUtils.cloneAndMerge(focusNote, templateNoteId)
           break;
       }
     }
@@ -1327,10 +1459,10 @@ class toolbarUtils {
       if (testIndex == -1){
         if (focusNoteType === "definition") {
           templateNoteId = "9129B736-DBA1-441B-A111-EC0655B6120D"
-          cloneAndMerge(focusNote, templateNoteId)
+          toolbarUtils.cloneAndMerge(focusNote, templateNoteId)
         } else {
           templateNoteId = "3D07C54E-9DF3-4EC9-9122-871760709EB9"
-          cloneAndMerge(focusNote, templateNoteId)
+          toolbarUtils.cloneAndMerge(focusNote, templateNoteId)
         }
       }
     }
@@ -1679,10 +1811,10 @@ class toolbarUtils {
     // let afterApplicationHtmlContinuousLink = true
     switch (focusNoteType) {
       case "method":
-        proofHtmlCommentIndex= focusNote.getCommentIndex("原理：", true)
+        proofHtmlCommentIndex = focusNote.getCommentIndex("原理：", true)
         break;
       case "antiexample":
-        proofHtmlCommentIndex= focusNote.getCommentIndex("反例及证明：", true)
+        proofHtmlCommentIndex = focusNote.getCommentIndex("反例及证明：", true)
         break;
       default:
         proofHtmlCommentIndex = focusNote.getIncludingCommentIndex('方法'+ this.numberToChinese(methodNum) +'：', true)
@@ -1824,18 +1956,37 @@ class toolbarUtils {
 
   // 根据颜色 index 确认卡片类型
   static getKnowledgeNoteTypeByColorIndex(colorIndex) {
+    let focusNoteType
     switch (colorIndex) {
+      case 0: // 淡黄色
+        focusNoteType = "classification"
+        break;
       case 2: // 淡蓝色：定义类
-        return "definition"
+        focusNoteType = "definition"
+        break;
       case 3: // 淡粉色：反例
-        return "antiexample"
+        focusNoteType = "antiexample"
+        break;
+      case 4: // 黄色：归类
+        focusNoteType = "classification"
+        break;
+      case 6: // 蓝色：应用
+        focusNoteType = "application"
+        break;
       case 9: // 深绿色：思想方法
-        return "method"
+        focusNoteType = "method"
+        break;
       case 10: // 深蓝色：定理命题
-        return "theorem"
+        focusNoteType = "theorem"
+        break;
+      case 13: // 淡灰色：问题
+        focusNoteType = "question"
+        break;
       case 15: // 淡紫色：例子
-        return "example"
+        focusNoteType = "example"
+        break;
     }
+    return focusNoteType
   }
   static referenceMoveLastCommentToThought(focusNote){
     let refedHtmlCommentIndex = focusNote.getCommentIndex("被引用情况：", true)
@@ -4988,7 +5139,16 @@ static template(action) {
         {
           "action": "menu",
           "menuTitle": "➡️ 注释",
+          "menuWidth": 260,
           "menuItems": [
+            {
+              "action": "renewCommentsInProofToHtmlType",
+              "menuTitle": "🔄更新证明里的注释➡️高亮",
+            },
+            {
+              "action": "htmlCommentToProofFromClipboard",
+              "menuTitle": "从剪切板粘贴到证明中"
+            },
             {
               "action": "htmlCommentToBottom",
               "menuTitle": "➕卡片末尾"
@@ -5008,6 +5168,14 @@ static template(action) {
           "menuTitle": "➡️ 证明",
           "menuItems": [
             {
+              "action": "moveProofToStart",
+              "menuTitle": "证明⬆️证明开始",
+            },
+            {
+              "action" : "addProofFromClipboard",
+              "menuTitle" : "从剪切板增加证明"
+            },
+            {
               "action": "moveProofToMethod",
               "menuTitle": "证明⬆️某种方法",
             },
@@ -5026,10 +5194,6 @@ static template(action) {
             {
               "action" : "renewProof",
               "menuTitle" : "更新证明"
-            },
-            {
-              "action" : "addProofFromClipboard",
-              "menuTitle" : "从剪切板增加证明"
             },
             {
               "action" : "moveLastCommentToProof",
@@ -5094,7 +5258,11 @@ static template(action) {
             {
               "action" : "moveUpLinkNotes",
               "menuTitle" : "摘录⬆️"
-            }
+            },
+            {
+              "action": "moveOneCommentToLinkNote",
+              "menuTitle": "1️⃣💬⬆️摘录",
+            },
           ]
         },
         {
@@ -5458,6 +5626,16 @@ static template(action) {
         {
           "action": "mergeInParentAndReappendAllLinks",
           "menuTitle": "合并卡片到父卡片并更新所有链接",
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 链接",
+          "menuItems": [
+            {
+              "action": "linkRemoveDuplicatesAfterApplication",
+              "menuTitle": "“应用”下方的链接去重"
+            }
+          ]
         },
         {
           "action": "menu",
