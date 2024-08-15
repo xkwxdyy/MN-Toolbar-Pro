@@ -2094,6 +2094,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           focusNote.focusInFloatMindMap()
         })
         break;
+      case "selectionTextToLowerCase":
+        MNUtil.showHUD(MNUtil.selectionText.toLowerCase())
+        MNUtil.copy(MNUtil.selectionText.toLowerCase())
+        break;
       case "selectionTextToTitleCase":
         MNUtil.showHUD(MNUtil.selectionText.toTitleCase())
         MNUtil.copy(MNUtil.selectionText.toTitleCase())
@@ -2101,6 +2105,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "copiedTextToTitleCase":
         MNUtil.showHUD(MNUtil.clipboardText.toTitleCase())
         MNUtil.copy(MNUtil.clipboardText.toTitleCase())
+        break;
+      case "copiedTextToLowerCase":
+        MNUtil.showHUD(MNUtil.clipboardText.toLowerCase())
+        MNUtil.copy(MNUtil.clipboardText.toLowerCase())
         break;
       case "proofAddMethodComment":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(

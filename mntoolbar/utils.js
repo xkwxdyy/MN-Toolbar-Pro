@@ -5590,6 +5590,10 @@ static template(action) {
               "menuTitle": "标题规范"
             },
             {
+              "action": "selectionTextToLowerCase",
+              "menuTitle": "转小写"
+            },
+            {
               "action": "selectionTextHandleSpaces",
               "menuTitle": "处理空格"
             }
@@ -5602,6 +5606,10 @@ static template(action) {
             {
               "action": "copiedTextToTitleCase",
               "menuTitle": "标题规范"
+            },
+            {
+              "action": "copiedTextToLowerCase",
+              "menuTitle": "转小写"
             },
             {
               "action": "copiedTextHandleSpaces",
