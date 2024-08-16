@@ -172,8 +172,8 @@ class Pangu {
     // 特殊字符
     newText = newText.replace(SPECIAL, "$1 ")
     // 处理 C[a,b] 这种单独字母紧跟括号的情形，不加空格
-    newText = newText.replace(/([A-Za-z])\s([\(\[])/g, "$1$2")
-    newText = newText.replace(/([\)\]])\s([A-Za-z])/g, "$1$2")
+    newText = newText.replace(/([A-Za-z])\s([\(\[\{])/g, "$1$2")
+    newText = newText.replace(/([\)\]\}])\s([A-Za-z])/g, "$1$2")
     // ”后面不加空格
     newText = newText.replace(/”\s/g, "”")
     // DEBUG
@@ -5552,10 +5552,10 @@ static template(action) {
             // {
             //   "menuTitle": "🔽 "
             // },
-            {
-              "action": "",
-              "menuTitle": "➕出版社"
-            },
+            // {
+            //   "action": "",
+            //   "menuTitle": "➕出版社"
+            // },
             // {
             //   "action": "",
             //   "menuTitle": "修改整卷期刊前缀"
