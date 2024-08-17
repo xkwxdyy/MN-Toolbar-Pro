@@ -176,6 +176,8 @@ class Pangu {
     newText = newText.replace(/([\)\]\}])\s([A-Za-z])/g, "$1$2")
     // ”后面不加空格
     newText = newText.replace(/”\s/g, "”")
+    // · 左右的空格去掉
+    newText = newText.replace(/\s*·\s*/g, "·")
     // DEBUG
     // String.prototype.replace = String.prototype.rawReplace;
     return newText
