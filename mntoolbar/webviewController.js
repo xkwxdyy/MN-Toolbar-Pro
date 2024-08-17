@@ -4923,6 +4923,15 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                   MNUtil.showHUD(error)
                 }
               }
+              if (focusNoteType == "classification") {
+                MNUtil.undoGrouping(()=>{
+                  try {
+                    toolbarUtils.changeChildNotesPrefix(focusNote)
+                  } catch (error) {
+                    MNUtil.showHUD(error);
+                  }
+                })
+              }
               focusNote.refresh()
               // 处理卡片标题空格
               focusNote.noteTitle = Pangu.spacing(focusNote.noteTitle)
