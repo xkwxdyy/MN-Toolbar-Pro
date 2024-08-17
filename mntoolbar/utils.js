@@ -1403,6 +1403,7 @@ class toolbarUtils {
           note.noteTitle = ""
           // 将旧卡片合并到新卡片中
           newNote.merge(note)
+          newNote.focusInMindMap(0.2)
           // newNoteList.push(newNote)
         // }
       // )
