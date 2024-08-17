@@ -3113,6 +3113,14 @@ class toolbarUtils {
       focusNote.moveComment(focusNote.comments.length-1, keywordsHtmlCommentIndex)
     }
 
+    // 更新“相关定义：”→“相关概念：”
+    let definitionHtmlCommentOldIndex = focusNote.getCommentIndex("相关定义：", true)
+    if (keywordsHtmlCommentIndex !== -1){
+      focusNote.removeCommentByIndex(keywordsHtmlCommentIndex)
+      this.cloneAndMerge(focusNote,"9129B736-DBA1-441B-A111-EC0655B6120D")
+      focusNote.moveComment(focusNote.comments.length-1, definitionHtmlCommentOldIndex)
+    }
+
     this.clearAllFailedLinks(focusNote)
     focusNote.refresh()
   }
