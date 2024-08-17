@@ -1872,7 +1872,8 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                   focusNote.comments.forEach(
                     (comment, index) => {
                       if (
-                        proofHtmlCommentIndex < index < thoughtHtmlCommentIndex &&
+                        proofHtmlCommentIndex < index &&
+                        index < thoughtHtmlCommentIndex &&
                         comment.type == "TextNote" &&
                         comment.text.startsWith("- ")
                       ) {
