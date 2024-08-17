@@ -3103,6 +3103,15 @@ class toolbarUtils {
     } catch (error) {
       MNUtil.showHUD(error);
     }
+
+    // 更新“关键词：”
+    let keywordsHtmlCommentIndex = focusNote.getCommentIndex("关键词：", true)
+    if (keywordsHtmlCommentIndex !== -1){
+      focusNote.removeCommentByIndex(keywordsHtmlCommentIndex)
+      this.cloneAndMerge(focusNote,"13D040DD-A662-4EFF-A751-217EE9AB7D2E")
+      focusNote.moveComment(focusNote.comments.length-1, keywordsHtmlCommentIndex)
+    }
+
     this.clearAllFailedLinks(focusNote)
     focusNote.refresh()
   }
