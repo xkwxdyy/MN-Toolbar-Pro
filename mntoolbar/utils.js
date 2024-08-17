@@ -3103,6 +3103,7 @@ class toolbarUtils {
     } catch (error) {
       MNUtil.showHUD(error);
     }
+    this.clearAllFailedLinks(focusNote)
     focusNote.refresh()
   }
 
