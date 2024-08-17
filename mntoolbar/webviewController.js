@@ -15,7 +15,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
     self.maxButtonNumber = 20
-    self.buttonNumber = 16
+    self.buttonNumber = 18
       // MNUtil.copy("refreshHeight: "+self.buttonNumber)
     if (self.dynamicWindow) {
       // self.maxButtonNumber = 9

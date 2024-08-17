@@ -1969,6 +1969,134 @@ static template(action) {
       config.title = "title"
       config.content = "{{clipboardText}}"
       break;
+    case "menu_study":
+      config.action = "menu"
+      config.menuWidth = 200
+      config.menuItems = [
+        {
+          "action": "menu",
+          "menuTitle": "⇨ 注释 ⇦",
+          "menuWidth": 200,
+          "menuItems": [
+            "⇩  ⇩",
+            {
+              "action": "",
+              "menuTitle": ""
+            },
+            {
+              "action": "",
+              "menuTitle": ""
+            }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "⇨ 证明 ⇦",
+          "menuWidth": 200,
+          "menuItems": [
+            "⇩  ⇩",
+            {
+              "action": "",
+              "menuTitle": ""
+            },
+            {
+              "action": "",
+              "menuTitle": ""
+            }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "⇨ 思考 ⇦",
+          "menuWidth": 200,
+          "menuItems": [
+            "⇩  ⇩",
+            {
+              "action": "",
+              "menuTitle": ""
+            },
+            {
+              "action": "",
+              "menuTitle": ""
+            }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "⇨ 反例 ⇦",
+          "menuWidth": 200,
+          "menuItems": [
+            "⇩  ⇩",
+            {
+              "action": "",
+              "menuTitle": ""
+            },
+            {
+              "action": "",
+              "menuTitle": ""
+            }
+          ]
+        },
+        {
+          "action": "menu",
+          "menuTitle": "⇨ 关键词 ⇦",
+          "menuWidth": 200,
+          "menuItems": [
+            "⇩  ⇩",
+            {
+              "action": "",
+              "menuTitle": ""
+            },
+            {
+              "action": "",
+              "menuTitle": ""
+            }
+          ]
+        },
+      ]
+      break;
+    case "menu_card":
+      config.action = "menu"
+      config.menuWidth = 200
+      config.menuItems = [
+        
+      ]
+      break;
+    case "menu_link":
+      config.action = "menu"
+      config.menuWidth = 200
+      config.menuItems = [
+        
+      ]
+      break;
+    case "menu_excerpt":
+      config.action = "menu"
+      config.menuWidth = 200
+      config.menuItems = [
+        
+      ]
+      break;
+    case "menu_comment":
+      config.action = "menu"
+      config.menuWidth = 200
+      config.menuItems = [
+        
+      ]
+      break;
+    case "menu_text":
+      config.action = "menu"
+      config.menuWidth = 200
+      config.menuItems = [
+        
+      ]
+      break;
+    case "menu_reference":
+      config.action = "menu"
+      config.menuWidth = 200
+      config.menuItems = [
+        
+      ]
+      break;
     default:
       break;
   }
@@ -1984,21 +2112,22 @@ static getActions() {
   return {
     "custom1":{name:"制卡",image:"makeCards",description: this.template("makeCards")},
     "custom2":{name:"学习",image:"study",description: this.template("menu_study")},
-    "custom3":{name:"增加模板",image:"addTemplate",description: this.template("addTemplate")},
-    "custom4":{name:"文献",image:"reference",description: this.template("menu_reference")},
-    "custom5":{name:"卡片",image:"card",description: this.template("menu_card")},
-    "custom6":{name:"文本",image:"text",description: this.template("menu_text")},
+    "custom3":{name:"模板",image:"template",description: this.template("addTemplate")},
+    "custom4":{name:"卡片",image:"card",description: this.template("menu_card")},
+    "custom5":{name:"链接",image:"link",description: this.template("menu_link")},
+    "custom6":{name:"摘录",image:"excerpt",description: this.template("menu_excerpt")},
+    "custom7":{name:"评论",image:"comment",description: this.template("menu_comment")},
+    "custom8":{name:"文本",image:"text",description: this.template("menu_text")},
+    "custom9":{name:"文献",image:"reference",description: this.template("menu_reference")},
     "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
-    "custom7":{name:"隐藏插件栏",image:"hideAddonBar",description: this.template("hideAddonBar")},
-    "custom8":{name:"测试",image:"test",description: this.template("test")},
+    "custom10":{name:"隐藏插件栏",image:"hideAddonBar",description: this.template("hideAddonBar")},
     "execute":{name:"execute",image:"execute",description:"let focusNote = MNNote.getFocusNote()\nMNUtil.showHUD(focusNote.noteTitle)"},
     "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
     "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})},
     "copyAsMarkdownLink":{name:"Copy md link",image:"copyAsMarkdownLink",description:"Copy md link"},
     "search":{name:"Search",image:"search",description:"Search"},
     "bigbang":{name:"Bigbang",image:"bigbang",description:"Bigbang"},
-    "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"},
-    // "setting":{name:"Setting",image:"setting",description:"Setting"}
+    "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"}
   }
 }
 
