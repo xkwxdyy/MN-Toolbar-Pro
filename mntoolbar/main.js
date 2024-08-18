@@ -136,6 +136,91 @@ JSB.newAddon = function (mainPath) {
             MNUtil.showHUD(error)
           }
         }
+        MNNote.prototype.getLinksCommentsIndexArray = function(){
+          let linksCommentsIndexArray = []
+          this.comments.forEach((comment,index)=>{
+            if (
+              comment.type == "TextNote" &&
+              /^marginnote\dapp:\/\/note\//.test(comment.text)
+            ) {
+              linksCommentsIndexArray.push(index)
+            }
+          })
+          return linksCommentsIndexArray
+        }
+        MNNote.prototype.hasComment = function(comment){
+          let comments = this.comments
+          for (let i = 0; i < comments.length; i++) {
+            if (
+              comments[i].text &&
+              comments[i].text === comment
+            ) {
+              return true
+            }
+          }
+          return false
+        }
+        MNNote.prototype.noteURL = function(){
+          return "marginnote4app://note/"+this.noteId
+        }
+        MNNote.prototype.clearAllLinks = function(){
+          for (let i = this.comments.length-1; i >= 0; i--) {
+            let comment = this.comments[i]
+            if (
+              comment.type == "TextNote" &&
+              (
+                comment.text.includes("marginnote3") ||
+                comment.text.includes("marginnote4")
+              )
+            ) {
+              this.removeCommentByIndex(i)
+            }
+          }
+        }
+        MNNote.prototype.linksConvertToMN4Type = function(){
+          for (let i = this.comments.length-1; i >= 0; i--) {
+            let comment = this.comments[i]
+            if (
+              comment.type == "TextNote" &&
+              comment.text.startsWith("marginnote3app://note/")
+            ) {
+              let targetNoteId = comment.text.match(/marginnote3app:\/\/note\/(.*)/)[1]
+              let targetNote = MNNote.new(targetNoteId)
+              if (targetNote) {
+                this.removeCommentByIndex(i)
+                this.appendNoteLink(targetNote, "To")
+                this.moveComment(this.comments.length-1, index)
+              } else {
+                this.removeCommentByIndex(i)
+              }
+            }
+          }
+        }
+        // TODO：失效
+        MNNote.prototype.clearAllFailedLinks = function() {
+          // this.linksConvertToMN4Type()
+          // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
+          for (let i = this.comments.length-1; i >= 0; i--) {
+            let comment = this.comments[i]
+            if (
+              comment.type == "TextNote" &&
+              comment.text.includes("marginnote3app://note/")
+            ) {
+              this.removeCommentByIndex(i)
+            } else if (
+              comment.type == "TextNote" &&
+              comment.text.includes("marginnote4app://note/")
+            ) {
+              let targetNoteId = comment.text.match(/marginnote4app:\/\/note\/(.*)/)[1]
+              if (!targetNoteId.includes("/summary/")) {  // 防止把概要的链接处理了
+                let targetNote = MNNote.new(targetNoteId)
+                if (!targetNote) {
+                  this.removeCommentByIndex(i)
+                }
+              }
+            }
+          }
+        }
         MNUtil.delay(0.2).then(()=>{
           MNUtil.studyView.becomeFirstResponder(); //For dismiss keyboard on iOS
         })

@@ -162,7 +162,7 @@ class Pangu {
     newText = newText.replace(CJK_ANS, "$1 $2")
     newText = newText.replace(ANS_CJK, "$1 $2")
     newText = newText.replace(S_A, "$1 $2")
-    newText = newText.replace(MIDDLE_DOT, "・")
+    // newText = newText.replace(MIDDLE_DOT, "・")
     // 去中文间的空格
     newText = newText.replace(BACKSAPCE_CJK, "$1$2")
     // 去掉下标和中文之间的空格
@@ -172,10 +172,12 @@ class Pangu {
     // 特殊字符
     newText = newText.replace(SPECIAL, "$1 ")
     // 处理 C[a,b] 这种单独字母紧跟括号的情形，不加空格
-    newText = newText.replace(/([A-Za-z])\s([\(\[])/g, "$1$2")
-    newText = newText.replace(/([\)\]])\s([A-Za-z])/g, "$1$2")
+    newText = newText.replace(/([A-Za-z])\s([\(\[\{])/g, "$1$2")
+    newText = newText.replace(/([\)\]\}])\s([A-Za-z])/g, "$1$2")
     // ”后面不加空格
     newText = newText.replace(/”\s/g, "”")
+    // · 左右的空格去掉
+    newText = newText.replace(/\s*·\s*/g, "·")
     // DEBUG
     // String.prototype.replace = String.prototype.rawReplace;
     return newText
@@ -214,6 +216,152 @@ class toolbarUtils {
 
   // TODO:
   // - 判断链接是否存在
+
+  static isValidNoteId(noteId) {
+    const regex = /^[0-9A-Z]{8}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{12}$/;
+    return regex.test(noteId);
+  }
+
+  static getNoteIdFromClipboard(){
+    let noteId = MNUtil.clipboardText
+    if (/^marginnote\dapp:\/\/note\//.test(noteId)) {
+      noteId = noteId.slice(22)
+      return noteId
+    } else if (
+      this.isValidNoteId(noteId)
+    ) {
+      return noteId
+    } else {
+      MNUtil.showHUD("剪切板中不是有效的卡片 ID 或 URL")
+      return undefined
+    }
+  }
+
+  static isCommentLink(comment) {
+    return comment.type === "TextNote" && comment.text.includes("marginnote4app://note/");
+  }
+
+  static getNoteURLById(noteId) {
+    noteId = noteId.trim()
+    let noteURL
+    if (/^marginnote\dapp:\/\/note\//.test(noteId)) {
+      noteURL = noteId
+    } else {
+      noteURL = "marginnote4app://note/" + noteId
+    }
+    return noteURL
+  }
+
+  static getLinkType(note, link){
+    link = this.getNoteURLById(link)
+    let linkedNoteId = MNUtil.getNoteIdByURL(link)
+    let linkedNote = MNNote.new(linkedNoteId)
+    if (note.hasComment(link)) {
+      if (linkedNote.getCommentIndex(note.noteURL) !== -1) {
+        return "Double"
+      } else {
+        return "Single"
+      }
+    } else {
+      MNUtil.showHUD("卡片「" + note.title + "」中不包含到「" + linkedNote.title + "」的链接")
+    }
+  }
+
+  static isLinkDouble(note, link) {
+    return this.getLinkType(note, link) === "Double";
+  }
+
+  static isLinkSingle(note, link) {
+    return this.getLinkType(note, link) === "Single";
+  }
+
+  static pasteNoteAsChildNote(targetNote){
+    // 不足：跨学习集的时候必须要进入到目标学习集里面
+    let cutNoteId = this.getNoteIdFromClipboard()
+    let cutNoteLinksInfoArr = []
+    let handledLinksSet = new Set()  // 防止 cutNote 里面有多个相同链接，造成对 linkedNote 的多次相同处理
+    if (cutNoteId !== undefined){
+      let cutNote = MNNote.new(cutNoteId)
+      if (cutNote) {
+        this.linksConvertToMN4Type(cutNote)
+        cutNote.comments.forEach(
+          (comment, index) => {
+            if (this.isCommentLink(comment)) {
+              if (this.isLinkDouble(cutNote, comment.text)) {
+                // 双向链接
+                cutNoteLinksInfoArr.push(
+                  {
+                    linkedNoteId: MNUtil.getNoteIdByURL(comment.text),
+                    indexInCutNote: index,
+                    indexArrInLinkedNote: MNNote.new(MNUtil.getNoteIdByURL(comment.text)).getLinksCommentsIndexArray()
+                  }
+                )
+              } else {
+                // 单向链接
+                cutNoteLinksInfoArr.push(
+                  {
+                    linkedNoteId: MNUtil.getNoteIdByURL(comment.text),
+                    indexInCutNote: index
+                  }
+                )
+              }
+            }
+          }
+        )
+        // 去掉被剪切卡片里的所有链接
+        cutNote.clearAllLinks()
+        // 在目标卡片下新建一个卡片
+        let config = {
+          title: cutNote.title,
+          content: "",
+          markdown: true,
+          color: cutNote.colorIndex,
+        }
+        let newNote = targetNote.createChildNote(config)
+        cutNote.title = ""
+        // 合并之前要把双向链接的卡片里的旧链接删掉
+        cutNoteLinksInfoArr.forEach(
+          cutNoteLinkInfo => {
+            if (!handledLinksSet.has(cutNoteLinkInfo.linkedNoteId)) {
+              let linkedNote = MNNote.new(cutNoteLinkInfo.linkedNoteId)
+              if (linkedNote) {
+                if (cutNoteLinkInfo.indexArrInLinkedNote !== undefined) {
+                  // 双向链接
+                  linkedNote.removeCommentsByIndices(cutNoteLinkInfo.indexArrInLinkedNote)
+                }
+              }
+            }
+            handledLinksSet.add(cutNoteLinkInfo.linkedNoteId)
+          }
+        )
+        // 将被剪切的卡片合并到新卡片中
+        newNote.merge(cutNote)
+
+        handledLinksSet.clear()
+        // 重新链接
+        cutNoteLinksInfoArr.forEach(
+          cutNoteLinkInfo => {
+            let linkedNote = MNNote.new(cutNoteLinkInfo.linkedNoteId)
+            newNote.appendNoteLink(linkedNote, "To")
+            newNote.moveComment(newNote.comments.length-1, cutNoteLinkInfo.indexInCutNote)
+            if (!handledLinksSet.has(cutNoteLinkInfo.linkedNoteId)) {
+              if (cutNoteLinkInfo.indexArrInLinkedNote !== undefined) {
+                // 双向链接
+                cutNoteLinkInfo.indexArrInLinkedNote.forEach(
+                  index => {
+                    linkedNote.appendNoteLink(newNote, "To")
+                    linkedNote.moveComment(linkedNote.comments.length-1, index)
+                  }
+                )
+              }
+            }
+            handledLinksSet.add(cutNoteLinkInfo.linkedNoteId)
+            this.clearAllFailedLinks(linkedNote)
+          }
+        )
+      }
+    }
+  }
 
   static getProofHtmlCommentIndex(focusNote, includeMethod = false, methodNum = 0) {
     let focusNoteType = this.getKnowledgeNoteTypeByColorIndex(focusNote.colorIndex)
@@ -412,7 +560,7 @@ class toolbarUtils {
     }
   }
   static clearAllFailedLinks(focusNote) {
-    this.convertMN3LinkToMN4Link(focusNote)
+    this.linksConvertToMN4Type(focusNote)
     // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
     for (let i = focusNote.comments.length-1; i >= 0; i--) {
       let comment = focusNote.comments[i]
@@ -436,8 +584,9 @@ class toolbarUtils {
     }
   }
 
-  static convertMN3LinkToMN4Link(focusNote) {
-    focusNote.comments.forEach((comment, index) => {
+  static linksConvertToMN4Type(focusNote) {
+    for (let i = focusNote.comments.length-1; i >= 0; i--) {
+      let comment = focusNote.comments[i]
       if (
         comment.type == "TextNote" &&
         comment.text.startsWith("marginnote3app://note/")
@@ -445,12 +594,14 @@ class toolbarUtils {
         let targetNoteId = comment.text.match(/marginnote3app:\/\/note\/(.*)/)[1]
         let targetNote = MNNote.new(targetNoteId)
         if (targetNote) {
-          focusNote.removeCommentByIndex(index)
+          focusNote.removeCommentByIndex(i)
           focusNote.appendNoteLink(targetNote, "To")
           focusNote.moveComment(focusNote.comments.length-1, index)
+        } else {
+          focusNote.removeCommentByIndex(i)
         }
       }
-    })
+    }
   }
   static generateArrayCombinations(Arr, joinLabel) {
     const combinations = [];
@@ -1403,6 +1554,7 @@ class toolbarUtils {
           note.noteTitle = ""
           // 将旧卡片合并到新卡片中
           newNote.merge(note)
+          newNote.focusInMindMap(0.2)
           // newNoteList.push(newNote)
         // }
       // )
@@ -3103,6 +3255,24 @@ class toolbarUtils {
     } catch (error) {
       MNUtil.showHUD(error);
     }
+
+    // 更新“关键词：”
+    let keywordsHtmlCommentIndex = focusNote.getCommentIndex("关键词：", true)
+    if (keywordsHtmlCommentIndex !== -1){
+      focusNote.removeCommentByIndex(keywordsHtmlCommentIndex)
+      this.cloneAndMerge(focusNote,"13D040DD-A662-4EFF-A751-217EE9AB7D2E")
+      focusNote.moveComment(focusNote.comments.length-1, keywordsHtmlCommentIndex)
+    }
+
+    // 更新“相关定义：”→“相关概念：”
+    let definitionHtmlCommentOldIndex = focusNote.getCommentIndex("相关定义：", true)
+    if (definitionHtmlCommentOldIndex !== -1){
+      focusNote.removeCommentByIndex(definitionHtmlCommentOldIndex)
+      this.cloneAndMerge(focusNote,"9129B736-DBA1-441B-A111-EC0655B6120D")
+      focusNote.moveComment(focusNote.comments.length-1, definitionHtmlCommentOldIndex)
+    }
+
+    this.clearAllFailedLinks(focusNote)
     focusNote.refresh()
   }
 
@@ -3380,7 +3550,7 @@ class toolbarUtils {
   }
   }
   static showHUD(message,duration=2) {
-    this.app.showHUD(message,this.focusWindow,2)
+    this.app.showHUD(message,this.focusWindow,duration)
   }
   static refreshSubscriptionStatus(){
     this.isSubscribe = this.checkSubscribe(false,false,true)
@@ -5166,14 +5336,23 @@ static template(action) {
         {
           "action": "menu",
           "menuTitle": "➡️ 证明",
+          "menuWidth": 250,
           "menuItems": [
+            {
+              "action" : "moveLastCommentToProofStart",
+              "menuTitle" : "最后1️⃣💬⬆️证明「开始」"
+            },
             {
               "action": "moveProofToStart",
               "menuTitle": "证明⬆️证明开始",
             },
             {
+              "action" : "addProofToStartFromClipboard",
+              "menuTitle" : "从剪切板增加证明⬆️证明「开始」"
+            },
+            {
               "action" : "addProofFromClipboard",
-              "menuTitle" : "从剪切板增加证明"
+              "menuTitle" : "从剪切板增加证明⬆️证明「末尾」"
             },
             {
               "action": "moveProofToMethod",
@@ -5197,11 +5376,11 @@ static template(action) {
             },
             {
               "action" : "moveLastCommentToProof",
-              "menuTitle" : "最后1️⃣💬⬆️证明"
+              "menuTitle" : "最后1️⃣💬⬆️证明「末尾」"
             },
             {
               "action" : "moveLastTwoCommentsToProof",
-              "menuTitle" : "最后2️⃣💬⬆️证明"
+              "menuTitle" : "最后2️⃣💬⬆️证明「末尾」"
             },
           ]
         },
@@ -5544,10 +5723,10 @@ static template(action) {
             // {
             //   "menuTitle": "🔽 "
             // },
-            {
-              "action": "",
-              "menuTitle": "➕出版社"
-            },
+            // {
+            //   "action": "",
+            //   "menuTitle": "➕出版社"
+            // },
             // {
             //   "action": "",
             //   "menuTitle": "修改整卷期刊前缀"
@@ -5582,6 +5761,10 @@ static template(action) {
               "menuTitle": "标题规范"
             },
             {
+              "action": "selectionTextToLowerCase",
+              "menuTitle": "转小写"
+            },
+            {
               "action": "selectionTextHandleSpaces",
               "menuTitle": "处理空格"
             }
@@ -5594,6 +5777,10 @@ static template(action) {
             {
               "action": "copiedTextToTitleCase",
               "menuTitle": "标题规范"
+            },
+            {
+              "action": "copiedTextToLowerCase",
+              "menuTitle": "转小写"
             },
             {
               "action": "copiedTextHandleSpaces",
@@ -5628,6 +5815,10 @@ static template(action) {
           "menuTitle": "合并卡片到父卡片并更新所有链接",
         },
         {
+          "action": "pasteNoteAsChildNote",
+          "menuTitle": "剪切卡片到选中卡片",
+        },
+        {
           "action": "menu",
           "menuTitle": "➡️ 链接",
           "menuItems": [
@@ -5651,7 +5842,7 @@ static template(action) {
               "menuTitle": "🔄 卡片的所有链接重新链接",
             },
             // {
-            //   "action": "convertMN3LinkToMN4Link",
+            //   "action": "linksConvertToMN4Type",
             //   "menuTitle": "mn3 链接 → mn4 链接",
             // },
             {

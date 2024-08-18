@@ -1838,6 +1838,25 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "pasteNoteAsChildNote":
+        MNUtil.undoGrouping(()=>{
+          try {
+            toolbarUtils.pasteNoteAsChildNote(focusNote)
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      case "moveLastCommentToProofStart":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let targetIndex = toolbarUtils.getProofHtmlCommentIndex(focusNote) + 1
+            focusNote.moveComment(focusNote.comments.length-1,targetIndex)
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
       case "moveProofToStart":
         MNUtil.undoGrouping(()=>{
           try {
@@ -1862,7 +1881,8 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                   focusNote.comments.forEach(
                     (comment, index) => {
                       if (
-                        proofHtmlCommentIndex < index < thoughtHtmlCommentIndex &&
+                        proofHtmlCommentIndex < index &&
+                        index < thoughtHtmlCommentIndex &&
                         comment.type == "TextNote" &&
                         comment.text.startsWith("- ")
                       ) {
@@ -2026,6 +2046,19 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           focusNote.appendMarkdownComment("-",keywordsHtmlCommentIndex+1)
         })
         break;
+      case "addProofToStartFromClipboard":
+        try {
+          MNUtil.undoGrouping(()=>{
+            MNUtil.excuteCommand("EditPaste")
+            MNUtil.delay(0.1).then(()=>{
+              let targetIndex = toolbarUtils.getProofHtmlCommentIndex(focusNote) + 1
+              focusNote.moveComment(focusNote.comments.length-1,targetIndex)
+            })
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+        break;
       case "addProofFromClipboard":
         try {
           MNUtil.undoGrouping(()=>{
@@ -2071,6 +2104,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           focusNote.focusInFloatMindMap()
         })
         break;
+      case "selectionTextToLowerCase":
+        MNUtil.showHUD(MNUtil.selectionText.toLowerCase())
+        MNUtil.copy(MNUtil.selectionText.toLowerCase())
+        break;
       case "selectionTextToTitleCase":
         MNUtil.showHUD(MNUtil.selectionText.toTitleCase())
         MNUtil.copy(MNUtil.selectionText.toTitleCase())
@@ -2078,6 +2115,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       case "copiedTextToTitleCase":
         MNUtil.showHUD(MNUtil.clipboardText.toTitleCase())
         MNUtil.copy(MNUtil.clipboardText.toTitleCase())
+        break;
+      case "copiedTextToLowerCase":
+        MNUtil.showHUD(MNUtil.clipboardText.toLowerCase())
+        MNUtil.copy(MNUtil.clipboardText.toLowerCase())
         break;
       case "proofAddMethodComment":
         UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
@@ -4328,11 +4369,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           MNUtil.showHUD(error)
         }
         break;
-      case "convertMN3LinkToMN4Link":
+      case "linksConvertToMN4Type":
         MNUtil.undoGrouping(()=>{
           try {
             focusNotes.forEach(focusNote=>{
-              toolbarUtils.convertMN3LinkToMN4Link(focusNote)
+              toolbarUtils.linksConvertToMN4Type(focusNote)
             })
           } catch (error) {
             MNUtil.showHUD(error);
@@ -4428,7 +4469,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         MNUtil.undoGrouping(()=>{
           try {
             focusNotes.forEach(focusNote=>{
-              toolbarUtils.convertMN3LinkToMN4Link(focusNote)
+              toolbarUtils.linksConvertToMN4Type(focusNote)
               // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
               for (let i = focusNote.comments.length-1; i >= 0; i--) {
                 let comment = focusNote.comments[i]
@@ -4891,6 +4932,15 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
                 } catch (error) {
                   MNUtil.showHUD(error)
                 }
+              }
+              if (focusNoteType == "classification") {
+                MNUtil.undoGrouping(()=>{
+                  try {
+                    toolbarUtils.changeChildNotesPrefix(focusNote)
+                  } catch (error) {
+                    MNUtil.showHUD(error);
+                  }
+                })
               }
               focusNote.refresh()
               // 处理卡片标题空格
