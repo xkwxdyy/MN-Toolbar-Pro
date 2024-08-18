@@ -1838,6 +1838,15 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      case "pasteNoteAsChildNote":
+        MNUtil.undoGrouping(()=>{
+          try {
+            toolbarUtils.pasteNoteAsChildNote(focusNote)
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
       case "moveLastCommentToProofStart":
         MNUtil.undoGrouping(()=>{
           try {
@@ -2037,7 +2046,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           focusNote.appendMarkdownComment("-",keywordsHtmlCommentIndex+1)
         })
         break;
-      case "addProofFromClipboard":
+      case "addProofToStartFromClipboard":
         try {
           MNUtil.undoGrouping(()=>{
             MNUtil.excuteCommand("EditPaste")
@@ -4360,11 +4369,11 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           MNUtil.showHUD(error)
         }
         break;
-      case "convertMN3LinkToMN4Link":
+      case "linksConvertToMN4Type":
         MNUtil.undoGrouping(()=>{
           try {
             focusNotes.forEach(focusNote=>{
-              toolbarUtils.convertMN3LinkToMN4Link(focusNote)
+              toolbarUtils.linksConvertToMN4Type(focusNote)
             })
           } catch (error) {
             MNUtil.showHUD(error);
@@ -4460,7 +4469,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         MNUtil.undoGrouping(()=>{
           try {
             focusNotes.forEach(focusNote=>{
-              toolbarUtils.convertMN3LinkToMN4Link(focusNote)
+              toolbarUtils.linksConvertToMN4Type(focusNote)
               // 从最后往上删除，就不会出现前面删除后干扰后面的 index 的情况
               for (let i = focusNote.comments.length-1; i >= 0; i--) {
                 let comment = focusNote.comments[i]
