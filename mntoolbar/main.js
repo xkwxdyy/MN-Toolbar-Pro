@@ -148,6 +148,18 @@ JSB.newAddon = function (mainPath) {
           })
           return linksCommentsIndexArray
         }
+        MNNote.prototype.getCommentIndexArray = function(text){
+          let linksCommentsIndexArray = []
+          this.comments.forEach((comment,index)=>{
+            if (
+              comment.type == "TextNote" &&
+              comment.text.includes(text)
+            ) {
+              linksCommentsIndexArray.push(index)
+            }
+          })
+          return linksCommentsIndexArray
+        }
         MNNote.prototype.hasComment = function(comment){
           let comments = this.comments
           for (let i = 0; i < comments.length; i++) {
@@ -189,7 +201,7 @@ JSB.newAddon = function (mainPath) {
               if (targetNote) {
                 this.removeCommentByIndex(i)
                 this.appendNoteLink(targetNote, "To")
-                this.moveComment(this.comments.length-1, index)
+                this.moveComment(this.comments.length-1, i)
               } else {
                 this.removeCommentByIndex(i)
               }

@@ -293,7 +293,7 @@ class toolbarUtils {
                   {
                     linkedNoteId: MNUtil.getNoteIdByURL(comment.text),
                     indexInCutNote: index,
-                    indexArrInLinkedNote: MNNote.new(MNUtil.getNoteIdByURL(comment.text)).getLinksCommentsIndexArray()
+                    indexArrInLinkedNote: MNNote.new(MNUtil.getNoteIdByURL(comment.text)).getCommentIndexArray(cutNote.noteId)
                   }
                 )
               } else {
@@ -337,28 +337,32 @@ class toolbarUtils {
         // 将被剪切的卡片合并到新卡片中
         newNote.merge(cutNote)
 
-        handledLinksSet.clear()
-        // 重新链接
-        cutNoteLinksInfoArr.forEach(
-          cutNoteLinkInfo => {
-            let linkedNote = MNNote.new(cutNoteLinkInfo.linkedNoteId)
-            newNote.appendNoteLink(linkedNote, "To")
-            newNote.moveComment(newNote.comments.length-1, cutNoteLinkInfo.indexInCutNote)
-            if (!handledLinksSet.has(cutNoteLinkInfo.linkedNoteId)) {
-              if (cutNoteLinkInfo.indexArrInLinkedNote !== undefined) {
-                // 双向链接
-                cutNoteLinkInfo.indexArrInLinkedNote.forEach(
-                  index => {
-                    linkedNote.appendNoteLink(newNote, "To")
-                    linkedNote.moveComment(linkedNote.comments.length-1, index)
-                  }
-                )
+        try {
+          handledLinksSet.clear()
+          // 重新链接
+          cutNoteLinksInfoArr.forEach(
+            cutNoteLinkInfo => {
+              let linkedNote = MNNote.new(cutNoteLinkInfo.linkedNoteId)
+              newNote.appendNoteLink(linkedNote, "To")
+              newNote.moveComment(newNote.comments.length-1, cutNoteLinkInfo.indexInCutNote)
+              if (!handledLinksSet.has(cutNoteLinkInfo.linkedNoteId)) {
+                if (cutNoteLinkInfo.indexArrInLinkedNote !== undefined) {
+                  // 双向链接
+                  cutNoteLinkInfo.indexArrInLinkedNote.forEach(
+                    index => {
+                      linkedNote.appendNoteLink(newNote, "To")
+                      linkedNote.moveComment(linkedNote.comments.length-1, index)
+                    }
+                  )
+                }
               }
+              handledLinksSet.add(cutNoteLinkInfo.linkedNoteId)
+              this.clearAllFailedLinks(linkedNote)
             }
-            handledLinksSet.add(cutNoteLinkInfo.linkedNoteId)
-            this.clearAllFailedLinks(linkedNote)
-          }
-        )
+          )
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
       }
     }
   }
@@ -596,7 +600,7 @@ class toolbarUtils {
         if (targetNote) {
           focusNote.removeCommentByIndex(i)
           focusNote.appendNoteLink(targetNote, "To")
-          focusNote.moveComment(focusNote.comments.length-1, index)
+          focusNote.moveComment(focusNote.comments.length-1, i)
         } else {
           focusNote.removeCommentByIndex(i)
         }
@@ -5816,7 +5820,7 @@ static template(action) {
         },
         {
           "action": "pasteNoteAsChildNote",
-          "menuTitle": "剪切卡片到选中卡片",
+          "menuTitle": "复制卡片🆔后，剪切到选中卡片",
         },
         {
           "action": "menu",
