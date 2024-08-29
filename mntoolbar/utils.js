@@ -3613,8 +3613,87 @@ class toolbarUtils {
   static clipboardText() {
     return UIPasteboard.generalPasteboard().string
   }
-  static copy(text) {
-    UIPasteboard.generalPasteboard().string = text
+  static mergeWhitespace(str) {
+      if (!str) {
+        return ""
+      }
+      // 先将多个连续的换行符替换为双换行符
+      var tempStr = str.replace(/\n+/g, '\n\n');
+      // 再将其它的空白符（除了换行符）替换为单个空格
+      return tempStr.replace(/[\r\t\f\v ]+/g, ' ').trim();
+  }
+  static copy(des) {
+    let focusNote = MNNote.getFocusNote()
+    MNUtil.showHUD("copy")
+    let target = des.target
+    let element = undefined
+    if (target) {
+      switch (target) {
+        case "selectionText":
+          element = MNUtil.selectionText
+          break;
+        case "title":
+          if (focusNote) {
+            element = focusNote.noteTitle
+          }
+          break;
+        case "excerpt":
+          if (focusNote) {
+            element = focusNote.excerptText
+          }
+          break
+        case "notesText":
+          if (focusNote) {
+            element = focusNote.notesText
+          }
+          break;
+        case "comment":
+          if (focusNote) {
+            let index = 1
+            if (des.index) {
+              index = des.index
+            }
+            let comments = focusNote.comments
+            let commentsLength = comments.length
+            if (index > commentsLength) {
+              index = commentsLength
+            }
+            element = comments[index-1].text
+          }
+          break;
+        case "noteId":
+          if (focusNote) {
+            element = focusNote.noteId
+          }
+          break;
+        case "noteMarkdown":
+          if (focusNote) {
+            element = this.mergeWhitespace(this.getMDFromNote(focusNote))
+          }
+          break;
+        case "noteWithDecendentsMarkdown":
+          if (focusNote) {
+            element = this.getMDFromNote(focusNote)
+            // MNUtil.copyJSON(focusNote.descendantNodes.treeIndex)
+            let levels = focusNote.descendantNodes.treeIndex.map(ind=>ind.length)
+            let descendantsMarkdowns = focusNote.descendantNodes.descendant.map((note,index)=>{
+              return this.getMDFromNote(note,levels[index])
+            })
+            element = this.mergeWhitespace(element+"\n"+descendantsMarkdowns.join("\n\n"))
+          }
+          break;
+        default:
+          MNUtil.showHUD("Invalid target")
+          break;
+      }
+    }
+    let copyContent = des.content
+    if (copyContent) {
+      let replacedText = this.detectAndReplace(copyContent,element)
+      MNUtil.copy(replacedText)
+    }else{//没有提供content参数则直接复制目标内容
+      MNUtil.copy(element)
+    }
   }
   static copyJSON(object) {
     UIPasteboard.generalPasteboard().string = JSON.stringify(object,null,2)
@@ -3951,6 +4030,7 @@ class toolbarUtils {
     let emojiIndices = ["0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟"]
     return emojiIndices[index]
   }
+
   /**
    * 
    * @param {MNNote} note 
@@ -3959,8 +4039,6 @@ class toolbarUtils {
    */
   static getMergedText(note,des,noteIndex){
   try {
-    
-
     let textList = []
     des.source.map(text=>{
       if (text.includes("{{title}}") && des.removeSource) {
@@ -5090,6 +5168,98 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
       url = url+"&text="+encodeURIComponent(text)
     }
     MNUtil.openURL(url)
+  }
+  static export(des){
+    let focusNote = MNNote.getFocusNote()
+    let exportTarget = des.target ?? "auto"
+    let exportSource = des.source ?? "noteDoc"
+    switch (exportSource) {
+      case "noteDoc":
+        let noteDocPath = MNUtil.getDocById(focusNote.note.docMd5).fullPathFileName
+        MNUtil.saveFile(noteDocPath, ["public.pdf"])
+        break;
+      case "note":
+        let md = this.getMDFromNote(focusNote)
+        MNUtil.copy(md)
+        break;
+      case "currentDoc":
+        let docPath = MNUtil.currentDocController.document.fullPathFileName
+        MNUtil.saveFile(docPath, ["public.pdf"])
+        break;
+      default:
+        break;
+    }
+  }
+  static getMDFromNote(note,level = 0){
+    if (note) {
+      if (note.groupNoteId || (note.note && note.note.groupNoteId)) {
+        if (note.groupNoteId) {
+          note = new MNNote(note.groupNoteId)
+        }else{
+          note = new MNNote(note.note.groupNoteId)
+        }
+      }
+    }else{
+      return
+    }
+try {
+
+  let title = (note.noteTitle && note.noteTitle.trim()) ? "# "+note.noteTitle.trim() : ""
+  if (title.trim()) {
+    title = title.split(";").filter(t=>{
+      if (/{{.*}}/.test(t)) {
+        return false
+      }
+      return true
+    }).join(";")
+  }
+  let textFirst = note.textFirst
+  let excerptText = (note.excerptPic && !textFirst) ? "": (note.excerptText? note.excerptText.trim() :"")
+  if (note.comments.length) {
+    note.comments.forEach(comment=>{
+      switch (comment.type) {
+        case "TextNote":
+          if (/^marginnote\dapp\:\/\//.test(comment.text)) {
+            //do nothing
+          }else{
+            excerptText = excerptText+"\n"+comment.text
+          }
+          break;
+        case "LinkNote":
+          if (comment.q_hpic && (comment.q_hpic.mask || comment.q_hpic.drawing)) {
+            break;
+          }
+          if (comment.q_hpic && comment.q_hpic.paint && !textFirst) {
+            let imageData = MNUtil.getMediaByHash(comment.q_hpic.paint)
+            let imageSize = UIImage.imageWithData(imageData).size
+            if (imageSize.width === 1 && imageSize.height === 1) {
+              //do nothing
+            }else{
+              break;
+            }
+          }
+          if (comment.q_htext && comment.q_htext.trim()) {
+            excerptText = excerptText+"\n"+comment.q_htext
+          }
+        default:
+          break;
+      }
+    })
+  }
+  excerptText = (excerptText && excerptText.trim()) ? this.highlightEqualsContentReverse(excerptText) : ""
+  let content = title+"\n"+excerptText
+  if (level) {
+    content = content.replace(/(#+\s)/g, "#".repeat(level)+"\$1")
+  }
+  return content
+}catch(error){
+  this.addErrorLog(error, "getMDFromNote")
+  return ""
+}
+  }
+  static highlightEqualsContentReverse(markdown) {
+      // 使用正则表达式匹配==xxx==的内容并替换为<mark>xxx</mark>
+      return markdown.replace(/<mark>(.+?)<\/mark>/g, '==\$1==');
   }
 }
 

@@ -361,7 +361,6 @@ viewWillLayoutSubviews: function() {
       return
     }
     let input = await self.getWebviewContent()
-    // toolbarUtils.copy(selected)
     if (self.selectedItem === "execute" || MNUtil.isValidJSON(input)) {
       if (!toolbarConfig.actions[selected]) {
         toolbarConfig.actions[selected] = toolbarConfig.getAction(selected)
@@ -857,7 +856,6 @@ settingController.prototype.show = function (frame) {
       this.view.layer.opacity = 1.0
       this.showAllButton()
       this.settingView.hidden = false
-
   })
     } catch (error) {
       MNUtil.showHUD(error)
@@ -1028,7 +1026,6 @@ settingController.prototype.createWebviewInput = function (superView) {
  * @this {settingController}
  */
 settingController.prototype.setWebviewContent = function (content) {
-  // toolbarUtils.copy(content)
   this.webviewInput.loadHTMLStringBaseURL(toolbarUtils.html(content))
 }
 
@@ -1036,7 +1033,6 @@ settingController.prototype.setWebviewContent = function (content) {
  * @this {settingController}
  */
 settingController.prototype.setJSContent = function (content) {
-  // toolbarUtils.copy(content)
   this.webviewInput.loadHTMLStringBaseURL(toolbarUtils.JShtml(content))
 }
 

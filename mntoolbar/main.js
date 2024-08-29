@@ -398,67 +398,66 @@ JSB.newAddon = function (mainPath) {
         if (!self.addonController.view.hidden) {
           if (self.addonController.onAnimate || self.addonController.onResize) {
             // showHUD("reject")
-            return
-          }
-          let splitLine = MNUtil.splitLine
-          // MNUtil.showHUD("splitline:"+splitLine)
-          let studyFrame = toolbarUtils.studyView().bounds
-          let currentFrame = self.addonController.currentFrame
-          // showHUD(JSON.stringify(currentFrame))
-          if (currentFrame.x+currentFrame.width*0.5 >= studyFrame.width) {
-            currentFrame.x = studyFrame.width-currentFrame.width*0.5              
-          }
-          if (currentFrame.y >= studyFrame.height) {
-            currentFrame.y = studyFrame.height-20              
-          }
-          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,self.addonController.maxButtonNumber)
-          if (self.addonController.splitMode) {
-            if (splitLine) {
-              currentFrame.x = splitLine-20
-            }else{
-              if (currentFrame.x < studyFrame.width*0.5) {
-                currentFrame.x = 0
+          }else{
+            let splitLine = MNUtil.splitLine
+            // MNUtil.showHUD("splitline:"+splitLine)
+            let studyFrame = MNUtil.studyView.bounds
+            let currentFrame = self.addonController.currentFrame
+            // showHUD(JSON.stringify(currentFrame))
+            if (currentFrame.x+currentFrame.width*0.5 >= studyFrame.width) {
+              currentFrame.x = studyFrame.width-currentFrame.width*0.5              
+            }
+            if (currentFrame.y >= studyFrame.height) {
+              currentFrame.y = studyFrame.height-20              
+            }
+            currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,self.addonController.maxButtonNumber)
+            if (self.addonController.splitMode) {
+              if (splitLine) {
+                currentFrame.x = splitLine-20
               }else{
-                currentFrame.x = studyFrame.width-40
+                if (currentFrame.x < studyFrame.width*0.5) {
+                  currentFrame.x = 0
+                }else{
+                  currentFrame.x = studyFrame.width-40
+                }
               }
             }
-          }
-          if (self.addonController.sideMode) {
-            switch (self.addonController.sideMode) {
-              case "left":
-                currentFrame.x = 0
-                break;
-              case "right":
-                currentFrame.x = studyFrame.width-40
-                break;
-              default:
-                break;
+            if (self.addonController.sideMode) {
+              switch (self.addonController.sideMode) {
+                case "left":
+                  currentFrame.x = 0
+                  break;
+                case "right":
+                  currentFrame.x = studyFrame.width-40
+                  break;
+                default:
+                  break;
+              }
             }
+            currentFrame.width = 40
+            if (currentFrame.x > (studyFrame.width-40)) {
+              currentFrame.x = studyFrame.width-40
+              // MNUtil.showHUD("message")
+            }
+            self.addonController.view.frame = currentFrame
+            self.addonController.currentFrame = currentFrame
           }
-          currentFrame.width = 40
-          if (currentFrame.x > (studyFrame.width-40)) {
-            currentFrame.x = studyFrame.width-40
-            // MNUtil.showHUD("message")
-          }
-          self.addonController.view.frame = currentFrame
-          self.addonController.currentFrame = currentFrame
         }
         if (self.testController) {
           if (self.testController.onAnimate || self.testController.onResize) {
-            // showHUD("reject")
-            return
+          }else{
+            let currentFrame = self.testController.currentFrame
+            let buttonNumber = toolbarConfig.getWindowState("dynamicButton");
+            currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,buttonNumber)
+            self.testController.view.frame = currentFrame
+            self.testController.currentFrame = currentFrame
           }
-          let currentFrame = self.testController.currentFrame
-          let buttonNumber = toolbarConfig.getWindowState("dynamicButton");
-          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,buttonNumber)
-          self.testController.view.frame = currentFrame
-          self.testController.currentFrame = currentFrame
         }
-        if (self.addonController.settingController && !self.addonController.settingController.onAnimate) {
-          let currentFrame = self.addonController.settingController.currentFrame
+        if (self.settingController && !self.settingController.onAnimate) {
+          let currentFrame = self.settingController.currentFrame
           // currentFrame.height = toolbarUtils.checkHeight(currentFrame.height)
-          self.addonController.settingController.view.frame = currentFrame
-          self.addonController.settingController.currentFrame = currentFrame
+          self.settingController.view.frame = currentFrame
+          self.settingController.currentFrame = currentFrame
         }
       },
 
@@ -737,8 +736,8 @@ try {
       onRefreshToolbarButton: function (sender) {
         try {
         self.addonController.setToolbarButton()
-        if (self.addonController.settingController) {
-          self.addonController.settingController.setButtonText()
+        if (self.settingController) {
+          self.settingController.setButtonText()
         }
         } catch (error) {
           toolbarUtils.addErrorLog(error, "onRefreshToolbarButton")
