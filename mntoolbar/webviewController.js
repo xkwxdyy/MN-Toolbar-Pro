@@ -87,8 +87,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.resizeGesture.view.hidden = false
     // self.resizeGesture.addTargetAction(self,"onResizeGesture:")
   } catch (error) {
-    MNUtil.showHUD(error)
-    // toolbarUtils.copy(error)
+    toolbarUtils.addErrorLog(error, "viewDidLoad")
   }
   },
   viewWillAppear: function(animated) {
@@ -230,7 +229,11 @@ try {
           return {title:title,object:self,selector:'customActionByMenu:',param:{des:item,button:button}}
         })
         self.commandTables = [commandTable]
-        self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+        if (MNUtil.studyView.bounds.width - self.view.frame.x < (width+40)) {
+          self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+        }else{
+          self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+        }
       }
       return
     }
@@ -1235,7 +1238,11 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
             targetNoteid = MNNote.getFocusNote().noteId
             break;
           case "{{currentChildMap}}":
-            targetNoteid = MNUtil.mindmapView.mindmapNodes[0].note.childMindMap.noteId
+            if (MNUtil.mindmapView ) {
+              targetNoteid = MNUtil.mindmapView.mindmapNodes[0].note.childMindMap.noteId
+            }else{
+              targetNoteid = undefined
+            }
             break;
           case "{{parentNote}}":
             targetNoteid = MNNote.getFocusNote().parentNote.noteId
@@ -1255,8 +1262,11 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
             targetNoteid= MNUtil.getNoteIdByURL(des.target)
             break;
         }
-
-        MNNote.focusInFloatMindMap(targetNoteid)
+        if (targetNoteid) {
+          MNNote.focusInFloatMindMap(targetNoteid)
+        }else{
+          MNUtil.showHUD("No Note found!")
+        }
         // toolbarUtils.studyController().focusNoteInFloatMindMapById(targetNoteid)
         break;
       case "openURL":
@@ -1578,59 +1588,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         focusNote.createBrotherNote(config)
         break;
       case "copy":
-        MNUtil.showHUD("copy")
-        let target = des.target
-        let element = undefined
-        if (target) {
-          switch (target) {
-            case "selectionText":
-              element = MNUtil.selectionText
-              break;
-            case "title":
-              if (focusNote) {
-                element = focusNote.noteTitle
-              }
-              break;
-            case "excerpt":
-              if (focusNote) {
-                element = focusNote.excerptText
-              }
-              break
-            case "notesText":
-              if (focusNote) {
-                element = focusNote.notesText
-              }
-              break;
-            case "commtent":
-              if (focusNote) {
-                let index = 1
-                if (des.index) {
-                  index = des.index
-                }
-                let comments = focusNote.comments
-                let commentsLength = comments.length
-                if (index > commentsLength) {
-                  index = commentsLength
-                }
-                element = comments[index-1].text
-              }
-              break;
-            case "noteId":
-              if (focusNote) {
-                element = focusNote.noteId
-              }
-              break;
-            default:
-              break;
-          }
-        }
-        let copyContent = des.content
-        if (copyContent) {
-          let replacedText = toolbarUtils.detectAndReplace(copyContent,element)
-          MNUtil.copy(replacedText)
-        }else{//没有提供content参数则直接复制目标内容
-          MNUtil.copy(element)
-        }
+        toolbarUtils.copy(des)
         break;
       case "addComment":
         MNUtil.showHUD("addComment")
@@ -1638,8 +1596,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         if (comment) {
           let replacedText = toolbarUtils.detectAndReplace(des.content)
           let focusNotes = MNNote.getFocusNotes()
+          // MNUtil.copy("text"+focusNotes.length)
           MNUtil.undoGrouping(()=>{
             focusNotes.forEach(note => {
+              // note.appendTextComment(replacedText)
               note.appendMarkdownComment(replacedText)
             })
           })
@@ -1897,8 +1857,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         }
         break
       case "export":
-        let docPath = MNUtil.getDocById(focusNote.note.docMd5).fullPathFileName
-        MNUtil.saveFile(docPath, ["public.pdf"])
+        toolbarUtils.export(des)
+        // let exportTarget = des.target ?? "auto"
+        // let docPath = MNUtil.getDocById(focusNote.note.docMd5).fullPathFileName
+        // MNUtil.saveFile(docPath, ["public.pdf"])
         break;
       case "setButtonImage":
         MNUtil.showHUD("setButtonImage")

@@ -68,73 +68,6 @@ JSB.newAddon = function (mainPath) {
           self.addonController.notebookid = notebookid
           self.notebookid = notebookid
           toolbarUtils.notebookId = notebookid
-          MNNote.prototype.refresh = function () {
-            this.note.appendMarkdownComment("")
-            this.note.removeCommentByIndex(this.note.comments.length-1)
-          }
-          MNNote.prototype.refreshAll = function() {
-            this.refresh()
-            if (this.descendantNodes.descendant.length > 0) {
-              this.descendantNodes.descendant.forEach(descendantNote => {
-                descendantNote.refresh()
-              })
-            }
-            if (this.ancestorNodes.length > 0) {
-              this.ancestorNodes.forEach(ancestorNote => {
-                ancestorNote.refresh()
-              })
-            }
-          }
-          MNNote.prototype.getIncludingCommentIndex = function(comment,includeHtmlComment = false) {
-            const comments = this.note.comments
-            for (let i = 0; i < comments.length; i++) {
-              const _comment = comments[i]
-              if (typeof comment == "string") {
-                if (includeHtmlComment) {
-                  if ((_comment.type == "TextNote" || _comment.type == "HtmlNote" )&& _comment.text.includes(comment)) return i
-                }else{
-                  if (_comment.type == "TextNote" && _comment.text.includes(comment)) return i
-                }
-              } else if (
-                _comment.type == "LinkNote" &&
-                _comment.noteid == comment.noteId
-              )
-                return i
-            }
-            return -1
-          }
-        }
-        MNNote.prototype.moveComment = function (fromIndex, toIndex) {
-          try {
-            let length = this.comments.length;
-            let arr = Array.from({ length: length }, (_, i) => i);
-            let from = fromIndex
-            let to = toIndex
-            if (fromIndex < 0) {
-              from = 0
-            }
-            if (fromIndex > (arr.length-1)) {
-              from = arr.length-1
-            }
-            if (toIndex < 0) {
-              to = 0
-            }
-            if (toIndex > (arr.length-1)) {
-              to = arr.length-1
-            }
-            if (from == to) {
-              // MNUtil.showHUD("No change")
-              return
-            }
-            // 取出要移动的元素
-            const element = arr.splice(to, 1)[0];
-            // 将元素插入到目标位置
-            arr.splice(from, 0, element);
-            let targetArr = arr
-            this.sortCommentsByNewIndices(targetArr)
-            } catch (error) {
-            MNUtil.showHUD(error)
-          }
         }
         MNUtil.delay(0.2).then(()=>{
           MNUtil.studyView.becomeFirstResponder(); //For dismiss keyboard on iOS
@@ -301,67 +234,66 @@ JSB.newAddon = function (mainPath) {
         if (!self.addonController.view.hidden) {
           if (self.addonController.onAnimate || self.addonController.onResize) {
             // showHUD("reject")
-            return
-          }
-          let splitLine = MNUtil.splitLine
-          // MNUtil.showHUD("splitline:"+splitLine)
-          let studyFrame = toolbarUtils.studyView().bounds
-          let currentFrame = self.addonController.currentFrame
-          // showHUD(JSON.stringify(currentFrame))
-          if (currentFrame.x+currentFrame.width*0.5 >= studyFrame.width) {
-            currentFrame.x = studyFrame.width-currentFrame.width*0.5              
-          }
-          if (currentFrame.y >= studyFrame.height) {
-            currentFrame.y = studyFrame.height-20              
-          }
-          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,self.addonController.maxButtonNumber)
-          if (self.addonController.splitMode) {
-            if (splitLine) {
-              currentFrame.x = splitLine-20
-            }else{
-              if (currentFrame.x < studyFrame.width*0.5) {
-                currentFrame.x = 0
+          }else{
+            let splitLine = MNUtil.splitLine
+            // MNUtil.showHUD("splitline:"+splitLine)
+            let studyFrame = MNUtil.studyView.bounds
+            let currentFrame = self.addonController.currentFrame
+            // showHUD(JSON.stringify(currentFrame))
+            if (currentFrame.x+currentFrame.width*0.5 >= studyFrame.width) {
+              currentFrame.x = studyFrame.width-currentFrame.width*0.5              
+            }
+            if (currentFrame.y >= studyFrame.height) {
+              currentFrame.y = studyFrame.height-20              
+            }
+            currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,self.addonController.maxButtonNumber)
+            if (self.addonController.splitMode) {
+              if (splitLine) {
+                currentFrame.x = splitLine-20
               }else{
-                currentFrame.x = studyFrame.width-40
+                if (currentFrame.x < studyFrame.width*0.5) {
+                  currentFrame.x = 0
+                }else{
+                  currentFrame.x = studyFrame.width-40
+                }
               }
             }
-          }
-          if (self.addonController.sideMode) {
-            switch (self.addonController.sideMode) {
-              case "left":
-                currentFrame.x = 0
-                break;
-              case "right":
-                currentFrame.x = studyFrame.width-40
-                break;
-              default:
-                break;
+            if (self.addonController.sideMode) {
+              switch (self.addonController.sideMode) {
+                case "left":
+                  currentFrame.x = 0
+                  break;
+                case "right":
+                  currentFrame.x = studyFrame.width-40
+                  break;
+                default:
+                  break;
+              }
             }
+            currentFrame.width = 40
+            if (currentFrame.x > (studyFrame.width-40)) {
+              currentFrame.x = studyFrame.width-40
+              // MNUtil.showHUD("message")
+            }
+            self.addonController.view.frame = currentFrame
+            self.addonController.currentFrame = currentFrame
           }
-          currentFrame.width = 40
-          if (currentFrame.x > (studyFrame.width-40)) {
-            currentFrame.x = studyFrame.width-40
-            // MNUtil.showHUD("message")
-          }
-          self.addonController.view.frame = currentFrame
-          self.addonController.currentFrame = currentFrame
         }
         if (self.testController) {
           if (self.testController.onAnimate || self.testController.onResize) {
-            // showHUD("reject")
-            return
+          }else{
+            let currentFrame = self.testController.currentFrame
+            let buttonNumber = toolbarConfig.getWindowState("dynamicButton");
+            currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,buttonNumber)
+            self.testController.view.frame = currentFrame
+            self.testController.currentFrame = currentFrame
           }
-          let currentFrame = self.testController.currentFrame
-          let buttonNumber = toolbarConfig.getWindowState("dynamicButton");
-          currentFrame.height = toolbarUtils.checkHeight(currentFrame.height,buttonNumber)
-          self.testController.view.frame = currentFrame
-          self.testController.currentFrame = currentFrame
         }
-        if (self.addonController.settingController && !self.addonController.settingController.onAnimate) {
-          let currentFrame = self.addonController.settingController.currentFrame
+        if (self.settingController && !self.settingController.onAnimate) {
+          let currentFrame = self.settingController.currentFrame
           // currentFrame.height = toolbarUtils.checkHeight(currentFrame.height)
-          self.addonController.settingController.view.frame = currentFrame
-          self.addonController.settingController.currentFrame = currentFrame
+          self.settingController.view.frame = currentFrame
+          self.settingController.currentFrame = currentFrame
         }
       },
 
@@ -640,8 +572,8 @@ try {
       onRefreshToolbarButton: function (sender) {
         try {
         self.addonController.setToolbarButton()
-        if (self.addonController.settingController) {
-          self.addonController.settingController.setButtonText()
+        if (self.settingController) {
+          self.settingController.setButtonText()
         }
         } catch (error) {
           toolbarUtils.addErrorLog(error, "onRefreshToolbarButton")

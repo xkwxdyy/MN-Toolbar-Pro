@@ -1,186 +1,3 @@
-// https://github.com/vinta/pangu.js
-// CJK is short for Chinese, Japanese, and Korean.
-//
-// CJK includes following Unicode blocks:
-// \u2e80-\u2eff CJK Radicals Supplement
-// \u2f00-\u2fdf Kangxi Radicals
-// \u3040-\u309f Hiragana
-// \u30a0-\u30ff Katakana
-// \u3100-\u312f Bopomofo
-// \u3200-\u32ff Enclosed CJK Letters and Months
-// \u3400-\u4dbf CJK Unified Ideographs Extension A
-// \u4e00-\u9fff CJK Unified Ideographs
-// \uf900-\ufaff CJK Compatibility Ideographs
-//
-// For more information about Unicode blocks, see
-// http://unicode-table.com/en/
-// https://github.com/vinta/pangu
-//
-// all J below does not include \u30fb
-const CJK =
-  "\u2e80-\u2eff\u2f00-\u2fdf\u3040-\u309f\u30a0-\u30fa\u30fc-\u30ff\u3100-\u312f\u3200-\u32ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff"
-// ANS is short for Alphabets, Numbers, and Symbols.
-//
-// A includes A-Za-z\u0370-\u03ff
-// N includes 0-9
-// S includes `~!@#$%^&*()-_=+[]{}\|;:'",<.>/?
-//
-// some S below does not include all symbols
-// the symbol part only includes ~ ! ; : , . ? but . only matches one character
-const CONVERT_TO_FULLWIDTH_CJK_SYMBOLS_CJK = new RegExp(
-  `([${CJK}])[ ]*([\\:]+|\\.)[ ]*([${CJK}])`,
-  "g"
-)
-const CONVERT_TO_FULLWIDTH_CJK_SYMBOLS = new RegExp(
-  `([${CJK}])[ ]*([~\\!;,\\?]+)[ ]*`,
-  "g"
-)
-const DOTS_CJK = new RegExp(`([\\.]{2,}|\u2026)([${CJK}])`, "g")
-const FIX_CJK_COLON_ANS = new RegExp(`([${CJK}])\\:([A-Z0-9\\(\\)])`, "g")
-// the symbol part does not include '
-const CJK_QUOTE = new RegExp(`([${CJK}])([\`"\u05f4])`, "g")
-const QUOTE_CJK = new RegExp(`([\`"\u05f4])([${CJK}])`, "g")
-const FIX_QUOTE_ANY_QUOTE = /([`"\u05f4]+)[ ]*(.+?)[ ]*([`"\u05f4]+)/g
-const CJK_SINGLE_QUOTE_BUT_POSSESSIVE = new RegExp(`([${CJK}])('[^s])`, "g")
-const SINGLE_QUOTE_CJK = new RegExp(`(')([${CJK}])`, "g")
-const FIX_POSSESSIVE_SINGLE_QUOTE = new RegExp(
-  `([A-Za-z0-9${CJK}])( )('s)`,
-  "g"
-)
-const HASH_ANS_CJK_HASH = new RegExp(
-  `([${CJK}])(#)([${CJK}]+)(#)([${CJK}])`,
-  "g"
-)
-const CJK_HASH = new RegExp(`([${CJK}])(#([^ ]))`, "g")
-const HASH_CJK = new RegExp(`(([^ ])#)([${CJK}])`, "g")
-// the symbol part only includes + - * / = & | < >
-const CJK_OPERATOR_ANS = new RegExp(
-  `([${CJK}])([\\+\\-\\*\\/=&\\|<>])([A-Za-z0-9])`,
-  "g"
-)
-const ANS_OPERATOR_CJK = new RegExp(
-  `([A-Za-z0-9])([\\+\\-\\*\\/=&\\|<>])([${CJK}])`,
-  "g"
-)
-const FIX_SLASH_AS = /([/]) ([a-z\-_\./]+)/g
-const FIX_SLASH_AS_SLASH = /([/\.])([A-Za-z\-_\./]+) ([/])/g
-// the bracket part only includes ( ) [ ] { } < > “ ”
-const CJK_LEFT_BRACKET = new RegExp(`([${CJK}])([\\(\\[\\{<>\u201c])`, "g")
-const RIGHT_BRACKET_CJK = new RegExp(`([\\)\\]\\}<>\u201d])([${CJK}])`, "g")
-const FIX_LEFT_BRACKET_ANY_RIGHT_BRACKET =
-  /([\(\[\{<\u201c]+)[ ]*(.+?)[ ]*([\)\]\}>\u201d]+)/
-const ANS_CJK_LEFT_BRACKET_ANY_RIGHT_BRACKET = new RegExp(
-  `([A-Za-z0-9${CJK}])[ ]*([\u201c])([A-Za-z0-9${CJK}\\-_ ]+)([\u201d])`,
-  "g"
-)
-const LEFT_BRACKET_ANY_RIGHT_BRACKET_ANS_CJK = new RegExp(
-  `([\u201c])([A-Za-z0-9${CJK}\\-_ ]+)([\u201d])[ ]*([A-Za-z0-9${CJK}])`,
-  "g"
-)
-const AN_LEFT_BRACKET = /([A-Za-z0-9])([\(\[\{])/g
-const RIGHT_BRACKET_AN = /([\)\]\}])([A-Za-z0-9])/g
-const CJK_ANS = new RegExp(
-  `([${CJK}])([A-Za-z\u0370-\u03ff0-9@\\$%\\^&\\*\\-\\+\\\\=\\|/\u00a1-\u00ff\u2150-\u218f\u2700—\u27bf])`,
-  "g"
-)
-const ANS_CJK = new RegExp(
-  `([A-Za-z\u0370-\u03ff0-9~\\$%\\^&\\*\\-\\+\\\\=\\|/!;:,\\.\\?\u00a1-\u00ff\u2150-\u218f\u2700—\u27bf])([${CJK}])`,
-  "g"
-)
-const S_A = /(%)([A-Za-z])/g
-const MIDDLE_DOT = /([ ]*)([\u00b7\u2022\u2027])([ ]*)/g
-const BACKSAPCE_CJK = new RegExp(`([${CJK}]) ([${CJK}])`, "g")
-const SUBSCRIPT_CJK = /([\u2080-\u2099])(?=[\u4e00-\u9fa5])/g
-// 上标 https://rupertshepherd.info/resource_pages/superscript-letters-in-unicode
-const SUPERSCRIPT_CJK = /([\u2070-\u209F\u1D56\u1D50\u207F\u1D4F\u1D57])(?=[\u4e00-\u9fa5])/g
-// 特殊字符
-// \u221E: ∞
-const SPECIAL = /([\u221E])(?!\s|[\(\[])/g  // (?!\s) 是为了当后面没有空格才加空格，防止出现多个空格
-class Pangu {
-  version
-  static convertToFullwidth(symbols) {
-    return symbols
-      .replace(/~/g, "～")
-      .replace(/!/g, "！")
-      .replace(/;/g, "；")
-      .replace(/:/g, "：")
-      .replace(/,/g, "，")
-      .replace(/\./g, "。")
-      .replace(/\?/g, "？")
-  }
-  static toFullwidth(text) {
-    let newText = text
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const that = this
-    newText = newText.replace(
-      CONVERT_TO_FULLWIDTH_CJK_SYMBOLS_CJK,
-      (match, leftCjk, symbols, rightCjk) => {
-        const fullwidthSymbols = that.convertToFullwidth(symbols)
-        return `${leftCjk}${fullwidthSymbols}${rightCjk}`
-      }
-    )
-    newText = newText.replace(
-      CONVERT_TO_FULLWIDTH_CJK_SYMBOLS,
-      (match, cjk, symbols) => {
-        const fullwidthSymbols = that.convertToFullwidth(symbols)
-        return `${cjk}${fullwidthSymbols}`
-      }
-    )
-    return newText
-  }
-  static spacing(text) {
-    let newText = text
-    // https://stackoverflow.com/questions/4285472/multiple-regex-replace
-    newText = newText.replace(DOTS_CJK, "$1 $2")
-    newText = newText.replace(FIX_CJK_COLON_ANS, "$1：$2")
-    newText = newText.replace(CJK_QUOTE, "$1 $2")
-    newText = newText.replace(QUOTE_CJK, "$1 $2")
-    newText = newText.replace(FIX_QUOTE_ANY_QUOTE, "$1$2$3")
-    newText = newText.replace(CJK_SINGLE_QUOTE_BUT_POSSESSIVE, "$1 $2")
-    newText = newText.replace(SINGLE_QUOTE_CJK, "$1 $2")
-    newText = newText.replace(FIX_POSSESSIVE_SINGLE_QUOTE, "$1's") // eslint-disable-line quotes
-    newText = newText.replace(HASH_ANS_CJK_HASH, "$1 $2$3$4 $5")
-    newText = newText.replace(CJK_HASH, "$1 $2")
-    newText = newText.replace(HASH_CJK, "$1 $3")
-    newText = newText.replace(CJK_OPERATOR_ANS, "$1 $2 $3")
-    newText = newText.replace(ANS_OPERATOR_CJK, "$1 $2 $3")
-    newText = newText.replace(FIX_SLASH_AS, "$1$2")
-    newText = newText.replace(FIX_SLASH_AS_SLASH, "$1$2$3")
-    newText = newText.replace(CJK_LEFT_BRACKET, "$1 $2")
-    newText = newText.replace(RIGHT_BRACKET_CJK, "$1 $2")
-    newText = newText.replace(FIX_LEFT_BRACKET_ANY_RIGHT_BRACKET, "$1$2$3")
-    newText = newText.replace(
-      ANS_CJK_LEFT_BRACKET_ANY_RIGHT_BRACKET,
-      "$1 $2$3$4"
-    )
-    newText = newText.replace(
-      LEFT_BRACKET_ANY_RIGHT_BRACKET_ANS_CJK,
-      "$1$2$3 $4"
-    )
-    newText = newText.replace(AN_LEFT_BRACKET, "$1 $2")
-    newText = newText.replace(RIGHT_BRACKET_AN, "$1 $2")
-    newText = newText.replace(CJK_ANS, "$1 $2")
-    newText = newText.replace(ANS_CJK, "$1 $2")
-    newText = newText.replace(S_A, "$1 $2")
-    newText = newText.replace(MIDDLE_DOT, "・")
-    // 去中文间的空格
-    newText = newText.replace(BACKSAPCE_CJK, "$1$2")
-    // 去掉下标和中文之间的空格
-    newText = newText.replace(SUBSCRIPT_CJK, "$1 ")
-    newText = newText.replace(SUPERSCRIPT_CJK, "$1 ")
-    /* 特殊处理 */
-    // 特殊字符
-    newText = newText.replace(SPECIAL, "$1 ")
-    // 处理 C[a,b] 这种单独字母紧跟括号的情形，不加空格
-    newText = newText.replace(/([A-Za-z])\s([\(\[\{])/g, "$1$2")
-    newText = newText.replace(/([\)\]\}])\s([A-Za-z])/g, "$1$2")
-    // ”后面不加空格
-    newText = newText.replace(/”\s/g, "”")
-    // DEBUG
-    // String.prototype.replace = String.prototype.rawReplace;
-    return newText
-  }
-}
 
 // 获取UITextView实例的所有属性
 function getAllProperties(obj) {
@@ -280,8 +97,87 @@ class toolbarUtils {
   static clipboardText() {
     return UIPasteboard.generalPasteboard().string
   }
-  static copy(text) {
-    UIPasteboard.generalPasteboard().string = text
+  static mergeWhitespace(str) {
+      if (!str) {
+        return ""
+      }
+      // 先将多个连续的换行符替换为双换行符
+      var tempStr = str.replace(/\n+/g, '\n\n');
+      // 再将其它的空白符（除了换行符）替换为单个空格
+      return tempStr.replace(/[\r\t\f\v ]+/g, ' ').trim();
+  }
+  static copy(des) {
+    let focusNote = MNNote.getFocusNote()
+    MNUtil.showHUD("copy")
+    let target = des.target
+    let element = undefined
+    if (target) {
+      switch (target) {
+        case "selectionText":
+          element = MNUtil.selectionText
+          break;
+        case "title":
+          if (focusNote) {
+            element = focusNote.noteTitle
+          }
+          break;
+        case "excerpt":
+          if (focusNote) {
+            element = focusNote.excerptText
+          }
+          break
+        case "notesText":
+          if (focusNote) {
+            element = focusNote.notesText
+          }
+          break;
+        case "comment":
+          if (focusNote) {
+            let index = 1
+            if (des.index) {
+              index = des.index
+            }
+            let comments = focusNote.comments
+            let commentsLength = comments.length
+            if (index > commentsLength) {
+              index = commentsLength
+            }
+            element = comments[index-1].text
+          }
+          break;
+        case "noteId":
+          if (focusNote) {
+            element = focusNote.noteId
+          }
+          break;
+        case "noteMarkdown":
+          if (focusNote) {
+            element = this.mergeWhitespace(this.getMDFromNote(focusNote))
+          }
+          break;
+        case "noteWithDecendentsMarkdown":
+          if (focusNote) {
+            element = this.getMDFromNote(focusNote)
+            // MNUtil.copyJSON(focusNote.descendantNodes.treeIndex)
+            let levels = focusNote.descendantNodes.treeIndex.map(ind=>ind.length)
+            let descendantsMarkdowns = focusNote.descendantNodes.descendant.map((note,index)=>{
+              return this.getMDFromNote(note,levels[index])
+            })
+            element = this.mergeWhitespace(element+"\n"+descendantsMarkdowns.join("\n\n"))
+          }
+          break;
+        default:
+          MNUtil.showHUD("Invalid target")
+          break;
+      }
+    }
+    let copyContent = des.content
+    if (copyContent) {
+      let replacedText = this.detectAndReplace(copyContent,element)
+      MNUtil.copy(replacedText)
+    }else{//没有提供content参数则直接复制目标内容
+      MNUtil.copy(element)
+    }
   }
   static copyJSON(object) {
     UIPasteboard.generalPasteboard().string = JSON.stringify(object,null,2)
@@ -618,6 +514,7 @@ class toolbarUtils {
     let emojiIndices = ["0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟"]
     return emojiIndices[index]
   }
+
   /**
    * 
    * @param {MNNote} note 
@@ -626,8 +523,6 @@ class toolbarUtils {
    */
   static getMergedText(note,des,noteIndex){
   try {
-    
-
     let textList = []
     des.source.map(text=>{
       if (text.includes("{{title}}") && des.removeSource) {
@@ -1757,6 +1652,98 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
       url = url+"&text="+encodeURIComponent(text)
     }
     MNUtil.openURL(url)
+  }
+  static export(des){
+    let focusNote = MNNote.getFocusNote()
+    let exportTarget = des.target ?? "auto"
+    let exportSource = des.source ?? "noteDoc"
+    switch (exportSource) {
+      case "noteDoc":
+        let noteDocPath = MNUtil.getDocById(focusNote.note.docMd5).fullPathFileName
+        MNUtil.saveFile(noteDocPath, ["public.pdf"])
+        break;
+      case "note":
+        let md = this.getMDFromNote(focusNote)
+        MNUtil.copy(md)
+        break;
+      case "currentDoc":
+        let docPath = MNUtil.currentDocController.document.fullPathFileName
+        MNUtil.saveFile(docPath, ["public.pdf"])
+        break;
+      default:
+        break;
+    }
+  }
+  static getMDFromNote(note,level = 0){
+    if (note) {
+      if (note.groupNoteId || (note.note && note.note.groupNoteId)) {
+        if (note.groupNoteId) {
+          note = new MNNote(note.groupNoteId)
+        }else{
+          note = new MNNote(note.note.groupNoteId)
+        }
+      }
+    }else{
+      return
+    }
+try {
+
+  let title = (note.noteTitle && note.noteTitle.trim()) ? "# "+note.noteTitle.trim() : ""
+  if (title.trim()) {
+    title = title.split(";").filter(t=>{
+      if (/{{.*}}/.test(t)) {
+        return false
+      }
+      return true
+    }).join(";")
+  }
+  let textFirst = note.textFirst
+  let excerptText = (note.excerptPic && !textFirst) ? "": (note.excerptText? note.excerptText.trim() :"")
+  if (note.comments.length) {
+    note.comments.forEach(comment=>{
+      switch (comment.type) {
+        case "TextNote":
+          if (/^marginnote\dapp\:\/\//.test(comment.text)) {
+            //do nothing
+          }else{
+            excerptText = excerptText+"\n"+comment.text
+          }
+          break;
+        case "LinkNote":
+          if (comment.q_hpic && (comment.q_hpic.mask || comment.q_hpic.drawing)) {
+            break;
+          }
+          if (comment.q_hpic && comment.q_hpic.paint && !textFirst) {
+            let imageData = MNUtil.getMediaByHash(comment.q_hpic.paint)
+            let imageSize = UIImage.imageWithData(imageData).size
+            if (imageSize.width === 1 && imageSize.height === 1) {
+              //do nothing
+            }else{
+              break;
+            }
+          }
+          if (comment.q_htext && comment.q_htext.trim()) {
+            excerptText = excerptText+"\n"+comment.q_htext
+          }
+        default:
+          break;
+      }
+    })
+  }
+  excerptText = (excerptText && excerptText.trim()) ? this.highlightEqualsContentReverse(excerptText) : ""
+  let content = title+"\n"+excerptText
+  if (level) {
+    content = content.replace(/(#+\s)/g, "#".repeat(level)+"\$1")
+  }
+  return content
+}catch(error){
+  this.addErrorLog(error, "getMDFromNote")
+  return ""
+}
+  }
+  static highlightEqualsContentReverse(markdown) {
+      // 使用正则表达式匹配==xxx==的内容并替换为<mark>xxx</mark>
+      return markdown.replace(/<mark>(.+?)<\/mark>/g, '==\$1==');
   }
 }
 
