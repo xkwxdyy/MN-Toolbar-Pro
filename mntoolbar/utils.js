@@ -27,6 +27,45 @@ class toolbarUtils {
   static sourceToRemove = []
   static commentToRemove = {}
 
+  /* 夏大鱼羊 - begin */
+  static TemplateMakeNote(note) {
+    /**
+     * 先判断是否是摘录版本，是的话就转为非摘录版本
+     * TODO: 这个操作放在了下面的处理旧卡片中，等实践了再决定此处要不要
+     * 主要是看看能否保留对于摘录版本的，点击一次时只有转换为非摘录版本，还不进行其它操作
+     */
+
+    /** 
+     * 处理旧卡片
+     */
+    note.renew()
+
+    /**
+     * 合并模板卡片
+     */
+    note.mergeTemplate()
+
+    /**
+     * 根据卡片类型修改卡片颜色
+     */
+    note.changeColorByType()
+
+    /**
+     * 与父卡片进行链接
+     */
+
+    /**
+     * 处理标题
+     */
+
+    /**
+     * 加入复习
+     */
+  }
+
+
+  /* 夏大鱼羊 - end */
+
   static init(){
   try {
     this.app = Application.sharedInstance()
@@ -2097,7 +2136,7 @@ static getAction(actionName){
 }
 static getActions() {
   return {
-    "custom1":{name:"制卡",image:"makeCards",description: this.template("makeCards")},
+    "custom1":{name:"制卡",image:"makeCards",description: this.template("TemplateMakeNotes")},
     "custom2":{name:"学习",image:"study",description: this.template("menu_study")},
     "custom3":{name:"模板",image:"template",description: this.template("addTemplate")},
     "custom4":{name:"卡片",image:"card",description: this.template("menu_card")},

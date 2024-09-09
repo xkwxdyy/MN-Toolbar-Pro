@@ -1488,8 +1488,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       return
     }
     let focusNote = undefined
+    let focusNotes = undefined
     try {
       focusNote = MNNote.getFocusNote()
+      focusNotes = MNNote.getFocusNotes()
     } catch (error) {
       
     }
@@ -1498,6 +1500,21 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     let title,content,color,config
     let targetNoteId
     switch (des.action) {
+      /* 夏大鱼羊 - begin */
+      case "TemplateMakeNotes":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(
+              focusNote=>{
+                toolbarUtils.TemplateMakeNote(focusNote)
+              }
+            )
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      /* 夏大鱼羊 - end */
       case "cloneAndMerge":
       try {
         MNUtil.showHUD("cloneAndMerge")
