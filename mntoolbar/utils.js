@@ -29,6 +29,9 @@ class toolbarUtils {
 
   /* 夏大鱼羊 - begin */
   static TemplateMakeNote(note) {
+    // TODO：
+    // 1. 没有父卡片的制卡（基于本身的颜色）
+    // 2. 处理归类卡片（包括黄色和绿色）
     /** 
      * 处理旧卡片
      */
@@ -50,7 +53,12 @@ class toolbarUtils {
     note.linkParentNote()
 
     /**
+     * 移动新内容到证明下方
+     */
+
+    /**
      * 处理标题
+     * 要注意处理：黄色卡片如果不是“”：“”相关 xx 的格式
      */
 
     // 增加标题前缀
@@ -62,6 +70,7 @@ class toolbarUtils {
      */
   }
 
+  //TODO：生成绿色顶层：兼容子脑图情形？
 
   /* 夏大鱼羊 - end */
 
