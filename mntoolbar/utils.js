@@ -5477,6 +5477,36 @@ static template(action) {
       config.title = "title"
       config.content = "{{clipboardText}}"
       break;
+    case "menu_think":
+      config.action = "menu"
+      config.menuWidth =  330,
+      config.menuItems = [
+        {
+          "action" : "moveUpThoughtPoints",
+          "menuTitle" : "思考点⬆️"
+        },
+        {
+          "action" : "addThoughtPoint",
+          "menuTitle" : "➕思考点"
+        },
+        {
+          "action": "addThoughtPointAndMoveLastCommentToThought",
+          "menuTitle": "➕思考点&最后💬⬆️思考",
+        },
+        {
+          "action" : "moveLastCommentToThought",
+          "menuTitle" : "最后1️⃣💬⬆️思考"
+        },
+        {
+          "action" : "moveLastTwoCommentsToThought",
+          "menuTitle" : "最后2️⃣💬⬆️思考"
+        },
+        {
+          "action": "moveLastTwoCommentsInBiLinkNotesToThought",
+          "menuTitle": "双向链接的两张卡片同时最后2️⃣💬⬆️思考",
+        }
+      ]
+      break;
     case "menu_study":
       config.action = "menu"
       config.menuItems = [
@@ -5555,37 +5585,6 @@ static template(action) {
             {
               "action" : "moveLastTwoCommentsToProof",
               "menuTitle" : "最后2️⃣💬⬆️证明「末尾」"
-            },
-          ]
-        },
-        {
-          "action": "menu",
-          "menuTitle": "➡️ 思考",
-          "menuWidth": 330,
-          "menuItems": [
-            {
-              "action" : "moveUpThoughtPoints",
-              "menuTitle" : "思考点⬆️"
-            },
-            {
-              "action" : "addThoughtPoint",
-              "menuTitle" : "➕思考点"
-            },
-            {
-              "action": "addThoughtPointAndMoveLastCommentToThought",
-              "menuTitle": "➕思考点&最后💬⬆️思考",
-            },
-            {
-              "action" : "moveLastCommentToThought",
-              "menuTitle" : "最后1️⃣💬⬆️思考"
-            },
-            {
-              "action" : "moveLastTwoCommentsToThought",
-              "menuTitle" : "最后2️⃣💬⬆️思考"
-            },
-            {
-              "action": "moveLastTwoCommentsInBiLinkNotesToThought",
-              "menuTitle": "双向链接的两张卡片同时最后2️⃣💬⬆️思考",
             },
           ]
         },
@@ -6152,6 +6151,7 @@ static getActions() {
   return {
     "custom1":{name:"制卡",image:"makeCards",description: this.template("makeCards")},
     "custom2":{name:"学习",image:"study",description: this.template("menu_study")},
+    "custom9":{name:"思考",image:"think",description: this.template("menu_think")},
     "custom3":{name:"增加模板",image:"addTemplate",description: this.template("addTemplate")},
     "custom4":{name:"文献",image:"reference",description: this.template("menu_reference")},
     "custom5":{name:"卡片",image:"card",description: this.template("menu_card")},
