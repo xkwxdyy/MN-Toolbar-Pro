@@ -60,23 +60,32 @@ class toolbarUtils {
     note.linkParentNote()
 
     /**
-     * 【Doing】移动新内容
+     * 【Done】移动新内容
      */
     note.moveNewContent()
     
 
     /**
-     * 【TODO】处理标题
-     * 要注意处理：黄色卡片如果不是“”：“”相关 xx 的格式的直接获取
+     * 【Doing】处理标题
+     * - 知识类卡片增加标题前缀
+     * - 黄色归类卡片：“”：“”相关 xx
+     * - 绿色归类卡片：“”相关 xx
+     * - 处理卡片标题空格
      */
 
-    // 增加标题前缀
-
-    // 处理标题空格
+    note.changeTitle()
 
     /**
-     * 【TODO】加入复习
+     * 【Done】加入复习
      */
+    if (note.getNoteTypeZh() !== "顶层" && note.getNoteTypeZh() !== "归类") {
+      MNUtil.excuteCommand("AddToReview")
+    }
+
+    /**
+     * 【Done】聚焦
+     */
+    note.focusInMindMap(0.2)
   }
 
   //TODO：生成绿色顶层：兼容子脑图情形？
