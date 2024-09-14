@@ -55,6 +55,18 @@ class toolbarUtils {
     note.changeColorByType()
 
     /**
+     * 【Doing】处理标题
+     * - 知识类卡片增加标题前缀
+     * - 黄色归类卡片：“”：“”相关 xx
+     * - 绿色归类卡片：“”相关 xx
+     * - 处理卡片标题空格
+     * 
+     * 需要放在修改链接前，因为可能需要获取到旧归类卡片的标题来对标题修改进行处理
+     */
+
+    note.changeTitle()
+
+    /**
      * 【Done】与父卡片进行链接
      */
     note.linkParentNote()
@@ -64,16 +76,6 @@ class toolbarUtils {
      */
     note.moveNewContent()
     
-
-    /**
-     * 【Doing】处理标题
-     * - 知识类卡片增加标题前缀
-     * - 黄色归类卡片：“”：“”相关 xx
-     * - 绿色归类卡片：“”相关 xx
-     * - 处理卡片标题空格
-     */
-
-    note.changeTitle()
 
     /**
      * 【Done】加入复习
