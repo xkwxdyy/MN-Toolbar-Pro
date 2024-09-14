@@ -1181,6 +1181,13 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
       case "hideAddonBar":
         MNUtil.postNotification("toggleMindmapToolbar", {target:"addonBar"})
         break;
+      case "TemplateMakeNotes":
+        MNUtil.undoGrouping(()=>{
+          focusNotes.forEach(focusNote=>{
+            MNUtil.TemplateMakeNote(focusNote)
+          })
+        })
+        break;
       case "makeCards":
         try {
           // MNUtil.showHUD("制卡")
@@ -4787,6 +4794,17 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           }
         )
         break
+      case "TemplateMakeNotes":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              toolbarUtils.TemplateMakeNote(focusNote)
+            })
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
       case "makeCards":
         MNUtil.undoGrouping(()=>{
           try {
