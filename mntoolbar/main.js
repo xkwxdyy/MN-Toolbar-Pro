@@ -68,6 +68,7 @@ JSB.newAddon = function (mainPath) {
           self.addonController.notebookid = notebookid
           self.notebookid = notebookid
           toolbarUtils.notebookId = notebookid
+        }
         MNNote.prototype.getLinksCommentsIndexArray = function(){
           let linksCommentsIndexArray = []
           this.comments.forEach((comment,index)=>{
