@@ -80,7 +80,14 @@ class toolbarUtils {
     /**
      * 【Done】加入复习
      */
-    if (!note.excerptText) {
+    if (
+      !note.excerptText &&
+      !(
+        note.title.includes("课前") ||
+        note.title.includes("上课中") ||
+        note.title.includes("内化中")
+      )
+    ) {
       if (note.getNoteTypeZh() !== "顶层" && note.getNoteTypeZh() !== "归类") {
         MNUtil.excuteCommand("AddToReview")
       }
