@@ -44,55 +44,55 @@ class toolbarUtils {
      */
     note.renew()
 
-    /**
-     * 【Done】合并模板卡片
-     */
-    note.mergeTemplate()
+    if (!note.excerptText) {
+      /**
+       * 【Done】合并模板卡片
+       */
+      note.mergeTemplate()
 
-    /**
-     * 【Done】根据卡片类型修改卡片颜色
-     */
-    note.changeColorByType()
+      /**
+       * 【Done】根据卡片类型修改卡片颜色
+       */
+      note.changeColorByType()
 
-    /**
-     * 【Doing】处理标题
-     * - 知识类卡片增加标题前缀
-     * - 黄色归类卡片：“”：“”相关 xx
-     * - 绿色归类卡片：“”相关 xx
-     * - 处理卡片标题空格
-     * 
-     * 需要放在修改链接前，因为可能需要获取到旧归类卡片的标题来对标题修改进行处理
-     */
+      /**
+       * 【Doing】处理标题
+       * - 知识类卡片增加标题前缀
+       * - 黄色归类卡片：“”：“”相关 xx
+       * - 绿色归类卡片：“”相关 xx
+       * - 处理卡片标题空格
+       * 
+       * 需要放在修改链接前，因为可能需要获取到旧归类卡片的标题来对标题修改进行处理
+       */
 
-    note.changeTitle()
+      note.changeTitle()
 
-    /**
-     * 【Done】与父卡片进行链接
-     */
-    note.linkParentNote()
+      /**
+       * 【Done】与父卡片进行链接
+       */
+      note.linkParentNote()
 
-    /**
-     * 【Done】移动新内容
-     */
-    note.moveNewContent()
-    
+      /**
+       * 【Done】移动新内容
+       */
+      note.moveNewContent()
+      
 
-    /**
-     * 【Done】加入复习
-     */
-    if (
-      !note.excerptText &&
-      !(
-        note.title.includes("课前") ||
-        note.title.includes("上课中") ||
-        note.title.includes("内化中")
-      )
-    ) {
-      if (note.getNoteTypeZh() !== "顶层" && note.getNoteTypeZh() !== "归类") {
-        MNUtil.excuteCommand("AddToReview")
+      /**
+       * 【Done】加入复习
+       */
+      if (
+        !(
+          note.title.includes("课前") ||
+          note.title.includes("上课中") ||
+          note.title.includes("内化中")
+        )
+      ) {
+        if (note.getNoteTypeZh() !== "顶层" && note.getNoteTypeZh() !== "归类") {
+          MNUtil.excuteCommand("AddToReview")
+        }
       }
     }
-
     /**
      * 【Done】聚焦
      */
