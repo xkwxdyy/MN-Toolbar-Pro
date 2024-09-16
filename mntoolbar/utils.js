@@ -97,6 +97,12 @@ class toolbarUtils {
      * 【Done】聚焦
      */
     note.focusInMindMap(0.2)
+
+    /**
+     * 更新卡片
+     */
+    note.refresh()
+    note.refreshAll()
   }
 
   // TODO:
