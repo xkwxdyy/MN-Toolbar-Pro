@@ -27,6 +27,16 @@ class toolbarUtils {
   static commentToRemove = {}
 
   // 夏大鱼羊自定义函数
+  /**
+   * 批量获取卡片 ID 存到 Arr 里
+   */
+  static getNoteIdArr(notes) {
+    let idsArr = []
+    notes.forEach(note => {
+      idsArr.push(note.noteId)
+    })
+    return idsArr
+  }
 
   static TemplateMakeNote(note) {
     /**
@@ -5859,38 +5869,12 @@ static template(action) {
       config.menuWidth = 250
       config.menuItems = [
         {
-          "action": "changeChildNotesPrefix",
-          "menuTitle": "✂️ 修改子卡片前缀",
+          "action": "copyFocusNotesIdArr",
+          "menuTitle": "复制卡片🆔",
         },
         {
-          "action": "renewChildNotesPrefix",
-          "menuTitle": "✂️ 重新设置子卡片前缀",
-        },
-        {
-          "action": "refreshNotes",
-          "menuTitle": "🔄 刷新卡片",
-        },
-        {
-          "action": "refreshCardsAndAncestorsAndDescendants",
-          "menuTitle": "🔄 刷新卡片及其所有父子卡片",
-        },
-        {
-          "action": "mergeInParentAndReappendAllLinks",
-          "menuTitle": "合并卡片到父卡片并更新所有链接",
-        },
-        {
-          "action": "pasteNoteAsChildNote",
+          "action": "pasteAsChildNotesByIdArrFromClipboard",
           "menuTitle": "复制卡片🆔后，剪切到选中卡片",
-        },
-        {
-          "action": "menu",
-          "menuTitle": "➡️ 链接",
-          "menuItems": [
-            {
-              "action": "linkRemoveDuplicatesAfterApplication",
-              "menuTitle": "“应用”下方的链接去重"
-            }
-          ]
         },
         {
           "action": "menu",
@@ -5956,20 +5940,47 @@ static template(action) {
           ]
         },
         {
+          "action": "convertNoteToNonexcerptVersion",
+          "menuTitle": "➡️ 非摘录版本",
+        },
+        "-----存档------",
+        {
+          "action": "changeChildNotesPrefix",
+          "menuTitle": "✂️ 修改子卡片前缀",
+        },
+        {
+          "action": "renewChildNotesPrefix",
+          "menuTitle": "✂️ 重新设置子卡片前缀",
+        },
+        {
+          "action": "refreshNotes",
+          "menuTitle": "🔄 刷新卡片",
+        },
+        {
+          "action": "refreshCardsAndAncestorsAndDescendants",
+          "menuTitle": "🔄 刷新卡片及其所有父子卡片",
+        },
+        {
+          "action": "mergeInParentAndReappendAllLinks",
+          "menuTitle": "合并卡片到父卡片并更新所有链接",
+        },
+        {
+          "action": "menu",
+          "menuTitle": "➡️ 链接",
+          "menuItems": [
+            {
+              "action": "linkRemoveDuplicatesAfterApplication",
+              "menuTitle": "“应用”下方的链接去重"
+            }
+          ]
+        },
+        {
           "action": "focusInMindMap",
           "menuTitle": "focus In 主视图",
         },
         {
           "action": "focusInFloatMindMap",
           "menuTitle": "focus In 浮窗",
-        },
-        {
-          "action": "convertNoteToNonexcerptVersion",
-          "menuTitle": "➡️ 非摘录版本",
-        },
-        {
-          "action": "cardCopyNoteId",
-          "menuTitle": "复制卡片🆔",
         },
         {
           "action": "menu",
@@ -6044,8 +6055,8 @@ static getActions() {
     "custom2":{name:"学习",image:"study",description: this.template("menu_study")},
     "custom9":{name:"思考",image:"think",description: this.template("menu_think")},
     "custom3":{name:"增加模板",image:"addTemplate",description: this.template("addTemplate")},
-    "custom4":{name:"文献",image:"reference",description: this.template("menu_reference")},
     "custom5":{name:"卡片",image:"card",description: this.template("menu_card")},
+    "custom4":{name:"文献",image:"reference",description: this.template("menu_reference")},
     "custom6":{name:"文本",image:"text",description: this.template("menu_text")},
     "snipaste":{name:"Snipaste",image:"snipaste",description:"Snipaste"},
     "custom7":{name:"隐藏插件栏",image:"hideAddonBar",description: this.template("hideAddonBar")},

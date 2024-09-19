@@ -1855,6 +1855,45 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+      /**
+       * 将剪切板中的 ID Arr 对应的卡片剪切过来作为选中卡片的子卡片
+       */
+      case "pasteAsChildNotesByIdArrFromClipboard":
+        MNUtil.undoGrouping(()=>{
+          try {
+            // 先把 MNUtils.clipboardText 转成数组
+            let idsArr = MNUtil.clipboardText.split(",")
+            // 再把数组中的 ID 对应的卡片作为选中卡片的子卡片
+            focusNote.pasteChildNotesByIdArr(idsArr)
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      /**
+       * 复制批量选中的卡片的 ID 到剪贴板
+       */
+      case "copyFocusNotesIdArr":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let idsArr = toolbarUtils.getNoteIdArr(focusNotes)
+            MNUtil.copy(idsArr)
+            MNUtil.showHUD(idsArr)
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      case "generateCustomTitleLink":
+        MNUtil.undoGrouping(()=>{
+          toolbarUtils.generateCustomTitleLink()
+        })
+        break;
+      case "generateCustomTitleLinkFromFocusNote":
+        MNUtil.undoGrouping(()=>{
+          toolbarUtils.generateCustomTitleLinkFromFocusNote(focusNote)
+        })
+        break;
       case "pasteNoteAsChildNote":
         MNUtil.undoGrouping(()=>{
           try {
@@ -4354,7 +4393,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           MNUtil.undoGrouping(()=>{
             focusNotes.forEach(focusNote=>{
               if (focusNote.excerptText) {
-                toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
+                focusNote.toNoExceptVersion()
               }
             })
           })
