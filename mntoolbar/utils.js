@@ -5942,6 +5942,10 @@ static template(action) {
           "action": "convertNoteToNonexcerptVersion",
           "menuTitle": "➡️ 非摘录版本",
         },
+        {
+          "action": "AddToReview",
+          "menuTitle": "加入复习",
+        },
         "-----存档------",
         {
           "action": "changeChildNotesPrefix",

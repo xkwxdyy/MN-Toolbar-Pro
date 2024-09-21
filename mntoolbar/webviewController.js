@@ -1855,6 +1855,10 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
+
+      case "AddToReview":
+        MNUtil.excuteCommand("AddToReview")
+        break;
       /**
        * 将剪切板中的 ID Arr 对应的卡片剪切过来作为选中卡片的子卡片
        */
