@@ -5378,6 +5378,19 @@ static template(action) {
       config.title = "title"
       config.content = "{{clipboardText}}"
       break;
+    case "menu_excerpt":
+      config.action = "menu"
+      config.menuItems = [
+        {
+          "action" : "moveUpLinkNotes",
+          "menuTitle" : "摘录⬆️"
+        },
+        {
+          "action": "moveOneCommentToLinkNote",
+          "menuTitle": "1️⃣💬⬆️摘录",
+        }
+      ]
+      break;
     case "menu_think":
       config.action = "menu"
       config.menuWidth =  330,
@@ -5501,20 +5514,6 @@ static template(action) {
             {
               "action": "moveUpLinkToBelonging",
               "menuTitle": "最后1️⃣💬⬆️所属",
-            },
-          ]
-        },
-        {
-          "action": "menu",
-          "menuTitle": "➡️ 摘录",
-          "menuItems": [
-            {
-              "action" : "moveUpLinkNotes",
-              "menuTitle" : "摘录⬆️"
-            },
-            {
-              "action": "moveOneCommentToLinkNote",
-              "menuTitle": "1️⃣💬⬆️摘录",
             },
           ]
         },
@@ -6052,8 +6051,9 @@ static getAction(actionName){
 static getActions() {
   return {
     "custom1":{name:"制卡",image:"makeCards",description: this.template("TemplateMakeNotes")},
-    "custom2":{name:"学习",image:"study",description: this.template("menu_study")},
     "custom9":{name:"思考",image:"think",description: this.template("menu_think")},
+    "custom10":{name:"摘录",image:"excerpt",description: this.template("menu_excerpt")},
+    "custom2":{name:"学习",image:"study",description: this.template("menu_study")},
     "custom3":{name:"增加模板",image:"addTemplate",description: this.template("addTemplate")},
     "custom5":{name:"卡片",image:"card",description: this.template("menu_card")},
     "custom4":{name:"文献",image:"reference",description: this.template("menu_reference")},
