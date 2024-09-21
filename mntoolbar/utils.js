@@ -66,7 +66,27 @@ class toolbarUtils {
       note.changeColorByType()
 
       /**
-       * 【Doing】处理标题
+       * 【Done】加入复习
+       * 
+       * 什么时候需要加入复习
+       * - 制卡的那次需要加入(通过判断标题是否是知识卡片的标题，所以需要放在修改卡片标题前)
+       * - 后续点击制卡都不需要加入
+       */
+      if (
+        // !(
+        //   note.title.includes("课前") ||
+        //   note.title.includes("上课") ||
+        //   note.title.includes("内化")
+        // )
+        !note.title.ifKnowledgeNoteTitle()
+      ) {
+        if (note.getNoteTypeZh() !== "顶层" && note.getNoteTypeZh() !== "归类") {
+          MNUtil.excuteCommand("AddToReview")
+        }
+      }
+
+      /**
+       * 【Done】处理标题
        * - 知识类卡片增加标题前缀
        * - 黄色归类卡片：“”：“”相关 xx
        * - 绿色归类卡片：“”相关 xx
@@ -87,21 +107,6 @@ class toolbarUtils {
        */
       note.moveNewContent()
       
-
-      /**
-       * 【Done】加入复习
-       */
-      if (
-        !(
-          note.title.includes("课前") ||
-          note.title.includes("上课中") ||
-          note.title.includes("内化中")
-        )
-      ) {
-        if (note.getNoteTypeZh() !== "顶层" && note.getNoteTypeZh() !== "归类") {
-          MNUtil.excuteCommand("AddToReview")
-        }
-      }
     }
     /**
      * 【Done】聚焦
@@ -109,7 +114,7 @@ class toolbarUtils {
     note.focusInMindMap(0.2)
 
     /**
-     * 更新卡片
+     * 刷新
      */
     note.refresh()
     note.refreshAll()
