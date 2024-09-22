@@ -4842,6 +4842,9 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           try {
             focusNotes.forEach(focusNote=>{
               toolbarUtils.TemplateMakeNote(focusNote)
+              focusNote.descendantNodes.descendant.forEach(descendantNote => {
+                toolbarUtils.TemplateMakeNote(descendantNote)
+              })
             })
           } catch (error) {
             MNUtil.showHUD(error);
