@@ -1856,6 +1856,68 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //   )
       //   break;
 
+    /**
+     * 通过弹窗选择，移动最后三个评论到指定位置
+     */
+    case "moveLastThreeCommentByPopupTo":
+      MNUtil.undoGrouping(()=>{
+        try {
+          let newContentsIndexArr = [
+            focusNote.comments.length-3,
+            focusNote.comments.length-2,
+            focusNote.comments.length-1
+          ]
+          focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「最后3️⃣条」评论到", "")
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+      })
+      break;
+    /**
+     * 通过弹窗选择，移动最后两个评论到指定位置
+     */
+    case "moveLastTwoCommentByPopupTo":
+      MNUtil.undoGrouping(()=>{
+        try {
+          let newContentsIndexArr = [
+            focusNote.comments.length-2,
+            focusNote.comments.length-1
+          ]
+          focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「最后2️⃣条」评论到", "")
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+      })
+      break;
+    /**
+     * 通过弹窗选择，移动最后一个评论到指定位置
+     */
+    case "moveLastOneCommentByPopupTo":
+      MNUtil.undoGrouping(()=>{
+        try {
+          let newContentsIndexArr = [
+            focusNote.comments.length-1
+          ]
+          focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「最后1️⃣条」评论到", "")
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+      })
+      break;
+    /**
+     * 自动识别新内容，并通过弹窗选择，移动到指定位置
+     */
+    case "moveNewContentsByPopupTo":
+      MNUtil.undoGrouping(()=>{
+        try {
+          let newContentsIndexArr = focusNote.getNewContentIndexArr()
+          focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「新增」评论到", "")
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+      })
+      break;
+        
       case "AddToReview":
         MNUtil.excuteCommand("AddToReview")
         break;
