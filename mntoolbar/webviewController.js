@@ -4904,9 +4904,13 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
           try {
             focusNotes.forEach(focusNote=>{
               toolbarUtils.TemplateMakeNote(focusNote)
-              focusNote.descendantNodes.descendant.forEach(descendantNote => {
-                toolbarUtils.TemplateMakeNote(descendantNote)
-              })
+              if (focusNote.getNoteTypeZh()=="顶层" || focusNote.getNoteTypeZh()=="归类") {
+                focusNote.descendantNodes.descendant.forEach(descendantNote => {
+                  toolbarUtils.TemplateMakeNote(descendantNote)
+                })
+
+                focusNote.focusInMindMap(0.5)
+              }
             })
           } catch (error) {
             MNUtil.showHUD(error);
