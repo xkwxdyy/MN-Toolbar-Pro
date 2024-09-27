@@ -343,46 +343,7 @@ lastPopover: function (button) {
         button.doubleClick = false
       return
     }
-    let focusNote = MNNote.getFocusNote()
-    if (focusNote.excerptText.trim() || (focusNote.excerptPic && focusNote.excerptPic.paint)) {
-      if (focusNote.excerptPic && !focusNote.textFirst && focusNote.excerptPic.paint) {
-        MNUtil.copyImage(focusNote.excerptPicData)
-        MNUtil.showHUD('摘录图片已复制')
-      }else{
-        let text = focusNote.excerptText
-        MNUtil.copy(text)
-        MNUtil.showHUD('摘录文字已复制')
-      }
-    }else{
-      let firstComment = focusNote.comments[0]
-      switch (firstComment.type) {
-        case "TextNote":
-          MNUtil.copy(firstComment.text)
-          MNUtil.showHUD('首条评论已复制')
-          break;
-        case "PaintNote":
-          let imageData = MNUtil.getMediaByHash(firstComment.paint)
-          MNUtil.copyImage(imageData)
-          MNUtil.showHUD('首条评论已复制')
-          break;
-        case "HtmlNote":
-          MNUtil.copy(firstComment.text)
-          MNUtil.showHUD('尝试复制该类型评论: '+firstComment.type)
-          break;
-        case "LinkNote":
-          if (firstComment.q_hpic && !focusNote.textFirst && firstComment.q_hpic.paint) {
-            MNUtil.copyImage(MNUtil.getMediaByHash(firstComment.q_hpic.paint))
-            MNUtil.showHUD('图片已复制')
-          }else{
-            MNUtil.copy(firstComment.q_htext)
-            MNUtil.showHUD('首条评论已复制')
-          }
-          break;
-        default:
-          MNUtil.showHUD('暂不支持的评论类型: '+firstComment.type)
-          break;
-      }
-    }
+    toolbarUtils.smartCopy()
     if (self.dynamicWindow) {
       self.hideAfterDelay()
     }
