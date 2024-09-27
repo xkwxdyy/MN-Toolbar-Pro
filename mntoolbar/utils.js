@@ -6173,6 +6173,20 @@ static template(action) {
         },
       ]
       break;
+    case "menu_workflow":
+      config.action = "menu"
+      config.menuWidth = 200
+      config.menuItems = [
+        {
+          "action": "moveToInternalize",
+          "menuTitle": "⇨ 内化",
+        },
+        {
+          "action": "moveToBeClassified",
+          "menuTitle": "⇨ 待归类",
+        },
+      ]
+      break;
     default:
       break;
   }
@@ -6190,6 +6204,7 @@ static getActions() {
     "custom9":{name:"思考",image:"think",description: this.template("menu_think")},
     "custom10":{name:"评论",image:"comment",description: this.template("menu_comment")},
     "custom2":{name:"学习",image:"study",description: this.template("menu_study")},
+    "custom11":{name:"工作流",image:"workflow",description: this.template("menu_workflow")},
     "custom3":{name:"增加模板",image:"addTemplate",description: this.template("addTemplate")},
     "custom5":{name:"卡片",image:"card",description: this.template("menu_card")},
     "custom4":{name:"文献",image:"reference",description: this.template("menu_reference")},

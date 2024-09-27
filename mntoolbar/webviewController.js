@@ -15,7 +15,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
     self.maxButtonNumber = 20
-    self.buttonNumber = 18
+    self.buttonNumber = 19
       // MNUtil.copy("refreshHeight: "+self.buttonNumber)
     if (self.dynamicWindow) {
       // self.maxButtonNumber = 9
@@ -1841,7 +1841,34 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
-
+    /**
+     * 移动卡片到「内化」区
+     */
+    case "moveToInternalize":
+      MNUtil.undoGrouping(()=>{
+        try {
+          focusNotes.forEach(focusNote=>{
+            focusNote.moveToInternalize()
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+      })
+      break;
+    /**
+     * 移动卡片到「待归类」区
+     */
+    case "moveToBeClassified":
+      MNUtil.undoGrouping(()=>{
+        try {
+          focusNotes.forEach(focusNote=>{
+            focusNote.moveToBeClassified()
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+      })
+      break;
     /**
      * 通过弹窗选择，移动最后三个评论到指定位置
      */
