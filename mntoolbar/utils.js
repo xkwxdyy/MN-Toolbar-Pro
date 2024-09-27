@@ -1,3 +1,4 @@
+
 // 获取UITextView实例的所有属性
 function getAllProperties(obj) {
     var props = [];
@@ -3448,7 +3449,7 @@ class toolbarUtils {
   }
   }
   static showHUD(message,duration=2) {
-    this.app.showHUD(message,this.focusWindow,duration)
+    this.app.showHUD(message,this.focusWindow,2)
   }
   static refreshSubscriptionStatus(){
     this.isSubscribe = this.checkSubscribe(false,false,true)
@@ -3516,7 +3517,65 @@ class toolbarUtils {
       // 再将其它的空白符（除了换行符）替换为单个空格
       return tempStr.replace(/[\r\t\f\v ]+/g, ' ').trim();
   }
-  static copy(des) {
+  static smartCopy(){
+    let focusNote = MNNote.getFocusNote()
+    if (!focusNote) {
+      if (MNUtil.currentSelection.onSelection) {
+        if (MNUtil.currentSelection.isText) {
+          MNUtil.copy(MNUtil.currentSelection.text)
+          MNUtil.showHUD('复制选中文本')
+        }else{
+          MNUtil.copyImage(MNUtil.currentSelection.image)
+          MNUtil.showHUD('复制框选图片')
+        }
+      }
+      return
+    }
+    if (focusNote.excerptPic && !focusNote.textFirst && focusNote.excerptPic.paint) {
+      MNUtil.copyImage(focusNote.excerptPicData)
+      MNUtil.showHUD('摘录图片已复制')
+      return
+    }
+    if ((focusNote.excerptText && focusNote.excerptText.trim())){
+      let text = focusNote.excerptText
+      MNUtil.copy(text)
+      MNUtil.showHUD('摘录文字已复制')
+      return
+    }
+    if (focusNote.comments.length) {
+      let firstComment = focusNote.comments[0]
+      switch (firstComment.type) {
+        case "TextNote":
+          MNUtil.copy(firstComment.text)
+          MNUtil.showHUD('首条评论已复制')
+          return
+        case "PaintNote":
+          let imageData = MNUtil.getMediaByHash(firstComment.paint)
+          MNUtil.copyImage(imageData)
+          MNUtil.showHUD('首条评论已复制')
+          return
+        case "HtmlNote":
+          MNUtil.copy(firstComment.text)
+          MNUtil.showHUD('尝试复制该类型评论: '+firstComment.type)
+          return
+        case "LinkNote":
+          if (firstComment.q_hpic && !focusNote.textFirst && firstComment.q_hpic.paint) {
+            MNUtil.copyImage(MNUtil.getMediaByHash(firstComment.q_hpic.paint))
+            MNUtil.showHUD('图片已复制')
+          }else{
+            MNUtil.copy(firstComment.q_htext)
+            MNUtil.showHUD('首条评论已复制')
+          }
+          return
+        default:
+          MNUtil.showHUD('暂不支持的评论类型: '+firstComment.type)
+          break;
+      }
+    }
+    MNUtil.copy(focusNote.noteTitle)
+    MNUtil.showHUD('标题已复制')
+  }
+  static async copy(des) {
     let focusNote = MNNote.getFocusNote()
     MNUtil.showHUD("copy")
     let target = des.target
@@ -3526,6 +3585,9 @@ class toolbarUtils {
         case "selectionText":
           element = MNUtil.selectionText
           break;
+        case "selectionImage":
+          MNUtil.copyImage(MNUtil.getDocImage(true))
+          return;
         case "title":
           if (focusNote) {
             element = focusNote.noteTitle
@@ -3533,12 +3595,28 @@ class toolbarUtils {
           break;
         case "excerpt":
           if (focusNote) {
+            if (focusNote.excerptPic && !focusNote.textFirst && focusNote.excerptPic.paint) {
+              MNUtil.copyImage(MNUtil.getMediaByHash(focusNote.excerptPic.paint))
+              MNUtil.showHUD("图片已复制")
+              return
+            }
             element = focusNote.excerptText
+          }
+          break
+        case "excerptOCR":
+          if (focusNote) {
+            if (focusNote.excerptPic && !focusNote.textFirst && focusNote.excerptPic.paint) {
+              // MNUtil.copyImage(MNUtil.getMediaByHash(focusNote.excerptPic.paint))
+              // MNUtil.showHUD("图片已复制")
+              element = await this.getTextOCR(MNUtil.getMediaByHash(focusNote.excerptPic.paint))
+            }else{
+              element = focusNote.excerptText
+            }
           }
           break
         case "notesText":
           if (focusNote) {
-            element = focusNote.notesText
+            element = focusNote.allNoteText()
           }
           break;
         case "comment":
@@ -3560,9 +3638,19 @@ class toolbarUtils {
             element = focusNote.noteId
           }
           break;
+        case "noteURL":
+          if (focusNote) {
+            element = focusNote.noteURL
+          }
+          break;
         case "noteMarkdown":
           if (focusNote) {
             element = this.mergeWhitespace(this.getMDFromNote(focusNote))
+          }
+          break;
+        case "noteMarkdownOCR":
+          if (focusNote) {
+            element = this.mergeWhitespace(await this.getMDFromNote(focusNote,0,true))
           }
           break;
         case "noteWithDecendentsMarkdown":
@@ -3862,7 +3950,7 @@ class toolbarUtils {
     let targetNotes = this.getNotesByRange(range)
     MNUtil.undoGrouping(()=>{
       targetNotes.forEach(note=>{
-        toolbarUtils.clearNoteContent(note, des)
+        this.clearNoteContent(note, des)
       })
     })
   }
@@ -3871,7 +3959,7 @@ class toolbarUtils {
     let targetNotes = this.getNotesByRange(range)
     MNUtil.undoGrouping(()=>{
       targetNotes.forEach(note=>{
-        toolbarUtils.setNoteContent(note, content,des)
+        this.setNoteContent(note, content,des)
       })
     })
   }
@@ -4100,16 +4188,18 @@ class toolbarUtils {
       let condition  = des.find
       MNUtil.undoGrouping(()=>{
         focusNotes.forEach(note=>{
-          let indices = note.getCommentIndicesByCondition(condition)
-          if (!indices.length) {
-            MNUtil.showHUD("No match")
-            return
-          }
-          if (des.multi) {
-            note.removeCommentsByIndices(indices)
-          }else{
-            indices = MNUtil.sort(indices,"increment")
-            note.removeCommentByIndex(indices[0])
+          if (note.comments.length) {
+            let indices = note.getCommentIndicesByCondition(condition)
+            if (!indices.length) {
+              MNUtil.showHUD("No match")
+              return
+            }
+            if (des.multi) {
+              note.removeCommentsByIndices(indices)
+            }else{
+              indices = MNUtil.sort(indices,"increment")
+              note.removeCommentByIndex(indices[0])
+            }
           }
         })
       })
@@ -4119,25 +4209,27 @@ class toolbarUtils {
       let type = Array.isArray(des.type) ? des.type : [des.type]
       MNUtil.undoGrouping(()=>{
         focusNotes.forEach(note=>{
-          if (des.multi) {
-            let commentsToRemove = []
-            note.comments.forEach((comment,index)=>{
-              if (type.includes(comment.type)) {
-                commentsToRemove.push(index)
+          if (note.comments.length) {
+            if (des.multi) {
+              let commentsToRemove = []
+              note.comments.forEach((comment,index)=>{
+                if (type.includes(comment.type)) {
+                  commentsToRemove.push(index)
+                }
+              })
+              if (!commentsToRemove.length) {
+                MNUtil.showHUD("No match")
+                return
               }
-            })
-            if (!commentsToRemove.length) {
-              MNUtil.showHUD("No match")
-              return
+              note.removeCommentsByIndices(commentsToRemove)
+            }else{
+              let index = note.comments.findIndex(comment=>type.includes(comment.type))
+              if (index < 0) {
+                MNUtil.showHUD("No match")
+                return
+              }
+              note.removeCommentByIndex(index)
             }
-            note.removeCommentsByIndices(commentsToRemove)
-          }else{
-            let index = note.comments.findIndex(comment=>type.includes(comment.type))
-            if (index < 0) {
-              MNUtil.showHUD("No match")
-              return
-            }
-            note.removeCommentByIndex(index)
           }
         })
       })
@@ -4153,7 +4245,9 @@ class toolbarUtils {
       }
       MNUtil.undoGrouping(()=>{
         focusNotes.forEach(note => {
-          note.removeCommentsByIndices(commentIndices)
+          if (note.comments.length) {
+            note.removeCommentsByIndices(commentIndices)
+          }
         })
       })
     }else{
@@ -4161,11 +4255,13 @@ class toolbarUtils {
       if (commentIndex) {
         MNUtil.undoGrouping(()=>{
           focusNotes.forEach(note => {
-            let commentLength = note.comments.length
-            if (commentIndex > commentLength) {
-              commentIndex = commentLength
+            if (note.comments.length) {
+              let commentLength = note.comments.length
+              if (commentIndex > commentLength) {
+                commentIndex = commentLength
+              }
+              note.removeCommentByIndex(commentIndex-1)
             }
-            note.removeCommentByIndex(commentIndex-1)
           })
         })
       }
@@ -4193,6 +4289,24 @@ class toolbarUtils {
     }
     MNUtil.postNotification("customChat",{})
     // MNUtil.showHUD("No valid argument!")
+  }
+  /**
+   * @param {NSData} image 
+   * @returns 
+   */
+  static async getTextOCR (image) {
+    if (typeof ocrNetwork === 'undefined') {
+      MNUtil.showHUD("Install 'MN OCR' first")
+      return undefined
+    }
+    try {
+      let res = await ocrNetwork.OCR(image)
+      MNUtil.copy(res)
+      return res
+    } catch (error) {
+      chatAIUtils.addErrorLog(error, "getTextOCR",)
+      return undefined
+    }
   }
   static async ocr(){
     if (typeof ocrUtils === 'undefined') {
@@ -5084,20 +5198,19 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
         break;
     }
   }
-  static getMDFromNote(note,level = 0){
+  /**
+   * 
+   * @param {MNNote} note 
+   * @param {number} level 
+   * @returns {Promise<string>}
+   */
+  static async getMDFromNote(note,level = 0,OCR_enabled = false){
     if (note) {
-      if (note.groupNoteId || (note.note && note.note.groupNoteId)) {
-        if (note.groupNoteId) {
-          note = new MNNote(note.groupNoteId)
-        }else{
-          note = new MNNote(note.note.groupNoteId)
-        }
-      }
+      note = note.realGroupNoteForTopicId()
     }else{
-      return
+      return ""
     }
 try {
-
   let title = (note.noteTitle && note.noteTitle.trim()) ? "# "+note.noteTitle.trim() : ""
   if (title.trim()) {
     title = title.split(";").filter(t=>{
@@ -5108,9 +5221,20 @@ try {
     }).join(";")
   }
   let textFirst = note.textFirst
-  let excerptText = (note.excerptPic && !textFirst) ? "": (note.excerptText? note.excerptText.trim() :"")
+  let excerptText
+  if (note.excerptPic && !textFirst) {
+    if (OCR_enabled) {
+      excerptText = await this.getTextOCR(MNUtil.getMediaByHash(note.excerptPic.paint))
+    }else{
+      excerptText = ""
+    }
+  }else{
+    excerptText = note.excerptText ?? ""
+  }
   if (note.comments.length) {
-    note.comments.forEach(comment=>{
+    let comments = note.comments
+    for (let i = 0; i < comments.length; i++) {
+      const comment = comments[i];
       switch (comment.type) {
         case "TextNote":
           if (/^marginnote\dapp\:\/\//.test(comment.text)) {
@@ -5119,26 +5243,33 @@ try {
             excerptText = excerptText+"\n"+comment.text
           }
           break;
+        case "HtmlNote":
+          excerptText = excerptText+"\n"+comment.text
+          break
         case "LinkNote":
-          if (comment.q_hpic && (comment.q_hpic.mask || comment.q_hpic.drawing)) {
-            break;
-          }
-          if (comment.q_hpic && comment.q_hpic.paint && !textFirst) {
+          if (OCR_enabled && comment.q_hpic  && comment.q_hpic.paint && !textFirst) {
             let imageData = MNUtil.getMediaByHash(comment.q_hpic.paint)
             let imageSize = UIImage.imageWithData(imageData).size
             if (imageSize.width === 1 && imageSize.height === 1) {
-              //do nothing
+              if (comment.q_htext) {
+                excerptText = excerptText+"\n"+comment.q_htext
+              }
             }else{
-              break;
+              excerptText = excerptText+"\n"+await this.getTextOCR(imageData)
             }
-          }
-          if (comment.q_htext && comment.q_htext.trim()) {
+          }else{
             excerptText = excerptText+"\n"+comment.q_htext
           }
+          break
+        case "PaintNote":
+          if (OCR_enabled && comment.paint){
+            excerptText = excerptText+"\n"+await this.getTextOCR(MNUtil.getMediaByHash(comment.paint))
+          }
+          break
         default:
           break;
       }
-    })
+    }
   }
   excerptText = (excerptText && excerptText.trim()) ? this.highlightEqualsContentReverse(excerptText) : ""
   let content = title+"\n"+excerptText
