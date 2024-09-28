@@ -1875,9 +1875,54 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     case "moveToBeClassified":
       MNUtil.undoGrouping(()=>{
         try {
-          focusNotes.forEach(focusNote=>{
-            focusNote.moveToBeClassified()
-          })
+          if (MNUtil.currentNotebookId == "A07420C1-661A-4C7D-BA06-C7035C18DA74") {
+            UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+              "移动到「待归类」区",
+              "请选择科目",
+              0,
+              "取消",
+              [
+                "数学基础",
+                "泛函分析",
+                "实分析",
+                "复分析",
+                "数学分析",
+                "高等代数"
+              ],
+              (alert, buttonIndex) => {
+                let targetNoteId
+                switch (buttonIndex) {
+                  case 1: // 数学基础
+                    targetNoteId = "EF75F2C8-2655-4BAD-92E1-C9C11D1A37C3"
+                    break;
+                  case 2: // 泛函分析
+                    targetNoteId = "23E0024A-F2C9-4E45-9F64-86DD30C0D497"
+                    break;
+                  case 3: // 实分析
+                    targetNoteId = "97672F06-1C40-475D-8F44-16759CCADA8C"
+                    break;
+                  case 4: // 复分析
+                    targetNoteId = "16920F8B-700E-4BA6-A7EE-F887F28A502B"
+                    break;
+                  case 5: // 数学分析
+                    targetNoteId = "9AAE346D-D7ED-472E-9D30-A7E1DE843F83"
+                    break;
+                  case 6: // 高等代数
+                    targetNoteId = "B9B3FB57-AAC0-4282-9BFE-3EF008EA2085"
+                    break;
+                }
+                MNUtil.undoGrouping(()=>{
+                  focusNotes.forEach(focusNote=>{
+                    focusNote.moveToBeClassified(targetNoteId)
+                  })
+                })
+              }
+            )
+          } else {
+            focusNotes.forEach(focusNote=>{
+              focusNote.moveToBeClassified()
+            })
+          }
         } catch (error) {
           MNUtil.showHUD(error);
         }
