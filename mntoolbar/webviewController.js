@@ -1842,6 +1842,20 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //   )
       //   break;
     /**
+     * 卡片独立出来
+     */
+    case "toBeIndependent":
+      MNUtil.undoGrouping(()=>{
+        try {
+          focusNotes.forEach(focusNote=>{
+            focusNote.toBeIndependent()
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+      })
+      break;
+    /**
      * 移动卡片到「内化」区
      */
     case "moveToInternalize":

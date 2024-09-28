@@ -6178,6 +6178,10 @@ static template(action) {
       config.menuWidth = 200
       config.menuItems = [
         {
+          "action": "toBeIndependent",
+          "menuTitle": "⇨ 独立",
+        },
+        {
           "action": "moveToInternalize",
           "menuTitle": "⇨ 内化",
         },
