@@ -1856,6 +1856,20 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       })
       break;
     /**
+      * 移动卡片到「输入」区
+      */
+    case "movToInput":
+      MNUtil.undoGrouping(()=>{
+        try {
+          focusNotes.forEach(focusNote=>{
+            focusNote.movToInput()
+          })
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+      })
+      break;
+    /**
      * 移动卡片到「内化」区
      */
     case "moveToInternalize":

@@ -6182,6 +6182,10 @@ static template(action) {
           "menuTitle": "⇨ 独立",
         },
         {
+          "action": "movToInput",
+          "menuTitle": "⇨ 输入",
+        },
+        {
           "action": "moveToInternalize",
           "menuTitle": "⇨ 内化",
         },
