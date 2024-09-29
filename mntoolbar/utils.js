@@ -6186,7 +6186,7 @@ static template(action) {
           "menuTitle": "⇨ 独立",
         },
         {
-          "action": "movToInput",
+          "action": "moveToInput",
           "menuTitle": "⇨ 输入",
         },
         {
