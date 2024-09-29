@@ -6178,6 +6178,10 @@ static template(action) {
       config.menuWidth = 200
       config.menuItems = [
         {
+          "action": "toBeProgressNote",
+          "menuTitle": "⇨ 📍进度标记",
+        },
+        {
           "action": "toBeIndependent",
           "menuTitle": "⇨ 独立",
         },

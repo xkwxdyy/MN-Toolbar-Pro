@@ -1842,6 +1842,17 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //   )
       //   break;
     /**
+     * 进度标记
+     */
+    case "toBeProgressNote":
+      MNUtil.undoGrouping(()=>{
+        try {
+          focusNotes.toBeProgressNote()
+        } catch (error) {
+          MNUtil.showHUD(error);
+        }
+      })
+    /**
      * 卡片独立出来
      */
     case "toBeIndependent":
