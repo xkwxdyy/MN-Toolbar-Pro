@@ -1847,7 +1847,7 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
     case "toBeProgressNote":
       MNUtil.undoGrouping(()=>{
         try {
-          focusNotes.toBeProgressNote()
+          focusNote.toBeProgressNote()
         } catch (error) {
           MNUtil.showHUD(error);
         }
