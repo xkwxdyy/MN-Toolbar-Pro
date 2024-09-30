@@ -28,6 +28,7 @@ JSB.newAddon = function (mainPath) {
         self.rect = '{{0, 0}, {10, 10}}';
         self.arrow = 1;
         MNUtil.addObserver(self, 'onPopupMenuOnNote:', 'PopupMenuOnNote')
+        MNUtil.addObserver(self, 'onPopupMenuOnSelection:', 'PopupMenuOnSelection')
         MNUtil.addObserver(self, 'onToggleDynamic:', 'toggleDynamic')
         MNUtil.addObserver(self, 'onClosePopupMenuOnNote:', 'ClosePopupMenuOnNote')
         MNUtil.addObserver(self, 'onRemoveMNToolbar:', 'removeMNToolbar')
@@ -185,14 +186,37 @@ JSB.newAddon = function (mainPath) {
         toolbarConfig.windowState.frame = self.addonController.view.frame
         toolbarConfig.save("MNToolbar_windowState")
       },
-      onPopupMenuOnNote: async function (sender) { // Clicking note
+      onPopupMenuOnSelection: async function (sender) { // Clicking note
         if (typeof MNUtil === 'undefined') return
         let self = getMNToolbarClass()
         // showHUD("note")
         // let noteid = sender.userInfo.note.noteId
         // var pasteBoard = UIPasteboard.generalPasteboard()
         // pasteBoard.string = url
-        if (self.window !== MNUtil.currentWindow || !toolbarConfig.dynamic) {
+        if (self.window !== MNUtil.currentWindow) {
+          return
+        }
+        self.addonController.popupReplace()
+        if (!toolbarConfig.dynamic) {
+          return
+        }
+      },
+      onPopupMenuOnNote: async function (sender) { // Clicking note
+        if (typeof MNUtil === 'undefined') return
+        let self = getMNToolbarClass()
+        if (self.window !== MNUtil.currentWindow) {
+          return
+        }
+        // let noteid = sender.userInfo.note.noteId
+        // var pasteBoard = UIPasteboard.generalPasteboard()
+        // pasteBoard.string = url
+        try {
+        self.addonController.popupReplace()
+          
+        } catch (error) {
+          
+        }
+        if (!toolbarConfig.dynamic) {
           return
         }
         // if (!self.appInstance.checkNotifySenderInWindow(sender, self.window) || !toolbarConfig.dynamic) return; // Don't process message from other window
@@ -214,6 +238,7 @@ JSB.newAddon = function (mainPath) {
         let studyFrameX = studyFrame.x
         let studyHeight = studyFrame.height
         let lastFrame 
+
         try {
           
         if (!self.testController) {
@@ -290,7 +315,6 @@ JSB.newAddon = function (mainPath) {
       },
       onClosePopupMenuOnNote: function (sender) {
         if (typeof MNUtil === 'undefined') return
-        // showHUD("close")
         // if (!self.appInstance.checkNotifySenderInWindow(sender, self.window)) {
         //   return; // Don't process message from other window
         // }

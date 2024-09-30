@@ -94,7 +94,7 @@ viewWillLayoutSubviews: function() {
   },
   moveTopTapped :function () {
     let self = getSettingController()
-    let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
+    let allActions = toolbarConfig.getAllActions()
     toolbarUtils.moveElement(allActions, self.selectedItem, "top")
     self.setButtonText(allActions,self.selectedItem)
     // MNUtil.postNotification("MNToolbarRefreshLayout",{})
@@ -104,7 +104,7 @@ viewWillLayoutSubviews: function() {
   },
   moveForwardTapped :function () {
     let self = getSettingController()
-    let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
+    let allActions = toolbarConfig.getAllActions()
     toolbarUtils.moveElement(allActions, self.selectedItem, "up")
     self.setButtonText(allActions,self.selectedItem)
     self.toolbarController.setToolbarButton(allActions)
@@ -118,17 +118,41 @@ viewWillLayoutSubviews: function() {
     toolbarConfig.save("MNToolbar_action")
 
   },
-  resetConfig: async function (button) {
+  resetButtonTapped: async function (button) {
+    var commandTable = [
+      {title:'🔄   Reset prompts',object:self,selector:'resetConfig:',param:"prompts"},
+      {title:'🔄   Reset button image',object:self,selector:'resetConfig:',param:"image"},
+    ]
+    self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,0)
+  },
+  resetConfig: async function (param) {
   try {
-    let confirm = await MNUtil.confirm("Clear all config?", "清除所有配置？")
-    if (confirm) {
-    
-      let self = getSettingController()
-      toolbarConfig.reset()
-      self.toolbarController.setToolbarButton(toolbarConfig.action,toolbarConfig.actions)
-      // self.toolbarController.actions = actions
-      self.setButtonText(toolbarConfig.action,toolbarConfig.action[0])
-      self.setTextview(toolbarConfig.action[0])
+    self.checkPopoverController()
+    switch (param) {
+      case "prompts":
+        let confirm = await MNUtil.confirm("Clear all config?", "清除所有配置？")
+        if (confirm) {
+          let self = getSettingController()
+          toolbarConfig.reset()
+          self.toolbarController.setToolbarButton(toolbarConfig.action,toolbarConfig.actions)
+          // self.toolbarController.actions = actions
+          self.setButtonText(toolbarConfig.action,toolbarConfig.action[0])
+          self.setTextview(toolbarConfig.action[0])
+          MNUtil.showHUD("Reset prompts")
+        }
+        break;
+      case "image":
+        toolbarConfig.imageScale = {}
+        toolbarConfig.save("MNToolbar_imageScale")
+        let keys = toolbarConfig.getDefaultActionKeys()
+        keys.forEach((key)=>{
+          toolbarConfig.imageConfigs[key] = MNUtil.getImage(toolbarConfig.mainPath+"/"+toolbarConfig.getAction(key).image+".png")
+        })
+        MNUtil.postNotification("refreshToolbarButton", {})
+        MNUtil.showHUD("Reset button image")
+        break
+      default:
+        break;
     }
   } catch (error) {
     MNUtil.showHUD("Error in resetConfig: "+error)
@@ -176,6 +200,52 @@ viewWillLayoutSubviews: function() {
       // self.showAllButton()
       self.settingViewLayout()
     })
+  },
+  changePopupReplace: function (button) {
+    let allActions = toolbarConfig.getAllActions()
+    // MNUtil.copyJSON(allActions)
+    var commandTable = allActions.map(actionKey=>{
+      let actionName = toolbarConfig.getAction(actionKey).name
+      return {title:actionName,object:self,selector:'setPopupReplace:',param:{id:button.id,name:actionName,target:actionKey}}
+    })
+    if (MNUtil.appVersion().type === "macOS") {
+      self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,4)
+    }else{
+      self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,1)
+    }
+    // MNUtil.showHUD("replacePopupEditTapped")
+  },
+  setPopupReplace: function (config) {
+    self.checkPopoverController()
+    try {
+      // MNUtil.copyJSON(config)
+      // MNUtil.copyJSON(toolbarConfig.popupConfig)
+    let popupConfig = toolbarConfig.getPopupConfig(config.id)
+    popupConfig.target = config.target
+    toolbarConfig.popupConfig[config.id] = popupConfig
+    // MNUtil.copyJSON(toolbarConfig.popupConfig)
+    // MNUtil.showHUD("Set target: "+config.target)
+    let buttonName = "replacePopupButton_"+config.id
+    MNButton.setConfig(self[buttonName], {title:config.id+": "+config.name,font:17,radius:10,bold:true})
+    toolbarConfig.save("MNToolbar_popupConfig")
+    } catch (error) {
+      toolbarUtils.addErrorLog(error, "setPopupReplace")
+    }
+  },
+  /**
+   * 
+   * @param {UISwitch} button 
+   */
+  togglePopupReplace: function (button) {
+    // MNUtil.showHUD("togglePopupReplace:"+button.id)
+    let popupConfig = toolbarConfig.getPopupConfig(button.id)
+    if (button.on) {
+      popupConfig.enabled = true
+    }else{
+      popupConfig.enabled = false
+    }
+    toolbarConfig.popupConfig[button.id] = popupConfig
+    toolbarConfig.save("MNToolbar_popupConfig")
   },
   onMoveGesture:function (gesture) {
     self.dynamic = false;
@@ -248,14 +318,27 @@ viewWillLayoutSubviews: function() {
   advancedButtonTapped: function (params) {
     self.advanceView.hidden = false
     self.configView.hidden = true
+    self.popupEditView.hidden = true
     MNButton.setColor(self.configButton, "#9bb2d6", 0.8)
     MNButton.setColor(self.advancedButton, "#457bd3", 0.8)
+    MNButton.setColor(self.popupButton, "#9bb2d6", 0.8)
+  },
+  popupButtonTapped: function (params) {
+    self.advanceView.hidden = true
+    self.configView.hidden = true
+    self.popupEditView.hidden = false
+    MNButton.setColor(self.configButton, "#9bb2d6", 0.8)
+    MNButton.setColor(self.advancedButton, "#9bb2d6", 0.8)
+    MNButton.setColor(self.popupButton, "#457bd3", 0.8)
+    self.settingViewLayout()
   },
   configButtonTapped: function (params) {
     self.configView.hidden = false
     self.advanceView.hidden = true
+    self.popupEditView.hidden = true
     MNButton.setColor(self.configButton, "#457bd3", 0.8)
     MNButton.setColor(self.advancedButton, "#9bb2d6", 0.8)
+    MNButton.setColor(self.popupButton, "#9bb2d6", 0.8)
   },
   configCopyTapped: async function (params) {
     // MNUtil.copy(self.selectedItem)
@@ -501,6 +584,38 @@ settingController.prototype.createButton = function (buttonName,targetAction,sup
     }
 }
 
+settingController.prototype.createSwitch = function (switchName,targetAction,superview) {
+    this[switchName] = UISwitch.new()
+    this.popupEditView.addSubview(this[switchName])
+    this[switchName].on = false
+    // this[switchName].frame = MNUtil.genFrame(10, 10, 100, 50)
+    this[switchName].hidden = false
+    if (targetAction) {
+      this[switchName].addTargetActionForControlEvents(this, targetAction, 1 << 12);
+    }
+    if (superview) {
+      this[superview].addSubview(this[switchName])
+    }else{
+      this.view.addSubview(this[switchName]);
+    }
+}
+
+settingController.prototype.createScrollView = function (scrollName,superview) {
+  this[scrollName] = UIScrollView.new()
+  this[scrollName].hidden = false
+  this[scrollName].autoresizingMask = (1 << 1 | 1 << 4);
+  this[scrollName].delegate = this
+  this[scrollName].bounces = true
+  this[scrollName].alwaysBounceVertical = true
+  this[scrollName].layer.cornerRadius = 8
+  this[scrollName].backgroundColor = MNUtil.hexColorAlpha("#c0bfbf",0.8)
+  if (superview) {
+    this[superview].addSubview(this[scrollName])
+  }else{
+    this.view.addSubview(this[scrollName]);
+  }
+}
+
 settingController.prototype.settingViewLayout = function (){
     let viewFrame = this.view.bounds
     let width = viewFrame.width
@@ -510,6 +625,7 @@ settingController.prototype.settingViewLayout = function (){
     this.settingView.frame = {x:0,y:55,width:width,height:height-55}
     this.configView.frame = MNUtil.genFrame(0,0,width-2,height-60)
     this.advanceView.frame = MNUtil.genFrame(0,0,width-2,height-60)
+    this.popupEditView.frame = MNUtil.genFrame(0,0,width-2,height-60)
     if (width < 650) {
       this.webviewInput.frame = {x:5,y:205,width:width-10,height:height-300}
       this.titleInput.frame = {x:5,y:165,width:width-50,height:35}
@@ -553,12 +669,35 @@ settingController.prototype.settingViewLayout = function (){
     settingFrame.height = 30
     this.configButton.frame = settingFrame
     settingFrame.x = 95
+    settingFrame.width = 75
+    this.popupButton.frame = settingFrame
+    settingFrame.x = 175
     settingFrame.width = 100
     this.advancedButton.frame = settingFrame
     settingFrame.x = width-35
     settingFrame.width = 30
     this.closeButton.frame = settingFrame
 
+    let scrollHeight = 5
+    if (MNUtil.appVersion().type === "macOS") {
+      for (let i = 0; i < toolbarConfig.allPopupButtons.length; i++) {
+        let replaceButtonName = "replacePopupButton_"+toolbarConfig.allPopupButtons[i]
+        let replaceSwtichName = "replacePopupSwtich_"+toolbarConfig.allPopupButtons[i]
+        this[replaceButtonName].frame = MNUtil.genFrame(5, 5+i*40, width-10, 35)
+        this[replaceSwtichName].frame = MNUtil.genFrame(width-33, 5+i*40, 20, 35)
+        scrollHeight = (i+1)*40+5
+      }
+    }else{
+      for (let i = 0; i < toolbarConfig.allPopupButtons.length; i++) {
+        let replaceButtonName = "replacePopupButton_"+toolbarConfig.allPopupButtons[i]
+        let replaceSwtichName = "replacePopupSwtich_"+toolbarConfig.allPopupButtons[i]
+        this[replaceButtonName].frame = MNUtil.genFrame(5, 5+i*40, width-65, 35)
+        this[replaceSwtichName].frame = MNUtil.genFrame(width-55, 6.5+i*40, 20, 35)
+        scrollHeight = (i+1)*40+5
+      }
+    }
+    this.popupScroll.frame = MNUtil.genFrame(0, 0, width, height-55)
+    this.popupScroll.contentSize = {width:width,height:scrollHeight}
     this.editorButton.frame = MNUtil.genFrame(10, 15, (width-25)/2, 35)
     this.chatAIButton.frame = MNUtil.genFrame(15+(width-25)/2, 15, (width-25)/2, 35)
     this.snipasteButton.frame = MNUtil.genFrame(10, 55, (width-25)/2, 35)
@@ -583,6 +722,11 @@ try {
   this.creatView("tabView","view","#9bb2d6",0.0)
   this.creatView("configView","settingView","#9bb2d6",0.0)
 
+  this.creatView("popupEditView","settingView","#9bb2d6",0.0)
+  this.popupEditView.hidden = true
+  this.createScrollView("popupScroll", "popupEditView")
+  this.popupScroll.layer.backgroundColor = MNUtil.hexColorAlpha("#c0bfbf",0.0)
+
   this.creatView("advanceView","settingView","#9bb2d6",0.0)
   this.advanceView.hidden = true
 
@@ -590,6 +734,8 @@ try {
   this.createButton("configButton","configButtonTapped:","tabView")
   MNButton.setConfig(this.configButton, {color:"#457bd3",alpha:0.9,opacity:1.0,title:"Buttons",font:17,radius:10,bold:true})
 
+  this.createButton("popupButton","popupButtonTapped:","tabView")
+  MNButton.setConfig(this.popupButton, {alpha:0.9,opacity:1.0,title:"Popup",font:17,radius:10,bold:true})
 
   this.createButton("advancedButton","advancedButtonTapped:","tabView")
   MNButton.setConfig(this.advancedButton, {alpha:0.9,opacity:1.0,title:"Advanced",font:17,radius:10,bold:true})
@@ -597,6 +743,29 @@ try {
   this.createButton("closeButton","closeButtonTapped:","tabView")
   MNButton.setConfig(this.closeButton, {color:"#e06c75",alpha:0.9,opacity:1.0,radius:10,bold:true})
   MNButton.setImage(this.closeButton, MNUtil.getImage(toolbarConfig.mainPath+"/stop.png"))
+
+  // this.createButton("editorButton","toggleAddonLogo:","advanceView")
+  try {
+    toolbarConfig.allPopupButtons.forEach(buttonName=>{
+      let replaceButtonName = "replacePopupButton_"+buttonName
+      let replaceSwtichName = "replacePopupSwtich_"+buttonName
+      this.createButton(replaceButtonName,"changePopupReplace:","popupScroll")
+      this[replaceButtonName].id = buttonName
+      let target = toolbarConfig.getPopupConfig(buttonName).target
+      if (target) {
+        let actionName = toolbarConfig.getAction(toolbarConfig.getPopupConfig(buttonName).target).name
+        MNButton.setConfig(this[replaceButtonName], {color:"#558fed",alpha:0.9,opacity:1.0,title:buttonName+": "+actionName,font:17,radius:10,bold:true})
+      }else{
+        MNButton.setConfig(this[replaceButtonName], {color:"#558fed",alpha:0.9,opacity:1.0,title:buttonName+": ",font:17,radius:10,bold:true})
+      }
+      this.createSwitch(replaceSwtichName, "togglePopupReplace:", "popupScroll")
+      this[replaceSwtichName].id = buttonName
+      this[replaceSwtichName].on = toolbarConfig.getPopupConfig(buttonName).enabled
+      this[replaceSwtichName].hidden = false
+    })
+  } catch (error) {
+    // toolbarUtils.addErrorLog(error, "replacePopupEditSwtich")
+  }
 
   this.createButton("editorButton","toggleAddonLogo:","advanceView")
   this.editorButton.layer.opacity = 1.0
@@ -649,15 +818,15 @@ try {
   this.hexInput.text = toolbarConfig.buttonConfig.color
   MNButton.setColor(this.hexButton, toolbarConfig.checkLogoStatus("MNOCR")?"#457bd3":"#9bb2d6",0.8)
 
-
-  this.scrollview = UIScrollView.new()
-  this.configView.addSubview(this.scrollview)
-  this.scrollview.hidden = false
-  this.scrollview.delegate = this
-  this.scrollview.bounces = true
-  this.scrollview.alwaysBounceVertical = true
-  this.scrollview.layer.cornerRadius = 8
-  this.scrollview.backgroundColor = MNUtil.hexColorAlpha("#c0bfbf",0.8)
+  this.createScrollView("scrollview", "configView")
+  // this.scrollview = UIScrollView.new()
+  // this.configView.addSubview(this.scrollview)
+  // this.scrollview.hidden = false
+  // this.scrollview.delegate = this
+  // this.scrollview.bounces = true
+  // this.scrollview.alwaysBounceVertical = true
+  // this.scrollview.layer.cornerRadius = 8
+  // this.scrollview.backgroundColor = MNUtil.hexColorAlpha("#c0bfbf",0.8)
 
   this.createWebviewInput("configView")
   this.creatTextView("systemInput","configView")
@@ -671,7 +840,7 @@ try {
   this.titleInput.text = text.title
   this.titleInput.contentInset = {top: 0,left: 0,bottom: 0,right: 0}
   this.titleInput.textContainerInset = {top: 0,left: 0,bottom: 0,right: 0}
-  this.createButton("configReset","resetConfig:","configView")
+  this.createButton("configReset","resetButtonTapped:","configView")
   this.configReset.layer.opacity = 1.0
   this.configReset.setTitleForState("🔄",0)
 
@@ -1052,6 +1221,9 @@ settingController.prototype.runJavaScript = async function(script) {
       this.webviewInput.evaluateJavaScript(script,(result) => {resolve(result)});
   })
 };
+settingController.prototype.checkPopoverController = function () {
+  if (this.view.popoverController) {this.view.popoverController.dismissPopoverAnimated(true);}
+}
 /**
  * 
  * @type {toolbarController}

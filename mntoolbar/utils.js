@@ -3780,19 +3780,29 @@ class toolbarUtils {
               break;
       }
   }
-  static getVarInfo(text) {
+/**
+ * 
+ * @param {string} text 
+ * @param {MNNote|MbBookNote|undefined} note 
+ * @returns 
+ */
+  static getVarInfo(text) {//对通用的部分先写好对应的值
     let config = {}
     let hasClipboardText = text.includes("{{clipboardText}}")
     let hasSelectionText = text.includes("{{selectionText}}")
-    let hasDocName = text.includes("{{currentDocName}}")
+    let hasCurrentDocName = text.includes("{{currentDocName}}")
+    let hasCurrentDocAttach = text.includes("{{currentDocAttach}}")
     if (hasClipboardText) {
       config.clipboardText = MNUtil.clipboardText
     }
     if (hasSelectionText) {
       config.selectionText = MNUtil.selectionText
     }
-    if (hasDocName) {
+    if (hasCurrentDocName) {
       config.currentDocName = MNUtil.getFileName(MNUtil.currentDocController.document.pathFile)
+    }
+    if (hasCurrentDocAttach && editorUtils) {
+      config.currentDocAttach = editorUtils.getAttachContentByMD5(MNUtil.currentDocmd5)
     }
     return config
   }
@@ -3977,6 +3987,63 @@ class toolbarUtils {
       default:
         break;
     }
+  }
+  static shouldShowMenu(des){
+    if ("target" in des) {
+      //des里提供了target参数的时候，如果target为menu则显示menu
+      if (des.target === "menu") {
+        return true
+      }
+      return false
+    }
+    //des里不提供target参数的时候默认为menu
+    return true
+  }
+  static showInFloatWindow(des){
+    let targetNoteid
+    switch (des.target) {
+      case "{{noteInClipboard}}":
+      case "noteInClipboard":
+        targetNoteid = MNNote.new(MNUtil.clipboardText).noteId
+        break;
+      case "{{currentNote}}":
+      case "currentNote":
+        targetNoteid = MNNote.getFocusNote().noteId
+        break;
+      case "{{currentChildMap}}":
+      case "currentChildMap":
+        if (MNUtil.mindmapView && MNUtil.mindmapView.mindmapNodes[0].note.childMindMap) {
+          targetNoteid = MNUtil.mindmapView.mindmapNodes[0].note.childMindMap.noteId
+        }else{
+          targetNoteid = undefined
+        }
+        break;
+      case "{{parentNote}}":
+      case "parentNote":
+        targetNoteid = MNNote.getFocusNote().parentNote.noteId
+        break;
+      case "{{currentNoteInMindMap}}":
+      case "currentNoteInMindMap":
+        let notebookController = MNUtil.notebookController
+        let currentNotebookId = notebookController.notebookId
+        
+        if (!notebookController.view.hidden && notebookController.mindmapView && notebookController.focusNote) {
+          targetNoteid = notebookController.focusNote.noteId
+        }else{
+          let testNote = MNUtil.currentDocController.focusNote
+          targetNoteid = testNote.realGroupNoteIdForTopicId(currentNotebookId)
+        }
+        break;
+      default:
+        targetNoteid= MNUtil.getNoteIdByURL(des.target)
+        break;
+    }
+    if (targetNoteid) {
+      MNNote.focusInFloatMindMap(targetNoteid)
+    }else{
+      MNUtil.showHUD("No Note found!")
+    }
+    // toolbarUtils.studyController().focusNoteInFloatMindMapById(targetNoteid)
   }
   static async delay (seconds) {
     return new Promise((resolve, reject) => {
@@ -4268,12 +4335,12 @@ class toolbarUtils {
     }
   
   }
-  static async chatAI(){
-    let des = toolbarConfig.getDescriptionByName("chatglm")
+  static async chatAI(des){
     if (!des || !Object.keys(des).length) {
       MNUtil.postNotification("customChat",{})
       return
     }
+
     if (des.prompt) {
       MNUtil.postNotification("customChat",{prompt:des.prompt})
       return
@@ -5306,23 +5373,135 @@ class toolbarConfig {
     dynamicButton:9,//跟随模式下的工具栏显示的按钮数量,
     frame:{x:0,y:0,width:40,height:415}
   }
+  //非自定义动作的key
+  static builtinActionKeys = ["copy","searchInEudic","switchTitleorExcerpt","copyAsMarkdownLink","search","bigbang","snipaste","chatglm","edit","ocr","execute","pasteAsTitle","clearFormat","color0","color1","color2","color3","color4","color5","color6","color7","color8","color9","color10","color11","color12","color13","color14","color15"]
+  static allPopupButtons = [
+  "copy",
+  "copyOCR",
+  "toggleTitle",
+  "toggleCopyMode",
+  "toggleGroupMode",
+  "moveNoteTo",
+  "linkNoteTo",
+  "noteHighlight",
+  "blankHighlight",
+  "mergeHighlight",
+  "delHighlight",
+  "sendHighlight",
+  "foldHighlight",
+  "setTitleHighlight",
+  "setCommentHighlight",
+  "setEmphasisHighlight",
+  "highStyleColor0",
+  "highStyleColor1",
+  "highStyleColor2",
+  "highStyleColor3",
+  "highlightType1",
+  "highlightType2",
+  "highlightType3",
+  "highlightType4",
+  "highlightShortcut1",
+  "highlightShortcut2",
+  "highlightShortcut3",
+  "highlightShortcut4",
+  "editHashtags",
+  "deleteNote",
+  "commentNote",
+  "pasteToNote",
+  "mergeIntoNote",
+  "focusCurrentNote",
+  "draftCurrentNote",
+  "collapseBlank",
+  "insertBlank",
+  "insertTranslation",
+  "addToTOC",
+  "addToReview",
+  "speechText",
+  "speechHighlight",
+  "goWiki",
+  "goPalette",
+  "goWikiNote",
+  "goDictionary",
+  "goToMindMap",
+  "newGroupChild",
+  "splitBook",
+  "pasteOnPage",
+  "textboxOnPage",
+  "imageboxOnPage",
+  "moreOperations",
+]
+  static defaultPopupReplaceConfig = {
+    noteHighlight:{enabled:false,target:"",name:"noteHighlight"},
+    addToReview:{enabled:false,target:"",name:"addToReview"},
+    goPalette:{enabled:false,target:"",name:"goPalette"},
+    editHashtags:{enabled:false,target:"",name:"editHashtags"},
+    toggleTitle:{enabled:false,target:"",name:"toggleTitle"},
+    moveNoteTo:{enabled:false,target:"",name:"moveNoteTo"},
+    toggleCopyMode:{enabled:false,target:"",name:"toggleCopyMode"},
+    pasteToNote:{enabled:false,target:"",name:"pasteToNote"},
+    linkNoteTo:{enabled:false,target:"",name:"linkNoteTo"},
+    goWikiNote:{enabled:false,target:"",name:"goWikiNote"},
+    focusCurrentNote:{enabled:false,target:"",name:"focusCurrentNote"},
+    delHighlight:{enabled:false,target:"",name:"delHighlight"},
+    moreOperations:{enabled:false,target:"",name:"moreOperations"},
+    blankHighlight:{enabled:false,target:"",name:"blankHighlight"},
+    mergeHighlight:{enabled:false,target:"",name:"mergeHighlight"},
+    highStyleColor0:{enabled:false,target:"",name:"highStyleColor0"},
+    highStyleColor1:{enabled:false,target:"",name:"highStyleColor1"},
+    highStyleColor2:{enabled:false,target:"",name:"highStyleColor2"},
+    highStyleColor3:{enabled:false,target:"",name:"highStyleColor3"},
+    goWiki:{enabled:false,target:"",name:"goWiki"},
+    speechHighlight:{enabled:false,target:"",name:"speechHighlight"},
+    sendHighlight:{enabled:false,target:"",name:"sendHighlight"},
+    commentNote:{enabled:false,target:"",name:"commentNote"},
+    deleteNote:{enabled:false,target:"",name:"deleteNote"},
+    copy:{enabled:false,target:"",name:"copy"},
+    insertBlank:{enabled:false,target:"",name:"insertBlank"},
+    collapseBlank:{enabled:false,target:"",name:"collapseBlank"},
+    copyOCR:{enabled:false,target:"",name:"copyOCR"},
+    foldHighlight:{enabled:false,target:"",name:"foldHighlight"},
+    addToTOC:{enabled:false,target:"",name:"addToTOC"},
+    highlightType1:{enabled:false,target:"",name:"highlightType1"},
+    highlightType2:{enabled:false,target:"",name:"highlightType2"},
+    highlightType3:{enabled:false,target:"",name:"highlightType3"},
+    highlightType4:{enabled:false,target:"",name:"highlightType4"},
+    highlightShortcut1:{enabled:false,target:"",name:"highlightShortcut1"},
+    highlightShortcut2:{enabled:false,target:"",name:"highlightShortcut2"},
+    highlightShortcut3:{enabled:false,target:"",name:"highlightShortcut3"},
+    highlightShortcut4:{enabled:false,target:"",name:"highlightShortcut4"},
+    speechText:{enabled:false,target:"",name:"speechText"},
+    goDictionary:{enabled:false,target:"",name:"goDictionary"},
+    goToMindMap:{enabled:false,target:"",name:"goToMindMap"},
+    setTitleHighlight:{enabled:false,target:"",name:"setTitleHighlight"},
+    setCommentHighlight:{enabled:false,target:"",name:"setCommentHighlight"},
+    setEmphasisHighlight:{enabled:false,target:"",name:"setEmphasisHighlight"},
+    mergeIntoNote:{enabled:false,target:"",name:"mergeIntoNote"},
+    newGroupChild:{enabled:false,target:"",name:"newGroupChild"},
+    toggleGroupMode:{enabled:false,target:"",name:"toggleGroupMode"},
+    draftCurrentNote:{enabled:false,target:"",name:"draftCurrentNote"},
+    insertTranslation:{enabled:false,target:"",name:"insertTranslation"},
+    splitBook:{enabled:false,target:"",name:"splitBook"},
+    pasteOnPage:{enabled:false,target:"",name:"pasteOnPage"},
+    textboxOnPage:{enabled:false,target:"",name:"textboxOnPage"},
+    imageboxOnPage:{enabled:false,target:"",name:"imageboxOnPage"},
+  }
   static imageConfigs = {}
+  static imageScale = {}
   // static defaultConfig = {showEditorWhenEditingNote:false}
   static init(mainPath){
     // this.config = this.getByDefault("MNToolbar_config",this.defaultConfig)
     try {
     this.mainPath = mainPath
-    /* 夏大鱼羊 - start */
-    referenceIds = this.getByDefault("MNToolbar_referenceIds",{})
-    // if (JSON.stringify(referenceIds) === '{}') {
-    //   MNUtil.showHUD("referenceIds 是空的！")
-    // } else {
-    //   MNUtil.showHUD(Object.keys(referenceIds).length)
-    // }
-    /* 夏大鱼羊 - end */
     this.dynamic = this.getByDefault("MNToolbar_dynamic",false)
     this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})
     this.windowState = this.getByDefault("MNToolbar_windowState",this.defaultWindowState)
+    /**
+     * 夏大鱼羊 - begin
+     */
+    referenceIds = this.getByDefault("MNToolbar_referenceIds",{})
+    /**
+     * 夏大鱼羊 - end
+     */
     this.action = this.getByDefault("MNToolbar_action", this.getDefaultActionKeys())
     this.action = this.action.map(a=>{
       if (a === "excute") {
@@ -5358,18 +5537,35 @@ class toolbarConfig {
     } catch (error) {
       toolbarUtils.addErrorLog(error, "init")
     }
-    this.initImage()
     this.buttonImageFolder = MNUtil.dbFolder+"/buttonImage"
     NSFileManager.defaultManager().createDirectoryAtPathAttributes(this.buttonImageFolder, undefined)
+    // this.popupConfig = this.getByDefault("MNToolbar_popupConfig", this.defaultPopupReplaceConfig)
+    // this.popupConfig = this.defaultPopupReplaceConfig
+    this.popupConfig = this.getByDefault("MNToolbar_popupConfig", this.defaultPopupReplaceConfig)
+    this.initImage()
+  }
+  static getPopupConfig(key){
+    if (this.popupConfig[key] !== undefined) {
+      return this.popupConfig[key]
+    }else{
+      return this.defaultPopupReplaceConfig[key]
+    }
   }
   static initImage(){
     try {
     let keys = this.getDefaultActionKeys()
-    // MNUtil.copyJSON(keys)
+    this.imageScale = toolbarConfig.getByDefault("MNToolbar_imageScale",{})
+    // MNUtil.copyJSON(this.imageScale)
     // let images = keys.map(key=>this.mainPath+"/"+this.getAction(key).image+".png")
     // MNUtil.copyJSON(images)
     keys.forEach((key)=>{
-      this.imageConfigs[key] = MNUtil.getImage(this.mainPath+"/"+this.getAction(key).image+".png")
+      let tem = this.imageScale[key]
+      if (tem && MNUtil.isfileExists(this.buttonImageFolder+"/"+tem.path)) {
+        let scale = tem.scale ?? 2
+        this.imageConfigs[key] = MNUtil.getImage(this.buttonImageFolder+"/"+tem.path,scale)
+      }else{
+        this.imageConfigs[key] = MNUtil.getImage(this.mainPath+"/"+this.getAction(key).image+".png")
+      }
     })
     // MNUtil.copyJSON(this.imageConfigs)
       } catch (error) {
@@ -5384,35 +5580,48 @@ class toolbarConfig {
   // }
   static setImageByURL(action,url,refresh = false,scale = 3) {
     let md5 = MNUtil.MD5(url)
-    let localPath = this.buttonImageFolder+md5+".png"
+    // let imagePath = this.mainPath+"/"+this.getAction(action).image+".png"
+    // MNUtil.getImage(this.mainPath+"/"+this.getAction(key).image+".png",scale)
+    let localPath = this.buttonImageFolder+"/"+md5+".png"
+    this.imageScale[action] = {path:md5+".png",scale:scale}
+    this.save("MNToolbar_imageScale")
+    let image = undefined
+    let imageData = undefined
     if (MNUtil.isfileExists(localPath)) {
-      this.imageConfigs[action] = MNUtil.getImage(localPath,scale)
-    }else{
-      let image
-      let imageData
-      if (/^marginnote\dapp:\/\/note\//.test(url)) {
-        let note = MNNote.new(url)
-        imageData = MNNote.getImageFromNote(note)
-        if (imageData) {
-          image = UIImage.imageWithDataScale(imageData, scale)
-          imageData.writeToFileAtomically(localPath, false)
-          this.imageConfigs[action] = image
-          if (refresh) {
-            MNUtil.postNotification("refreshToolbarButton", {})
-          }
-        }
-        return
+      image = MNUtil.getImage(localPath,scale)
+      // image.pngData().writeToFileAtomically(imagePath, false)
+      this.imageConfigs[action] = image
+      if (refresh) {
+        MNUtil.postNotification("refreshToolbarButton", {})
       }
-      if (/^https?:\/\//.test(url)) {
-        image = toolbarUtils.getOnlineImage(url,scale)
+      return
+    }
+    if (/^marginnote\dapp:\/\/note\//.test(url)) {
+      let note = MNNote.new(url)
+      imageData = MNNote.getImageFromNote(note)
+      if (imageData) {
+        image = UIImage.imageWithDataScale(imageData, scale)
+        // imageData.writeToFileAtomically(imagePath, false)
+        imageData.writeToFileAtomically(localPath, false)
         this.imageConfigs[action] = image
-        image.pngData().writeToFileAtomically(localPath, false)
         if (refresh) {
           MNUtil.postNotification("refreshToolbarButton", {})
         }
-        return
       }
+      return
     }
+    if (/^https?:\/\//.test(url)) {
+      image = toolbarUtils.getOnlineImage(url,scale)
+      this.imageConfigs[action] = image
+      imageData = image.pngData()
+      // imageData.writeToFileAtomically(imagePath, false)
+      imageData.writeToFileAtomically(localPath, false)
+      if (refresh) {
+        MNUtil.postNotification("refreshToolbarButton", {})
+      }
+      return
+    }
+    // }
     if (refresh) {
       MNUtil.postNotification("refreshToolbarButton", {})
     }
@@ -6249,6 +6458,9 @@ static save(key,value = undefined) {
   }else{
     // showHUD(key)
     switch (key) {
+      case "MNToolbar_referenceIds":
+        // this.referenceIds = referenceIds
+        NSUserDefaults.standardUserDefaults().setObjectForKey(referenceIds,key)
       case "MNToolbar_windowState":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.windowState,key)
         break;
@@ -6267,9 +6479,11 @@ static save(key,value = undefined) {
       case "MNToolbar_buttonConfig":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.buttonConfig,key)
         break;
-      case "MNToolbar_referenceIds":
-        // this.referenceIds = referenceIds
-        NSUserDefaults.standardUserDefaults().setObjectForKey(referenceIds,key)
+      case "MNToolbar_popupConfig":
+        NSUserDefaults.standardUserDefaults().setObjectForKey(this.popupConfig,key)
+        break;
+      case "MNToolbar_imageScale":
+        NSUserDefaults.standardUserDefaults().setObjectForKey(this.imageScale,key)
         break;
       default:
         toolbarUtils.showHUD("Not supported")
