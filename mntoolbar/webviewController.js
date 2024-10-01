@@ -15,7 +15,7 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
     self.maxButtonNumber = 20
-    self.buttonNumber = 19
+    self.buttonNumber = 22
       // MNUtil.copy("refreshHeight: "+self.buttonNumber)
     if (self.dynamicWindow) {
       // self.maxButtonNumber = 9
@@ -1176,6 +1176,18 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
     let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
+      case "pasteAsChildNotesByIdArrFromClipboard":
+        MNUtil.undoGrouping(()=>{
+          try {
+            // 先把 MNUtils.clipboardText 转成数组
+            let idsArr = MNUtil.clipboardText.split(",")
+            // 再把数组中的 ID 对应的卡片作为选中卡片的子卡片
+            focusNote.pasteChildNotesByIdArr(idsArr)
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
       case "convertNoteToNonexcerptVersion":
         MNUtil.showHUD("卡片转化为非摘录版本")
         try {
@@ -2018,198 +2030,233 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
       //     }
       //   )
       //   break;
-    /**
-     * 进度标记
-     */
-    case "toBeProgressNote":
-      MNUtil.undoGrouping(()=>{
-        try {
-          focusNote.toBeProgressNote()
-        } catch (error) {
-          MNUtil.showHUD(error);
+      /**
+       * MN 原生的一些功能
+       */
+      case "MNFocusNote": // 焦点
+        MNUtil.excuteCommand("FocusNote")
+        break;
+      case "MNEditDeleteNote": // 删除卡片
+        let confirm = await MNUtil.confirm("删除卡片", "确定要删除这张卡片吗？")
+        if (confirm) {
+          MNUtil.excuteCommand("EditDeleteNote")
         }
-      })
-    /**
-     * 卡片独立出来
-     */
-    case "toBeIndependent":
-      MNUtil.undoGrouping(()=>{
-        try {
-          focusNotes.forEach(focusNote=>{
-            focusNote.toBeIndependent()
-          })
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-      })
-      break;
-    /**
-      * 移动卡片到「输入」区
-      */
-    case "moveToInput":
-      MNUtil.undoGrouping(()=>{
-        try {
-          focusNotes.forEach(focusNote=>{
-            focusNote.moveToInput()
-          })
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-      })
-      break;
-    /**
-     * 移动卡片到「内化」区
-     */
-    case "moveToInternalize":
-      MNUtil.undoGrouping(()=>{
-        try {
-          focusNotes.forEach(focusNote=>{
-            focusNote.moveToInternalize()
-          })
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-      })
-      break;
-    /**
-     * 移动卡片到「待归类」区
-     */
-    case "moveToBeClassified":
-      MNUtil.undoGrouping(()=>{
-        try {
-          if (MNUtil.currentNotebookId == "A07420C1-661A-4C7D-BA06-C7035C18DA74") {
-            UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
-              "移动到「待归类」区",
-              "请选择科目",
-              0,
-              "取消",
-              [
-                "数学基础",
-                "泛函分析",
-                "实分析",
-                "复分析",
-                "数学分析",
-                "高等代数"
-              ],
-              (alert, buttonIndex) => {
-                let targetNoteId
-                switch (buttonIndex) {
-                  case 1: // 数学基础
-                    targetNoteId = "EF75F2C8-2655-4BAD-92E1-C9C11D1A37C3"
-                    break;
-                  case 2: // 泛函分析
-                    targetNoteId = "23E0024A-F2C9-4E45-9F64-86DD30C0D497"
-                    break;
-                  case 3: // 实分析
-                    targetNoteId = "97672F06-1C40-475D-8F44-16759CCADA8C"
-                    break;
-                  case 4: // 复分析
-                    targetNoteId = "16920F8B-700E-4BA6-A7EE-F887F28A502B"
-                    break;
-                  case 5: // 数学分析
-                    targetNoteId = "9AAE346D-D7ED-472E-9D30-A7E1DE843F83"
-                    break;
-                  case 6: // 高等代数
-                    targetNoteId = "B9B3FB57-AAC0-4282-9BFE-3EF008EA2085"
-                    break;
-                }
-                MNUtil.undoGrouping(()=>{
-                  focusNotes.forEach(focusNote=>{
-                    focusNote.moveToBeClassified(targetNoteId)
-                  })
-                })
-              }
-            )
-          } else {
-            focusNotes.forEach(focusNote=>{
-              focusNote.moveToBeClassified()
-            })
-          }
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-      })
-      break;
-    /**
-     * 通过弹窗选择，移动最后三个评论到指定位置
-     */
-    case "moveLastThreeCommentByPopupTo":
-      MNUtil.undoGrouping(()=>{
-        try {
-          let newContentsIndexArr = [
-            focusNote.comments.length-3,
-            focusNote.comments.length-2,
-            focusNote.comments.length-1
-          ]
-          focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「最后3️⃣条」评论到", "")
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-      })
-      break;
-    /**
-     * 通过弹窗选择，移动最后两个评论到指定位置
-     */
-    case "moveLastTwoCommentByPopupTo":
-      MNUtil.undoGrouping(()=>{
-        try {
-          let newContentsIndexArr = [
-            focusNote.comments.length-2,
-            focusNote.comments.length-1
-          ]
-          focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「最后2️⃣条」评论到", "")
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-      })
-      break;
-    /**
-     * 通过弹窗选择，移动最后一个评论到指定位置
-     */
-    case "moveLastOneCommentByPopupTo":
-      MNUtil.undoGrouping(()=>{
-        try {
-          let newContentsIndexArr = [
-            focusNote.comments.length-1
-          ]
-          focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「最后1️⃣条」评论到", "")
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-      })
-      break;
-    /**
-     * 自动识别新内容，并通过弹窗选择，移动到指定位置
-     */
-    case "moveNewContentsByPopupTo":
-      MNUtil.undoGrouping(()=>{
-        try {
-          let newContentsIndexArr = focusNote.getNewContentIndexArr()
-          focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「新增」评论到", "")
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-      })
-      break;
-        
-      case "AddToReview":
-        MNUtil.excuteCommand("AddToReview")
         break;
       /**
-       * 将剪切板中的 ID Arr 对应的卡片剪切过来作为选中卡片的子卡片
+       * 移动摘录
        */
-      case "pasteAsChildNotesByIdArrFromClipboard":
+      case "moveToExcerptPartTop":
         MNUtil.undoGrouping(()=>{
           try {
-            // 先把 MNUtils.clipboardText 转成数组
-            let idsArr = MNUtil.clipboardText.split(",")
-            // 再把数组中的 ID 对应的卡片作为选中卡片的子卡片
-            focusNote.pasteChildNotesByIdArr(idsArr)
+            let newContentsIndexArr = focusNote.getNewContentIndexArr()
+            focusNote.moveCommentsByIndexArrTo(newContentsIndexArr, "excerpt", false)
           } catch (error) {
             MNUtil.showHUD(error);
           }
         })
         break;
+      case "moveToExcerptPartBottom":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let newContentsIndexArr = focusNote.getNewContentIndexArr()
+            focusNote.moveCommentsByIndexArrTo(newContentsIndexArr, "excerpt")
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      /**
+       * 进度标记
+       */
+      case "toBeProgressNote":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNote.toBeProgressNote()
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+      /**
+       * 卡片独立出来
+       */
+      case "toBeIndependent":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              focusNote.toBeIndependent()
+            })
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      /**
+        * 移动卡片到「输入」区
+        */
+      case "moveToInput":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              focusNote.moveToInput()
+            })
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      /**
+       * 移动卡片到「内化」区
+       */
+      case "moveToInternalize":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNotes.forEach(focusNote=>{
+              focusNote.moveToInternalize()
+            })
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      /**
+       * 移动卡片到「待归类」区
+       */
+      case "moveToBeClassified":
+        MNUtil.undoGrouping(()=>{
+          try {
+            if (MNUtil.currentNotebookId == "A07420C1-661A-4C7D-BA06-C7035C18DA74") {
+              UIAlertView.showWithTitleMessageStyleCancelButtonTitleOtherButtonTitlesTapBlock(
+                "移动到「待归类」区",
+                "请选择科目",
+                0,
+                "取消",
+                [
+                  "数学基础",
+                  "泛函分析",
+                  "实分析",
+                  "复分析",
+                  "数学分析",
+                  "高等代数"
+                ],
+                (alert, buttonIndex) => {
+                  let targetNoteId
+                  switch (buttonIndex) {
+                    case 1: // 数学基础
+                      targetNoteId = "EF75F2C8-2655-4BAD-92E1-C9C11D1A37C3"
+                      break;
+                    case 2: // 泛函分析
+                      targetNoteId = "23E0024A-F2C9-4E45-9F64-86DD30C0D497"
+                      break;
+                    case 3: // 实分析
+                      targetNoteId = "97672F06-1C40-475D-8F44-16759CCADA8C"
+                      break;
+                    case 4: // 复分析
+                      targetNoteId = "16920F8B-700E-4BA6-A7EE-F887F28A502B"
+                      break;
+                    case 5: // 数学分析
+                      targetNoteId = "9AAE346D-D7ED-472E-9D30-A7E1DE843F83"
+                      break;
+                    case 6: // 高等代数
+                      targetNoteId = "B9B3FB57-AAC0-4282-9BFE-3EF008EA2085"
+                      break;
+                  }
+                  MNUtil.undoGrouping(()=>{
+                    focusNotes.forEach(focusNote=>{
+                      focusNote.moveToBeClassified(targetNoteId)
+                    })
+                  })
+                }
+              )
+            } else {
+              focusNotes.forEach(focusNote=>{
+                focusNote.moveToBeClassified()
+              })
+            }
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      /**
+       * 通过弹窗选择，移动最后三个评论到指定位置
+       */
+      case "moveLastThreeCommentByPopupTo":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let newContentsIndexArr = [
+              focusNote.comments.length-3,
+              focusNote.comments.length-2,
+              focusNote.comments.length-1
+            ]
+            focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「最后3️⃣条」评论到", "")
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      /**
+       * 通过弹窗选择，移动最后两个评论到指定位置
+       */
+      case "moveLastTwoCommentByPopupTo":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let newContentsIndexArr = [
+              focusNote.comments.length-2,
+              focusNote.comments.length-1
+            ]
+            focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「最后2️⃣条」评论到", "")
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      /**
+       * 通过弹窗选择，移动最后一个评论到指定位置
+       */
+      case "moveLastOneCommentByPopupTo":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let newContentsIndexArr = [
+              focusNote.comments.length-1
+            ]
+            focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「最后1️⃣条」评论到", "")
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      /**
+       * 自动识别新内容，并通过弹窗选择，移动到指定位置
+       */
+      case "moveNewContentsByPopupTo":
+        MNUtil.undoGrouping(()=>{
+          try {
+            let newContentsIndexArr = focusNote.getNewContentIndexArr()
+            focusNote.moveCommentsByIndexArrAndButtonTo(newContentsIndexArr, "移动「新增」评论到", "")
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+          
+        case "AddToReview":
+          MNUtil.excuteCommand("AddToReview")
+          break;
+        /**
+         * 将剪切板中的 ID Arr 对应的卡片剪切过来作为选中卡片的子卡片
+         */
+        case "pasteAsChildNotesByIdArrFromClipboard":
+          MNUtil.undoGrouping(()=>{
+            try {
+              // 先把 MNUtils.clipboardText 转成数组
+              let idsArr = MNUtil.clipboardText.split(",")
+              // 再把数组中的 ID 对应的卡片作为选中卡片的子卡片
+              focusNote.pasteChildNotesByIdArr(idsArr)
+            } catch (error) {
+              MNUtil.showHUD(error);
+            }
+          })
+          break;
       /**
        * 复制批量选中的卡片的 ID 到剪贴板
        */

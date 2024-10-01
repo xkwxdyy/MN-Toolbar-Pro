@@ -6408,6 +6408,35 @@ static template(action) {
         },
       ]
       break;
+    case "menu_excerpt":
+      config.action = "menu"
+      config.menuItems = [
+        {
+          "action": "moveToExcerptPartBottom",
+          "menuTitle": "⇨ 摘录区「⬇️ bottom」",
+        },
+        {
+          "action": "moveToExcerptPartTop",
+          "menuTitle": "⇨ 摘录区「🔝 top」",
+        }
+      ]
+      break;
+    /**
+     * 把 MN 原生的一些功能整合，以把原本菜单用于替换自己的功能
+     */
+    case "menu_MN":
+      config.action = "menu"
+      config.menuItems = [
+        {
+          "action": "MNEditDeleteNote",
+          "menuTitle": "删除卡片",
+        },
+        {
+          "action": "MNFocusNote",
+          "menuTitle": "焦点",
+        },
+      ]
+      break;
     default:
       break;
   }
@@ -6441,6 +6470,9 @@ static getActions() {
     "bigbang":{name:"Bigbang",image:"bigbang",description:"Bigbang"},
     "chatglm":{name:"ChatAI",image:"ai",description:"ChatAI"},
     // "setting":{name:"Setting",image:"setting",description:"Setting"}
+    "custom12":{name:"工作流",image:"workflow_white",description: this.template("menu_workflow")},
+    "custom13":{name:"摘录",image:"excerpt_white",description: this.template("menu_excerpt")},
+    "custom14":{name:"MN",image:"MN_white",description: this.template("menu_MN")},
   }
 }
 
