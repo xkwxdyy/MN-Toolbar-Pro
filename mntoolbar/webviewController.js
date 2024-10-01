@@ -354,7 +354,8 @@ try {
     }else{
       self.checkPopoverController()
     }
-    MNUtil.copyJSON(des)
+    // 要去掉，否则会占领剪切板！
+    // MNUtil.copyJSON(des)
     self.commandTables = []
     self.customActionByDes(des)
   },
