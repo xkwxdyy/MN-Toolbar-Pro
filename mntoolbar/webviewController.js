@@ -2108,6 +2108,18 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
       //   )
       //   break;
       /**
+       * 把证明的内容移到最下方
+       */
+      case "moveProofDown":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNote.moveProofDown()
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+        break;
+      /**
        * MN 原生的一些功能
        */
       case "MNFocusNote": // 焦点
