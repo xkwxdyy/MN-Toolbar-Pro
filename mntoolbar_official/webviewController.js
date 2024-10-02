@@ -126,7 +126,7 @@ viewWillLayoutSubviews: function() {
   },
   changeOpacity: function(sender) {
     self.checkPopoverController()
-    // if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
+    // if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
     var menuController = MenuController.new();
     menuController.commandTable = [
       {title:'100%',object:self,selector:'changeOpacityTo:',param:1.0},
@@ -142,9 +142,9 @@ viewWillLayoutSubviews: function() {
       height: menuController.rowHeight * menuController.commandTable.length
     };
     var studyView = MNUtil.studyView
-    self.view.popoverController = new UIPopoverController(menuController);
+    self.popoverController = new UIPopoverController(menuController);
     var r = sender.convertRectToView(sender.bounds,studyView);
-    self.view.popoverController.presentPopoverFromRect(r, studyView, 1 << 1, true);
+    self.popoverController.presentPopoverFromRect(r, studyView, 1 << 1, true);
   },
   changeOpacityTo:function (opacity) {
     self.view.layer.opacity = opacity
@@ -156,12 +156,12 @@ viewWillLayoutSubviews: function() {
     //   return
     // }
     self.checkPopoverController()
-    // if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
+    // if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
     var commandTable = [
       {title:'🌟 Dynamic',object:self,selector:'toggleDynamic:',param:1.0,checked:toolbarConfig.dynamic},
       {title:'⚙️ Setting',object:self,selector:'setting:',param:1.0}
     ];
-    self.view.popoverController = MNUtil.getPopoverAndPresent(sender, commandTable,200)
+    self.popoverController = MNUtil.getPopoverAndPresent(sender, commandTable,200)
   },
   toggleDynamic: function () {
 try {
@@ -170,7 +170,7 @@ try {
     // MNUtil.showHUD("message")
     self.onClick = true
     self.checkPopoverController()
-    // if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
+    // if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
     // MNUtil.postNotification('toggleDynamic', {test:123})
     if (typeof MNUtil === 'undefined') return
     toolbarConfig.dynamic = !toolbarConfig.dynamic
@@ -231,96 +231,110 @@ try {
     // return
     let actionName = button.target ?? toolbarConfig.action[button.index]//这个是key
     let des = toolbarConfig.getDescriptionByName(actionName)
-    // MNUtil.copyJSON(des)
-    if (des.action === "chatAI" && des.target) {
-      if (des.target === "openFloat") {
-        MNUtil.postNotification("chatAIOpenFloat", {beginFrame:button.convertRectToView(button.bounds,MNUtil.studyView)})
-        return
+    if ("doubleClick" in des) {
+      button.delay = true //让菜单延迟关闭,保证双击可以被执行
+      if (button.menu) {
+        button.menu.stopHide = true
       }
-      if (des.target === "menu") {
-        self.onClick = true
-        let promptKeys = chatAIConfig.getConfig("promptNames")
-        let prompts = chatAIConfig.prompts
-        var commandTable = promptKeys.map(promptKey=>{
-          let title = prompts[promptKey].title.trim()
-          return {title:"🚀   "+title,object:self,selector:'customActionByMenu:',param:{des:{action:"chatAI",prompt:title},button:button}}
-        })
-        let width = 250
-        if (MNUtil.studyView.bounds.width - self.view.frame.x < (width+40)) {
-          self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
-        }else{
-          self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+      if (button.doubleClick) {
+        button.doubleClick = false
+        let doubleClick = des.doubleClick
+        if (!("action" in doubleClick)) {
+          doubleClick.action = des.action
         }
+        self.customActionByDes(button, doubleClick)
         return
       }
     }
-    if (des.action === "menu") {
-      self.onClick = true
-      if ("autoClose" in des) {
-        self.onClick = !des.autoClose
-      }
-      let menuItems = des.menuItems
-      let width = des.menuWidth??200
-      if (menuItems.length) {
-        var commandTable = menuItems.map(item=>{
-          let title = (typeof item === "string")?item:(item.menuTitle ?? item.action)
-          return {title:title,object:self,selector:'customActionByMenu:',param:{des:item,button:button}}
-        })
-        self.commandTables = [commandTable]
-        if (MNUtil.studyView.bounds.width - self.view.frame.x < (width+40)) {
-          self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
-        }else{
-          self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
-        }
-      }
-      return
-    }
-    if (des.action === "copy" && toolbarUtils.shouldShowMenu(des)) {
-      self.onClick = true
-      var commandTable = [
-        {title:"selectionText",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"selectionText"},button:button}},
-        {title:"selectionImage",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"selectionImage"},button:button}},
-        {title:"title",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"title"},button:button}},
-        {title:"excerpt",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"excerpt"},button:button}},
-        {title:"excerpt (OCR)",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"excerptOCR"},button:button}},
-        {title:"notesText",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"notesText"},button:button}},
-        {title:"comment",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"comment"},button:button}},
-        {title:"noteId",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteId"},button:button}},
-        {title:"noteURL",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteURL"},button:button}},
-        {title:"noteMarkdown",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteMarkdown"},button:button}},
-        {title:"noteMarkdown (OCR)",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteMarkdownOCR"},button:button}},
-        {title:"noteWithDecendentsMarkdown",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteWithDecendentsMarkdown"},button:button}},
-      ]
-      let width = 250
-      if (MNUtil.studyView.bounds.width - self.view.frame.x < (width+40)) {
-        self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
-      }else{
-        self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
-      }
-      return
-    }
-    if (des.action === "showInFloatWindow" && toolbarUtils.shouldShowMenu(des)) {
-      self.onClick = true
-      var commandTable = [
-        {title:"noteInClipboard",object:self,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"noteInClipboard"},button:button}},
-        {title:"currentNote",object:self,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"currentNote"},button:button}},
-        {title:"currentChildMap",object:self,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"currentChildMap"},button:button}},
-        {title:"parentNote",object:self,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"parentNote"},button:button}},
-        {title:"currentNoteInMindMap",object:self,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"currentNoteInMindMap"},button:button}}
-      ]
-      let width = 250
-      if (MNUtil.studyView.bounds.width - self.view.frame.x < (width+40)) {
-        self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
-      }else{
-        self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
-      }
-      return
-    }
-    self.customActionByDes(des)
-    if (button.menu) {
-      button.menu.dismissAnimated(true)
-      return
-    }
+    // if (des.action === "chatAI" && des.target) {
+    //   if (des.target === "openFloat") {
+    //     MNUtil.postNotification("chatAIOpenFloat", {beginFrame:button.convertRectToView(button.bounds,MNUtil.studyView)})
+    //     return
+    //   }
+    //   if (des.target === "menu") {
+    //     self.onClick = true
+    //     let promptKeys = chatAIConfig.getConfig("promptNames")
+    //     let prompts = chatAIConfig.prompts
+    //     var commandTable = promptKeys.map(promptKey=>{
+    //       let title = prompts[promptKey].title.trim()
+    //       return {title:"🚀   "+title,object:self,selector:'customActionByMenu:',param:{des:{action:"chatAI",prompt:title},button:button}}
+    //     })
+    //     let width = 250
+    //     if (MNUtil.studyView.bounds.width - self.view.frame.x < (width+40)) {
+    //       self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+    //     }else{
+    //       self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+    //     }
+    //     return
+    //   }
+    // }
+    // if (des.action === "menu") {
+    //   self.onClick = true
+    //   if ("autoClose" in des) {
+    //     self.onClick = !des.autoClose
+    //   }
+    //   let menuItems = des.menuItems
+    //   let width = des.menuWidth??200
+    //   if (menuItems.length) {
+    //     var commandTable = menuItems.map(item=>{
+    //       let title = (typeof item === "string")?item:(item.menuTitle ?? item.action)
+    //       return {title:title,object:self,selector:'customActionByMenu:',param:{des:item,button:button}}
+    //     })
+    //     self.commandTables = [commandTable]
+    //     if (MNUtil.studyView.bounds.width - self.view.frame.x < (width+40)) {
+    //       self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+    //     }else{
+    //       self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+    //     }
+    //   }
+    //   return
+    // }
+    // if (des.action === "copy" && toolbarUtils.shouldShowMenu(des)) {
+    //   self.onClick = true
+    //   var commandTable = [
+    //     {title:"selectionText",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"selectionText"},button:button}},
+    //     {title:"selectionImage",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"selectionImage"},button:button}},
+    //     {title:"title",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"title"},button:button}},
+    //     {title:"excerpt",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"excerpt"},button:button}},
+    //     {title:"excerpt (OCR)",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"excerptOCR"},button:button}},
+    //     {title:"notesText",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"notesText"},button:button}},
+    //     {title:"comment",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"comment"},button:button}},
+    //     {title:"noteId",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteId"},button:button}},
+    //     {title:"noteURL",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteURL"},button:button}},
+    //     {title:"noteMarkdown",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteMarkdown"},button:button}},
+    //     {title:"noteMarkdown (OCR)",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteMarkdownOCR"},button:button}},
+    //     {title:"noteWithDecendentsMarkdown",object:self,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteWithDecendentsMarkdown"},button:button}},
+    //   ]
+    //   let width = 250
+    //   if (MNUtil.studyView.bounds.width - self.view.frame.x < (width+40)) {
+    //     self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+    //   }else{
+    //     self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+    //   }
+    //   return
+    // }
+    // if (des.action === "showInFloatWindow" && toolbarUtils.shouldShowMenu(des)) {
+    //   self.onClick = true
+    //   var commandTable = [
+    //     {title:"noteInClipboard",object:self,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"noteInClipboard"},button:button}},
+    //     {title:"currentNote",object:self,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"currentNote"},button:button}},
+    //     {title:"currentChildMap",object:self,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"currentChildMap"},button:button}},
+    //     {title:"parentNote",object:self,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"parentNote"},button:button}},
+    //     {title:"currentNoteInMindMap",object:self,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"currentNoteInMindMap"},button:button}}
+    //   ]
+    //   let width = 250
+    //   if (MNUtil.studyView.bounds.width - self.view.frame.x < (width+40)) {
+    //     self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+    //   }else{
+    //     self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+    //   }
+    //   return
+    // }
+    self.customActionByDes(button,des)
+    // if (button.menu) {
+    //   button.menu.dismissAnimated(true)
+    //   return
+    // }
     // self.customAction(actionName)
   },
   customActionByMenu: async function (param) {
@@ -344,7 +358,7 @@ try {
         })
         commandTable.unshift({title:toolbarUtils.emojiNumber(self.commandTables.length)+" 🔙",object:self,selector:'lastPopover:',param:button})
         self.commandTables.push(commandTable)
-        self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+        self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
       }
       return
     }
@@ -354,15 +368,16 @@ try {
     }else{
       self.checkPopoverController()
     }
-    MNUtil.copyJSON(des)
+    // MNUtil.copyJSON(des)
+    // return
     self.commandTables = []
-    self.customActionByDes(des)
+    self.customActionByDes(button,des)
   },
 lastPopover: function (button) {
       self.checkPopoverController()
       self.commandTables.pop()
       let commandTable = self.commandTables.at(-1)
-      self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,4)
+      self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,4)
 },
   imagePickerControllerDidFinishPickingMediaWithInfo:async function (UIImagePickerController,info) {
     try {
@@ -390,27 +405,81 @@ lastPopover: function (button) {
   },
   copy:function (button) {
     let self = getToolbarController()
+    let des = toolbarConfig.getDescriptionByName("copy")
+    if (button.doubleClick) {
+      button.doubleClick = false
+      if (button.menu) {
+        button.menu.stopHide = true
+      }
+      if ("doubleClick" in des) {
+        let doubleClick = des.doubleClick
+        doubleClick.action = "copy"
+        self.customActionByDes(button, doubleClick, false)
+        return
+      }
+        let focusNote = MNNote.getFocusNote()
+        if (focusNote) {
+          let text = focusNote.noteTitle
+          if (text) {
+            MNUtil.copy(text)
+            MNUtil.showHUD('标题已复制')
+          }else{
+            MNUtil.showHUD('无标题')
+          }
+          button.doubleClick = false
+        }else{
+          MNUtil.showHUD('无选中卡片')
+        }
+        self.onClick = false
+        if (button.menu) {
+          button.menu.dismissAnimated(true)
+        }
+        if (self.dynamicWindow) {
+          self.hideAfterDelay()
+        }
+      return
+    }
+    if (des && Object.keys(des).length) {
+      des.action = "copy"
+      button.delay = true
+      self.customActionByDes(button, des, false)
+      return
+    }
     self.onClick = true
     if (button.doubleClick) {
+      if ("doubleClick" in des) {
+        let des = des.doubleClick
+        des.action = "copy"
+        self.customActionByDes(button, des,false)
+        return
+      }
         let focusNote = MNNote.getFocusNote()
-        let text = focusNote.noteTitle
-        if (text) {
-          MNUtil.copy(text)
-          MNUtil.showHUD('标题已复制')
+        if (focusNote) {
+          let text = focusNote.noteTitle
+          if (text) {
+            MNUtil.copy(text)
+            MNUtil.showHUD('标题已复制')
+          }else{
+            MNUtil.showHUD('无标题')
+          }
+          button.doubleClick = false
         }else{
-          MNUtil.showHUD('无标题')
+          MNUtil.showHUD('无选中卡片')
         }
-        button.doubleClick = false
+        self.onClick = false
+        if (button.menu) {
+          button.menu.dismissAnimated(true)
+        }
+        if (self.dynamicWindow) {
+          self.hideAfterDelay()
+        }
       return
     }
     toolbarUtils.smartCopy()
-    if (button.menu) {
-      button.menu.dismissAnimated(true)
-      return
-    }
     if (self.dynamicWindow) {
       self.hideAfterDelay()
     }
+    toolbarUtils.dismissPopupMenu(button.menu,self.onClick)
 
   },
   copyAsMarkdownLink(button) {
@@ -571,33 +640,13 @@ try {
   chatglm: function (button) {
     let des = toolbarConfig.getDescriptionByName("chatglm")
     if (des) {
-      if (des.target === "openFloat") {
-        MNUtil.postNotification("chatAIOpenFloat", {beginFrame:button.convertRectToView(button.bounds,MNUtil.studyView)})
-        return
-      }
-      if (des.target === "menu") {
-        self.onClick = true
-        let promptKeys = chatAIConfig.getConfig("promptNames")
-        let prompts = chatAIConfig.prompts
-        var commandTable = promptKeys.map(promptKey=>{
-          let title = prompts[promptKey].title.trim()
-          return {title:"🚀   "+title,object:self,selector:'customActionByMenu:',param:{des:{action:"chatAI",prompt:title},button:button}}
-        })
-        let width = 250
-        if (MNUtil.studyView.bounds.width - button.frame.x < (width+40)) {
-          self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
-        }else{
-          self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
-        }
-        return
-      }
+      des.action = "chatAI"
+      self.customActionByDes(button, des,false)
+    }else{
+      MNUtil.postNotification("customChat",{})
     }
-    // MNUtil.copyJSON(des)
-    toolbarUtils.chatAI(des)
-    // self.onClick = true
-    // // let focusNote = MNNote.getFocusNote()
-    // MNUtil.postNotification("customChat",{})
-    if (button.menu) {
+    // toolbarUtils.chatAI(des)
+    if (button.menu && !self.onClick) {
       button.menu.dismissAnimated(true)
       return
     }
@@ -606,6 +655,15 @@ try {
     }
   },
   search: function (button) {
+    let self = getToolbarController()
+    let des = toolbarConfig.getDescriptionByName("search")
+    if (des) {
+      des.action = "search"
+      self.customActionByDes(button, des,false)
+      return
+    }else{
+      // MNUtil.postNotification("customChat",{})
+    }
     self.onClick = true
     let selectionText = MNUtil.selectionText
     let noteId = undefined
@@ -615,6 +673,9 @@ try {
     }
     let studyFrame = MNUtil.studyView.bounds
     let beginFrame = self.view.frame
+    if (button.menu) {
+      beginFrame = button.convertRectToView(button.bounds,MNUtil.studyView)
+    }
     let endFrame
     beginFrame.y = beginFrame.y-10
     if (beginFrame.x+490 > studyFrame.width) {
@@ -629,8 +690,10 @@ try {
       }
     }
     if (selectionText) {
+      // MNUtil.showHUD("Text:"+selectionText)
       MNUtil.postNotification("searchInBrowser",{text:selectionText,beginFrame:beginFrame,endFrame:endFrame})
     }else{
+      // MNUtil.showHUD("NoteId:"+noteId)
       MNUtil.postNotification("searchInBrowser",{noteid:noteId,beginFrame:beginFrame,endFrame:endFrame})
     }
     if (button.menu) {
@@ -699,7 +762,7 @@ try {
     MNUtil.postNotification("openToolbarSetting", {})
     // let self = getToolbarController()
     // self.checkPopoverController()
-    // // if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
+    // // if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
     // try {
     // if (!self.settingController) {
     //   self.settingController = settingController.new();
@@ -1035,6 +1098,9 @@ toolbarController.prototype.hide = function (frame) {
  * @this {toolbarController}
  */
 toolbarController.prototype.hideAfterDelay = function (delay = 2) {
+  if (this.view.hidden) {
+    return
+  }
   let dynamicController = this
     if (dynamicController.notifyTimer) {
       dynamicController.notifyTimer.invalidate()
@@ -1161,7 +1227,7 @@ toolbarController.prototype.setToolbarLayout = function () {
 
 }
 toolbarController.prototype.checkPopoverController = function () {
-  if (this.view.popoverController) {this.view.popoverController.dismissPopoverAnimated(true);}
+  if (this.popoverController) {this.popoverController.dismissPopoverAnimated(true);}
 }
 toolbarController.prototype.customAction = async function (actionName) {//这里actionName指的是key
   try {
@@ -1648,16 +1714,27 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
     // MNUtil.showHUD(error)
   }
 }
-toolbarController.prototype.customActionByDes = async function (des) {//这里actionName指的是key
+/**
+ * @this {toolbarController}
+ * @param {UIButton} button 
+ * @param {object} des 
+ * @returns 
+ */
+toolbarController.prototype.customActionByDes = async function (button,des,checkSubscribe = true) {//这里actionName指的是key
   try {
-    if (!toolbarUtils.checkSubscribe(true)) {
+    if (checkSubscribe && !toolbarUtils.checkSubscribe(true)) {
       return
     }
+    if (this.customActionMenu(button,des)) {
+      // MNUtil.showHUD("reject")
+      //如果返回true则表示菜单弹出已执行，则不再执行下面的代码
+      return
+    }
+    // MNUtil.showHUD("customActionByDes")
     let focusNote = undefined
     try {
       focusNote = MNNote.getFocusNote()
     } catch (error) {
-      
     }
     // MNUtil.showHUD("message"+(focusNote instanceof MNNote))
     let notebookid = focusNote ? focusNote.notebookId : undefined
@@ -1814,52 +1891,6 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         break;
       case "showInFloatWindow":
         toolbarUtils.showInFloatWindow(des)
-        // let targetNoteid
-        // switch (des.target) {
-        //   case "{{noteInClipboard}}":
-        //   case "noteInClipboard":
-        //     targetNoteid = MNNote.new(MNUtil.clipboardText).noteId
-        //     break;
-        //   case "{{currentNote}}":
-        //   case "currentNote":
-        //     targetNoteid = MNNote.getFocusNote().noteId
-        //     break;
-        //   case "{{currentChildMap}}":
-        //   case "currentChildMap":
-        //     if (MNUtil.mindmapView ) {
-        //       targetNoteid = MNUtil.mindmapView.mindmapNodes[0].note.childMindMap.noteId
-        //     }else{
-        //       targetNoteid = undefined
-        //     }
-        //     break;
-        //   case "{{parentNote}}":
-        //   case "parentNote":
-        //     targetNoteid = MNNote.getFocusNote().parentNote.noteId
-        //     break;
-        //   case "{{currentNoteInMindMap}}":
-        //   case "currentNoteInMindMap":
-        //     let notebookController = MNUtil.notebookController
-        //     let currentNotebookId = notebookController.notebookId
-            
-        //     if (!notebookController.view.hidden && notebookController.mindmapView && notebookController.focusNote) {
-        //       targetNoteid = notebookController.focusNote.noteId
-        //     }else{
-        //       let testNote = MNUtil.currentDocController.focusNote
-        //       targetNoteid = testNote.realGroupNoteIdForTopicId(currentNotebookId)
-        //     }
-        //     break;
-        //   case "menu":
-            
-        //   default:
-        //     targetNoteid= MNUtil.getNoteIdByURL(des.target)
-        //     break;
-        // }
-        // if (targetNoteid) {
-        //   MNNote.focusInFloatMindMap(targetNoteid)
-        // }else{
-        //   MNUtil.showHUD("No Note found!")
-        // }
-        // toolbarUtils.studyController().focusNoteInFloatMindMapById(targetNoteid)
         break;
       case "openURL":
         if (des.url) {
@@ -1983,20 +2014,9 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         break;
       case "chatAI":
         toolbarUtils.chatAI(des)
-        // if (des.prompt) {
-        //   MNUtil.postNotification("customChat",{prompt:des.prompt})
-        //   break;
-        // }
-        // if(des.user){
-        //   let question = {user:des.user}
-        //   if (des.system) {
-        //     question.system = des.system
-        //   }
-        //   MNUtil.postNotification("customChat",question)
-        //   // MNUtil.showHUD("Not supported yet...")
-        //   break;
-        // }
-        // MNUtil.showHUD("No valid argument!")
+        break
+      case "search":
+        toolbarUtils.search(des,button)
         break
       case "addImageComment":
         let source = des.source ?? "photo"
@@ -2073,12 +2093,17 @@ toolbarController.prototype.customActionByDes = async function (des) {//这里ac
         MNUtil.showHUD("Not supported yet...")
         break;
     }
+    if (button.delay) {
+      toolbarUtils.dismissPopupMenu(button.menu,true)
+    }else{
+      toolbarUtils.dismissPopupMenu(button.menu)
+    }
     // if (this.dynamicWindow) {
     //   this.hideAfterDelay()
     // }
     // copyJSON(des)
   } catch (error) {
-    toolbarUtils.addErrorLog(error, "customAction")
+    toolbarUtils.addErrorLog(error, "customActionByDes")
     // MNUtil.showHUD(error)
   }
 }
@@ -2092,6 +2117,8 @@ toolbarController.prototype.replaceButtonTo = async function (button,target) {
   button.setTitleForState("", 1)
   button.removeTargetActionForControlEvents(undefined, undefined, 1 << 6);
   button.addTargetActionForControlEvents(this, target, 1 << 6);
+  button.addTargetActionForControlEvents(this, "doubleClick:", 1 << 1);
+
 }
 /**
  * @this {toolbarController}
@@ -2152,5 +2179,150 @@ toolbarController.prototype.popupReplace = async function (button) {
   }
   } catch (error) {
     toolbarUtils.addErrorLog(error, "popupReplace")
+  }
+}
+/**
+ * 检测是否需要弹出菜单,如果需要弹出菜单则返回true,否则返回false
+ * @this {toolbarController}
+ * @param {UIButton} button 
+ * @param {object} des 
+ * @returns {boolean}
+ */
+toolbarController.prototype.customActionMenu =  function (button,des) {
+  try {
+    //先处理menu这个自定义动作
+    if (des.action === "menu") {
+      this.onClick = true
+      if ("autoClose" in des) {
+        this.onClick = !des.autoClose
+      }
+      let menuItems = des.menuItems
+      let width = des.menuWidth??200
+      if (menuItems.length) {
+        var commandTable = menuItems.map(item=>{
+          let title = (typeof item === "string")?item:(item.menuTitle ?? item.action)
+          return {title:title,object:this,selector:'customActionByMenu:',param:{des:item,button:button}}
+        })
+        this.commandTables = [commandTable]
+        if (MNUtil.studyView.bounds.width - this.view.frame.x < (width+40)) {
+          this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+        }else{
+          this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+        }
+      }
+      return true
+    }
+
+    if (des.action === "chatAI" && des.target) {
+      if (des.target === "openFloat") {
+        MNUtil.postNotification("chatAIOpenFloat", {beginFrame:button.convertRectToView(button.bounds,MNUtil.studyView)})
+        return true
+      }
+      // if (des.target === "openSetting") {
+      //   MNUtil.postNotification("chatAIOpenSetting", {endFrame:button.convertRectToView(button.bounds,MNUtil.studyView)})
+      //   return true
+      // }
+      if (des.target === "currentPrompt") {
+        MNUtil.postNotification("customChat",{})
+        return true
+      }
+      if (des.target === "menu") {
+        this.onClick = true
+        let promptKeys = chatAIConfig.getConfig("promptNames")
+        let prompts = chatAIConfig.prompts
+        var commandTable = promptKeys.map(promptKey=>{
+          let title = prompts[promptKey].title.trim()
+          return {title:"🚀   "+title,object:this,selector:'customActionByMenu:',param:{des:{action:"chatAI",prompt:title},button:button}}
+        })
+        let width = 250
+        if (MNUtil.studyView.bounds.width - this.view.frame.x < (width+40)) {
+          this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+        }else{
+          this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+        }
+        return true
+      }
+    }
+    if (des.action === "search" && des.target && des.target === "menu") {
+      this.onClick = true
+      let names = browserConfig.entrieNames
+      let entries = browserConfig.entries
+      var commandTable = names.map(name=>{
+        let title = entries[name].title
+        let engine = entries[name].engine
+        return {title:title,object:this,selector:'customActionByMenu:',param:{des:{action:"search",engine:engine},button:button}}
+      })
+      let width = 250
+      if (MNUtil.studyView.bounds.width - this.view.frame.x < (width+40)) {
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+      }else{
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+      }
+      return true
+    }
+    if (des.action === "copy" && toolbarUtils.shouldShowMenu(des)) {
+      this.onClick = true
+      var commandTable = [
+        {title:"selectionText",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"selectionText"},button:button}},
+        {title:"selectionImage",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"selectionImage"},button:button}},
+        {title:"title",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"title"},button:button}},
+        {title:"excerpt",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"excerpt"},button:button}},
+        {title:"excerpt (OCR)",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"excerptOCR"},button:button}},
+        {title:"notesText",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"notesText"},button:button}},
+        {title:"comment",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"comment"},button:button}},
+        {title:"noteId",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteId"},button:button}},
+        {title:"noteURL",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteURL"},button:button}},
+        {title:"noteMarkdown",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteMarkdown"},button:button}},
+        {title:"noteMarkdown (OCR)",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteMarkdownOCR"},button:button}},
+        {title:"noteWithDecendentsMarkdown",object:this,selector:'customActionByMenu:',param:{des:{action:"copy",target:"noteWithDecendentsMarkdown"},button:button}},
+      ]
+      let width = 250
+      if (MNUtil.studyView.bounds.width - button.frame.x < (width+40)) {
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+      }else{
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+      }
+      return true
+    }
+    if (des.action === "showInFloatWindow" && toolbarUtils.shouldShowMenu(des)) {
+      this.onClick = true
+      // MNUtil.showHUD("showInFloatWindow")
+      var commandTable = [
+        {title:"noteInClipboard",object:this,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"noteInClipboard"},button:button}},
+        {title:"currentNote",object:this,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"currentNote"},button:button}},
+        {title:"currentChildMap",object:this,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"currentChildMap"},button:button}},
+        {title:"parentNote",object:this,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"parentNote"},button:button}},
+        {title:"currentNoteInMindMap",object:this,selector:'customActionByMenu:',param:{des:{action:"showInFloatWindow",target:"currentNoteInMindMap"},button:button}}
+      ]
+      let width = 250
+      if (MNUtil.studyView.bounds.width - button.frame.x < (width+40)) {
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+      }else{
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+      }
+      return true
+    }
+    if (des.action === "addImageComment" && des.target === "menu") {
+      this.onClick = true
+      // MNUtil.copyJSON(des)
+      // MNUtil.showHUD("addImageComment")
+      var commandTable = [
+        {title:"photo",object:this,selector:'customActionByMenu:',param:{des:{action:"addImageComment",source:"photo"},button:button}},
+        {title:"camera",object:this,selector:'customActionByMenu:',param:{des:{action:"addImageComment",source:"camera"},button:button}},
+        {title:"file",object:this,selector:'customActionByMenu:',param:{des:{action:"addImageComment",source:"file"},button:button}},
+      ]
+      let width = 250
+      if (MNUtil.studyView.bounds.width - button.frame.x < (width+40)) {
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+      }else{
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+      }
+      return true
+    }
+    // MNUtil.showHUD("shouldShowMenu: false")
+    return false
+  } catch (error) {
+    // toolbarUtils.addErrorLog(error, "customActionMenu")
+    return false
   }
 }

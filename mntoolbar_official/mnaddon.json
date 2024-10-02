@@ -2,7 +2,7 @@
     "addonid": "marginnote.extension.mntoolbar",
     "author": "Feliks",
     "title": "MN Toolbar",
-    "version": "0.0.9.alpha0930",
+    "version": "0.0.9.alpha1001",
     "marginnote_version_min": "3.7.11",
     "cert_key": ""
 }

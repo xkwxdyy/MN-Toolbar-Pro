@@ -123,7 +123,7 @@ viewWillLayoutSubviews: function() {
       {title:'🔄   Reset prompts',object:self,selector:'resetConfig:',param:"prompts"},
       {title:'🔄   Reset button image',object:self,selector:'resetConfig:',param:"image"},
     ]
-    self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,0)
+    self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,0)
   },
   resetConfig: async function (param) {
   try {
@@ -209,9 +209,9 @@ viewWillLayoutSubviews: function() {
       return {title:actionName,object:self,selector:'setPopupReplace:',param:{id:button.id,name:actionName,target:actionKey}}
     })
     if (MNUtil.appVersion().type === "macOS") {
-      self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,4)
+      self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,4)
     }else{
-      self.view.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,1)
+      self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,1)
     }
     // MNUtil.showHUD("replacePopupEditTapped")
   },
@@ -349,6 +349,7 @@ viewWillLayoutSubviews: function() {
     try {
     let input = await self.getWebviewContent()
     MNUtil.copy(input)
+    MNUtil.showHUD("Copy config")
     } catch (error) {
       toolbarUtils.addErrorLog(error, "configCopyTapped", info)
     }
@@ -437,7 +438,7 @@ viewWillLayoutSubviews: function() {
       toolbarUtils.addErrorLog(error, "configSaveTapped", info)
     }
   },
-  configRunTapped: async function (params) {
+  configRunTapped: async function (button) {
   try {
     let selected = self.selectedItem
     if (!toolbarConfig.checkCouldSave(selected)) {
@@ -461,7 +462,8 @@ viewWillLayoutSubviews: function() {
     }
     if (selected.includes("custom")) {
       let des = toolbarConfig.getDescriptionByName(selected)
-      self.toolbarController.customActionByDes(des)
+      // MNUtil.copyJSON(des)
+      self.toolbarController.customActionByDes(button,des)
       return
     }
     if (selected.includes("color")) {
@@ -1222,7 +1224,7 @@ settingController.prototype.runJavaScript = async function(script) {
   })
 };
 settingController.prototype.checkPopoverController = function () {
-  if (this.view.popoverController) {this.view.popoverController.dismissPopoverAnimated(true);}
+  if (this.popoverController) {this.popoverController.dismissPopoverAnimated(true);}
 }
 /**
  * 
