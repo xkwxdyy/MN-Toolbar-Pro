@@ -3582,6 +3582,10 @@ class toolbarUtils {
     let element = undefined
     if (target) {
       switch (target) {
+        case "auto":
+          toolbarUtils.smartCopy()
+          return
+          break;
         case "selectionText":
           element = MNUtil.selectionText
           break;
@@ -3988,8 +3992,28 @@ class toolbarUtils {
         break;
     }
   }
+  /**
+   * 关闭弹出菜单,如果delay为true则延迟0.5秒后关闭
+   * @param {PopupMenu} menu 
+   * @param {boolean} delay 
+   * @returns 
+   */
+  static dismissPopupMenu(menu,delay = false){
+    if (!menu) {
+      return
+    }
+    if (delay) {
+      MNUtil.delay(0.5).then(()=>{
+        if (!menu.stopHide) {
+          menu.dismissAnimated(true)
+        }
+      })
+      return
+    }
+    menu.dismissAnimated(true)
+  }
   static shouldShowMenu(des){
-    if ("target" in des) {
+    if ( des && "target" in des) {
       //des里提供了target参数的时候，如果target为menu则显示menu
       if (des.target === "menu") {
         return true
@@ -4356,6 +4380,51 @@ class toolbarUtils {
     }
     MNUtil.postNotification("customChat",{})
     // MNUtil.showHUD("No valid argument!")
+  }
+  static search(des,button){
+    // MNUtil.copyJSON(des)
+    // MNUtil.showHUD("Search")
+    let selectionText = MNUtil.selectionText
+    let noteId = undefined
+    let focusNote = MNNote.getFocusNote()
+    if (focusNote) {
+      noteId = focusNote.noteId
+    }
+    let studyFrame = MNUtil.studyView.bounds
+    let beginFrame = button.frame
+    if (button.menu) {
+      beginFrame = button.convertRectToView(button.bounds,MNUtil.studyView)
+    }
+    let endFrame
+    beginFrame.y = beginFrame.y-10
+    if (beginFrame.x+490 > studyFrame.width) {
+      endFrame = MNUtil.genFrame(beginFrame.x-450, beginFrame.y-10, 450, 500)
+      if (beginFrame.y+490 > studyFrame.height) {
+        endFrame.y = studyFrame.height-500
+      }
+    }else{
+      endFrame = MNUtil.genFrame(beginFrame.x+40, beginFrame.y-10, 450, 500)
+      if (beginFrame.y+490 > studyFrame.height) {
+        endFrame.y = studyFrame.height-500
+      }
+    }
+    if (des.engine) {
+      if (selectionText) {
+        // MNUtil.showHUD("Text:"+selectionText)
+        MNUtil.postNotification("searchInBrowser",{text:selectionText,engine:des.engine,beginFrame:beginFrame,endFrame:endFrame})
+      }else{
+        // MNUtil.showHUD("NoteId:"+noteId)
+        MNUtil.postNotification("searchInBrowser",{noteid:noteId,engine:des.engine,beginFrame:beginFrame,endFrame:endFrame})
+      }
+      return
+    }
+    if (selectionText) {
+      // MNUtil.showHUD("Text:"+selectionText)
+      MNUtil.postNotification("searchInBrowser",{text:selectionText,beginFrame:beginFrame,endFrame:endFrame})
+    }else{
+      // MNUtil.showHUD("NoteId:"+noteId)
+      MNUtil.postNotification("searchInBrowser",{noteid:noteId,beginFrame:beginFrame,endFrame:endFrame})
+    }
   }
   /**
    * @param {NSData} image 
@@ -5389,9 +5458,11 @@ class toolbarConfig {
   "delHighlight",
   "sendHighlight",
   "foldHighlight",
+  "sourceHighlight",
   "setTitleHighlight",
   "setCommentHighlight",
   "setEmphasisHighlight",
+  "sourceHighlightOfNote",
   "highStyleColor0",
   "highStyleColor1",
   "highStyleColor2",
@@ -5412,6 +5483,7 @@ class toolbarConfig {
   "focusCurrentNote",
   "draftCurrentNote",
   "collapseBlank",
+  "setBlankLayer",
   "insertBlank",
   "insertTranslation",
   "addToTOC",
@@ -5453,6 +5525,7 @@ class toolbarConfig {
     goWiki:{enabled:false,target:"",name:"goWiki"},
     speechHighlight:{enabled:false,target:"",name:"speechHighlight"},
     sendHighlight:{enabled:false,target:"",name:"sendHighlight"},
+    sourceHighlight:{enabled:false,target:"",name:"sourceHighlight"},
     commentNote:{enabled:false,target:"",name:"commentNote"},
     deleteNote:{enabled:false,target:"",name:"deleteNote"},
     copy:{enabled:false,target:"",name:"copy"},
@@ -5484,6 +5557,8 @@ class toolbarConfig {
     pasteOnPage:{enabled:false,target:"",name:"pasteOnPage"},
     textboxOnPage:{enabled:false,target:"",name:"textboxOnPage"},
     imageboxOnPage:{enabled:false,target:"",name:"imageboxOnPage"},
+    setBlankLayer:{enabled:false,target:"",name:"setBlankLayer"},
+    sourceHighlightOfNote:{enabled:false,target:"",name:"sourceHighlightOfNote"},
   }
   static imageConfigs = {}
   static imageScale = {}
@@ -6582,7 +6657,7 @@ static checkCouldSave(actionName){
   if (actionName.includes("color")) {
     return true
   }
-  let whiteNamelist = ["chatglm","ocr","edit","execute","searchInEudic"]
+  let whiteNamelist = ["search","copy","chatglm","ocr","edit","execute","searchInEudic"]
   if (whiteNamelist.includes(actionName)) {
     return true
   }
