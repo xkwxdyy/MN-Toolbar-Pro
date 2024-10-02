@@ -5873,14 +5873,6 @@ static template(action) {
           "menuWidth": 250,
           "menuItems": [
             {
-              "action" : "moveLastCommentToProofStart",
-              "menuTitle" : "最后1️⃣💬⬆️证明「开始」"
-            },
-            {
-              "action": "moveProofToStart",
-              "menuTitle": "证明⬆️证明开始",
-            },
-            {
               "action" : "addProofToStartFromClipboard",
               "menuTitle" : "从剪切板增加证明⬆️证明「开始」"
             },
@@ -5909,12 +5901,8 @@ static template(action) {
               "menuTitle" : "更新证明"
             },
             {
-              "action" : "moveLastCommentToProof",
-              "menuTitle" : "最后1️⃣💬⬆️证明「末尾」"
-            },
-            {
-              "action" : "moveLastTwoCommentsToProof",
-              "menuTitle" : "最后2️⃣💬⬆️证明「末尾」"
+              "action": "moveProofDown",
+              "menuTitle": "将证明移到最下方",
             },
           ]
         },
