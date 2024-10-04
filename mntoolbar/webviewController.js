@@ -2108,6 +2108,17 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
       //   )
       //   break;
       /**
+       * 更新归类卡片情况
+       */
+      case "getNewClassificationInformation":
+        MNUtil.undoGrouping(()=>{
+          try {
+            focusNote.toBeClassificationInfoNote()
+          } catch (error) {
+            MNUtil.showHUD(error);
+          }
+        })
+      /**
        * 把证明的内容移到最下方
        */
       case "moveProofDown":

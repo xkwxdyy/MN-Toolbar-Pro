@@ -6280,6 +6280,10 @@ static template(action) {
           "menuTitle": "复制卡片🆔后，剪切到选中卡片",
         },
         {
+          "action": "getNewClassificationInformation",
+          "menuTitle": "更新卡片归类情况到选中的卡片中",
+        },
+        {
           "action": "menu",
           "menuTitle": "➡️ 处理旧卡片",
           "menuWidth":250,
