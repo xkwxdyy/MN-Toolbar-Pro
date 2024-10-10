@@ -5054,7 +5054,7 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
       case "mergeInParentAndReappendAllLinks":
         MNUtil.undoGrouping(()=>{
           try {
-            toolbarUtils.mergeInParentAndReappendAllLinks(focusNote)
+            focusNote.mergeInto(focusNote.parentNote)
           } catch (error) {
             MNUtil.showHUD(error);
           }

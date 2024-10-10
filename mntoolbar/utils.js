@@ -6284,6 +6284,10 @@ static template(action) {
           "menuTitle": "更新卡片归类情况到选中的卡片中",
         },
         {
+          "action": "mergeInParentAndReappendAllLinks",
+          "menuTitle": "合并卡片到父卡片",
+        },
+        {
           "action": "menu",
           "menuTitle": "➡️ 处理旧卡片",
           "menuWidth":250,
@@ -6370,10 +6374,6 @@ static template(action) {
         {
           "action": "refreshCardsAndAncestorsAndDescendants",
           "menuTitle": "🔄 刷新卡片及其所有父子卡片",
-        },
-        {
-          "action": "mergeInParentAndReappendAllLinks",
-          "menuTitle": "合并卡片到父卡片并更新所有链接",
         },
         {
           "action": "menu",
