@@ -106,18 +106,74 @@ class toolbarUtils {
       // 再将其它的空白符（除了换行符）替换为单个空格
       return tempStr.replace(/[\r\t\f\v ]+/g, ' ').trim();
   }
+static isPureMNImages(markdown) {
+  try {
+    // 匹配 base64 图片链接的正则表达式
+    const MNImagePattern = /!\[.*?\]\((marginnote4app\:\/\/markdownimg\/png\/.*?)(\))/g;
+    let link = markdown.match(MNImagePattern)[0]
+    return markdown === link
+  } catch (error) {
+    editorUtils.addErrorLog(error, "isPureMNImages")
+    return false
+  }
+}
+static hasMNImages(markdown) {
+  try {
+    // 匹配 base64 图片链接的正则表达式
+    const MNImagePattern = /!\[.*?\]\((marginnote4app\:\/\/markdownimg\/png\/.*?)(\))/g;
+    let link = markdown.match(MNImagePattern)[0]
+    // MNUtil.copyJSON({"a":link,"b":markdown})
+    return markdown.match(MNImagePattern)?true:false
+  } catch (error) {
+    editorUtils.addErrorLog(error, "hasMNImages")
+    return false
+  }
+}
+  /**
+   * 
+   * @param {string} markdown 
+   * @returns {NSData}
+   */
+static getMNImagesFromMarkdown(markdown) {
+  try {
+    const MNImagePattern = /!\[.*?\]\((marginnote4app\:\/\/markdownimg\/png\/.*?)(\))/g;
+    let link = markdown.match(MNImagePattern)[0]
+    // MNUtil.copyJSON(link)
+    let hash = link.split("markdownimg/png/")[1].slice(0,-1)
+    let imageData = MNUtil.getMediaByHash(hash)
+    return imageData
+    // let images = []
+    // 处理 Markdown 字符串，替换每个 base64 图片链接
+    // const result = markdown.replace(MNImagePattern, (match, MNImageURL,p2) => {
+    //   // 你可以在这里对 base64Str 进行替换或处理
+    //   // shouldOverWritten = true
+    //   let hash = MNImageURL.split("markdownimg/png/")[1]
+    //   let base64 = MNUtil.getMediaByHash(hash).base64Encoding()
+    //   return match.replace(MNImageURL, `test`);
+    // });
+    // MNUtil.copy(result)
+    // return result;
+  } catch (error) {
+    editorUtils.addErrorLog(error, "replaceBase64ImagesWithR2")
+    return undefined
+  }
+}
   static smartCopy(){
+    MNUtil.showHUD("smartcopy")
+    let selection = MNUtil.currentSelection
+    if (selection.onSelection) {
+      if (selection.isText) {
+        MNUtil.copy(selection.text)
+        MNUtil.showHUD('复制选中文本')
+      }else{
+        MNUtil.copyImage(selection.image)
+        MNUtil.showHUD('复制框选图片')
+      }
+      return
+    }
     let focusNote = MNNote.getFocusNote()
     if (!focusNote) {
-      if (MNUtil.currentSelection.onSelection) {
-        if (MNUtil.currentSelection.isText) {
-          MNUtil.copy(MNUtil.currentSelection.text)
-          MNUtil.showHUD('复制选中文本')
-        }else{
-          MNUtil.copyImage(MNUtil.currentSelection.image)
-          MNUtil.showHUD('复制框选图片')
-        }
-      }
+      MNUtil.showHUD("No note found")
       return
     }
     if (focusNote.excerptPic && !focusNote.textFirst && focusNote.excerptPic.paint) {
@@ -127,6 +183,15 @@ class toolbarUtils {
     }
     if ((focusNote.excerptText && focusNote.excerptText.trim())){
       let text = focusNote.excerptText
+      if (focusNote.excerptTextMarkdown) {
+        if (this.isPureMNImages(text.trim())) {
+          let imageData = this.getMNImagesFromMarkdown(text)
+          MNUtil.copyImage(imageData)
+          MNUtil.showHUD('摘录图片已复制')
+          return
+        }
+      }
+
       MNUtil.copy(text)
       MNUtil.showHUD('摘录文字已复制')
       return
@@ -190,10 +255,17 @@ class toolbarUtils {
           if (focusNote) {
             if (focusNote.excerptPic && !focusNote.textFirst && focusNote.excerptPic.paint) {
               MNUtil.copyImage(MNUtil.getMediaByHash(focusNote.excerptPic.paint))
-              MNUtil.showHUD("图片已复制")
+              MNUtil.showHUD("摘录图片已复制")
               return
             }
-            element = focusNote.excerptText
+            let text = focusNote.excerptText.trim()
+            if (focusNote.excerptTextMarkdown && this.isPureMNImages(text)) {
+              let imageData = this.getMNImagesFromMarkdown(text)
+              MNUtil.copyImage(imageData)
+              MNUtil.showHUD('摘录图片已复制')
+              return
+            }
+            element = text
           }
           break
         case "excerptOCR":
@@ -201,9 +273,16 @@ class toolbarUtils {
             if (focusNote.excerptPic && !focusNote.textFirst && focusNote.excerptPic.paint) {
               // MNUtil.copyImage(MNUtil.getMediaByHash(focusNote.excerptPic.paint))
               // MNUtil.showHUD("图片已复制")
+
               element = await this.getTextOCR(MNUtil.getMediaByHash(focusNote.excerptPic.paint))
             }else{
-              element = focusNote.excerptText
+              let text = focusNote.excerptText.trim()
+              if (focusNote.excerptTextMarkdown && this.isPureMNImages(text)) {
+                  let imageData = this.getMNImagesFromMarkdown(text)
+                  element = await this.getTextOCR(imageData)
+              }else{
+                element = focusNote.excerptText
+              }
             }
           }
           break
@@ -238,7 +317,7 @@ class toolbarUtils {
           break;
         case "noteMarkdown":
           if (focusNote) {
-            element = this.mergeWhitespace(this.getMDFromNote(focusNote))
+            element = this.mergeWhitespace(await this.getMDFromNote(focusNote))
           }
           break;
         case "noteMarkdownOCR":
@@ -248,12 +327,14 @@ class toolbarUtils {
           break;
         case "noteWithDecendentsMarkdown":
           if (focusNote) {
-            element = this.getMDFromNote(focusNote)
+            element = await this.getMDFromNote(focusNote)
             // MNUtil.copyJSON(focusNote.descendantNodes.treeIndex)
             let levels = focusNote.descendantNodes.treeIndex.map(ind=>ind.length)
-            let descendantsMarkdowns = focusNote.descendantNodes.descendant.map((note,index)=>{
-              return this.getMDFromNote(note,levels[index])
-            })
+            let descendantNotes = focusNote.descendantNodes.descendant
+            let descendantsMarkdowns = await Promise.all(descendantNotes.map(async (note,index)=>{
+                return this.getMDFromNote(note,levels[index])
+              })
+            )
             element = this.mergeWhitespace(element+"\n"+descendantsMarkdowns.join("\n\n"))
           }
           break;
@@ -541,6 +622,7 @@ class toolbarUtils {
       case "title":
         note.noteTitle = content
         break;
+      case "excerpt":
       case "excerptText":
         note.excerptText = content
         break;
@@ -558,6 +640,9 @@ class toolbarUtils {
     })
   }
   static setContent(content,des){
+    try {
+      
+
     let range = des.range ?? "currentNote"
     let targetNotes = this.getNotesByRange(range)
     MNUtil.undoGrouping(()=>{
@@ -565,6 +650,9 @@ class toolbarUtils {
         this.setNoteContent(note, content,des)
       })
     })
+    } catch (error) {
+      toolbarUtils.addErrorLog(error, "setContent")
+    }
   }
   static replace(note,ptt,des){
     let content
@@ -611,6 +699,45 @@ class toolbarUtils {
     }
     //des里不提供target参数的时候默认为menu
     return true
+  }
+  static paste(des){
+    MNUtil.showHUD("paste")
+    let focusNote = MNNote.getFocusNote()
+    let text = MNUtil.clipboardText
+    let target = des.target ?? "default"
+    switch (target) {
+      case "default":
+        focusNote.paste()
+        break;
+      case "title":
+        MNUtil.undoGrouping(()=>{
+          focusNote.noteTitle = text
+        })
+        break;
+      case "excerpt":
+        MNUtil.undoGrouping(()=>{
+          focusNote.excerptText = text
+          if (des.markdown) {
+            focusNote.excerptTextMarkdown = true
+          }
+        })
+        break;
+      case "appendTitle":
+        MNUtil.undoGrouping(()=>{
+          focusNote.noteTitle = focusNote.noteTitle+";"+text
+        })
+        break;
+      case "appendExcerpt":
+        MNUtil.undoGrouping(()=>{
+          focusNote.excerptText = focusNote.excerptText+"\n"+text
+          if (des.markdown) {
+            focusNote.excerptTextMarkdown = true
+          }
+        })
+        break;
+      default:
+        break;
+    }
   }
   static showInFloatWindow(des){
     let targetNoteid
@@ -1026,7 +1153,7 @@ class toolbarUtils {
     }
     try {
       let res = await ocrNetwork.OCR(image)
-      MNUtil.copy(res)
+      // MNUtil.copy(res)
       return res
     } catch (error) {
       chatAIUtils.addErrorLog(error, "getTextOCR",)
@@ -1086,17 +1213,30 @@ try {
               foucsNote.excerptTextMarkdown = true
               MNUtil.showHUD("Set to excerpt")
             })
-            if (foucsNote.excerptPic && !foucsNote.textFirst) {
-              MNUtil.delay(0.5).then(()=>{
-                MNUtil.excuteCommand("EditTextMode")
-              })
-            }
+            // if (foucsNote.excerptPic && !foucsNote.textFirst) {
+            //   MNUtil.delay(0.5).then(()=>{
+            //     MNUtil.excuteCommand("EditTextMode")
+            //   })
+            // }
           }else{
             MNUtil.copy(res)
           }
           break;
         case "editor":
           MNUtil.postNotification("editorInsert",{contents:[{type:"text",content:res}]})
+          break;
+        case "chatModeReference":
+          let method = "append"
+          if ("method" in des) {
+            method = des.method
+          }
+          MNUtil.postNotification(
+            "insertChatModeReference",
+            {
+              contents:[{type:"text",content:res}],
+              method:method
+            }
+          )
           break;
         default:
           break;
@@ -1751,38 +1891,126 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
           break;
       }
     }
-  static setColor(colorIndex){
+  /**
+   * 
+   * @param {*} des 
+   * @returns {Promise<MNNote|undefined>}
+   */
+  static async noteHighlight(des){
+    let selection = MNUtil.currentSelection
+    if (!selection.onSelection) {
+      return
+    }
+    let OCRText = undefined
+    if ("OCR" in des && des.OCR) {
+      OCRText = await this.getTextOCR(selection.image)
+    }
+    let focusNote = MNNote.new(MNUtil.currentDocController.highlightFromSelection())
+
+    return new Promise((resolve, reject) => {
+      MNUtil.undoGrouping(()=>{
+        try {
+        if ("color" in des && des.color >= 0) {
+          let color = des.color
+          focusNote.colorIndex = color
+        }
+        if ("fillPattern" in des && des.fillPattern >= 0) {
+          let fillPattern = des.fillPattern
+          focusNote.fillIndex = fillPattern
+        }
+        if (OCRText) {
+          focusNote.excerptText = OCRText
+          focusNote.excerptTextMarkdown = true
+        }
+        if ("asTitle" in des && des.asTitle) {
+          focusNote.noteTitle = focusNote.excerptText
+          focusNote.excerptText = ""
+          focusNote.excerptTextMarkdown = false
+        }else if ("title" in des) {
+          focusNote.noteTitle = des.title
+        }
+        if ("tags" in des) {
+          let tags = des.tags
+          focusNote.appendTags(tags)
+        }else if("tag" in des){
+          let tag = des.tag
+          MNUtil.showHUD("add tag: "+tag)
+          focusNote.appendTags([tag])
+        }
+        // if ("parentNote" in des) {
+        //   let parentNote = MNNote.new(des.parentNote)
+        //   // parentNote.focusInMindMap()
+        //   if (parentNote.realGroupNoteForTopicId()) {
+        //     parentNote = parentNote.realGroupNoteForTopicId()
+        //   }
+        //   MNUtil.showHUD("move to "+parentNote.noteId)
+        //   parentNote.addChild(focusNote)
+        // }
+        resolve(focusNote)
+        } catch (error) {
+          toolbarUtils.addErrorLog(error, "noteHighlight")
+          resolve(undefined)
+        }
+      })
+    })
+  }
+  static async setColor(colorIndex){
+  try {
     let fillIndex = -1
-    let description = toolbarConfig.actions["color"+colorIndex].description
-    if (MNUtil.isValidJSON(description)) {
-      let des = JSON.parse(description)
-      if ("fillPattern" in des) {
-        fillIndex = des.fillPattern
-      }
-      if ("followAutoStyle" in des && des.followAutoStyle && (typeof autoUtils !== 'undefined')) {
-        MNUtil.showHUD("followAutoStyle")
-        let focusNotes = MNNote.getFocusNotes()
-        MNUtil.undoGrouping(()=>{
-          focusNotes.map(note=>{
-            let fillIndex
-            if (note.excerptPic) {
-              fillIndex = autoUtils.getConfig("image")[colorIndex]
-            }else{
-              fillIndex = autoUtils.getConfig("text")[colorIndex]
-            }
-            this.setNoteColor(note,colorIndex,fillIndex)
+    if (toolbarConfig.actions["color"+colorIndex] && toolbarConfig.actions["color"+colorIndex].description) {
+      
+      let description = toolbarConfig.actions["color"+colorIndex].description
+      if (MNUtil.isValidJSON(description)) {
+        let des = JSON.parse(description)
+        if ("fillPattern" in des) {
+          fillIndex = des.fillPattern
+        }
+        if ("followAutoStyle" in des && des.followAutoStyle && (typeof autoUtils !== 'undefined')) {
+          let focusNotes
+          let followAutoStyle = true
+          let selection = MNUtil.currentSelection
+          if (selection.onSelection) {
+            focusNotes = MNNote.new(MNUtil.currentDocController.highlightFromSelection())
+            // followAutoStyle = false
+          }else{
+            focusNotes = MNNote.getFocusNotes()
+          }
+          MNUtil.showHUD("followAutoStyle")
+          MNUtil.undoGrouping(()=>{
+            focusNotes.map(note=>{
+              if (followAutoStyle) {
+                let fillIndex
+                if (note.excerptPic) {
+                  fillIndex = autoUtils.getConfig("image")[colorIndex]
+                }else{
+                  fillIndex = autoUtils.getConfig("text")[colorIndex]
+                }
+              }
+              this.setNoteColor(note,colorIndex,fillIndex)
+            })
           })
-        })
-        return
+          return
+        }
       }
     }
+
     // MNUtil.copy(description+fillIndex)
-    let focusNotes = MNNote.getFocusNotes()
+    let focusNotes
+    let selection = MNUtil.currentSelection
+    if (selection.onSelection) {
+      focusNotes = [MNNote.new(MNUtil.currentDocController.highlightFromSelection())]
+    }else{
+      focusNotes = MNNote.getFocusNotes()
+    }
+    // await MNUtil.delay(1)
     MNUtil.undoGrouping(()=>{
       focusNotes.map(note=>{
         this.setNoteColor(note,colorIndex,fillIndex)
       })
     })
+  } catch (error) {
+    toolbarUtils.addErrorLog(error, "setColor")
+  }
   }
   /**
    * 
@@ -1902,7 +2130,7 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
     }
     MNUtil.openURL(url)
   }
-  static export(des){
+  static async export(des){
     let focusNote = MNNote.getFocusNote()
     let exportTarget = des.target ?? "auto"
     let exportSource = des.source ?? "noteDoc"
@@ -1912,7 +2140,7 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
         MNUtil.saveFile(noteDocPath, ["public.pdf"])
         break;
       case "note":
-        let md = this.getMDFromNote(focusNote)
+        let md = await this.getMDFromNote(focusNote)
         MNUtil.copy(md)
         break;
       case "currentDoc":
@@ -2011,6 +2239,18 @@ try {
       // 使用正则表达式匹配==xxx==的内容并替换为<mark>xxx</mark>
       return markdown.replace(/<mark>(.+?)<\/mark>/g, '==\$1==');
   }
+  static constrain(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+/**
+ * 
+ * @param {UIButton} button 
+ * @returns {CGRect}
+ */
+static getButtonFrame(button){
+  let buttonFrame = button.convertRectToView(button.frame, MNUtil.studyView)
+  return buttonFrame
+}
 }
 
 class toolbarConfig {
@@ -2064,6 +2304,10 @@ class toolbarConfig {
   "highlightShortcut2",
   "highlightShortcut3",
   "highlightShortcut4",
+  "highlightShortcut5",
+  "highlightShortcut6",
+  "highlightShortcut7",
+  "highlightShortcut8",
   "editHashtags",
   "deleteNote",
   "commentNote",
@@ -2131,6 +2375,10 @@ class toolbarConfig {
     highlightShortcut2:{enabled:false,target:"",name:"highlightShortcut2"},
     highlightShortcut3:{enabled:false,target:"",name:"highlightShortcut3"},
     highlightShortcut4:{enabled:false,target:"",name:"highlightShortcut4"},
+    highlightShortcut5:{enabled:false,target:"",name:"highlightShortcut5"},
+    highlightShortcut6:{enabled:false,target:"",name:"highlightShortcut6"},
+    highlightShortcut7:{enabled:false,target:"",name:"highlightShortcut7"},
+    highlightShortcut8:{enabled:false,target:"",name:"highlightShortcut8"},
     speechText:{enabled:false,target:"",name:"speechText"},
     goDictionary:{enabled:false,target:"",name:"goDictionary"},
     goToMindMap:{enabled:false,target:"",name:"goToMindMap"},
@@ -2159,6 +2407,7 @@ class toolbarConfig {
     this.dynamic = this.getByDefault("MNToolbar_dynamic",false)
     this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})
     this.windowState = this.getByDefault("MNToolbar_windowState",this.defaultWindowState)
+    this.buttonNumber = this.getDefaultActionKeys().length
     this.action = this.getByDefault("MNToolbar_action", this.getDefaultActionKeys())
     this.action = this.action.map(a=>{
       if (a === "excute") {
@@ -2420,7 +2669,8 @@ static getActions() {
     "custom9":{name:"Custom 9",image:"custom9",description: this.template("removeComment")},
     "ocr":{name:"ocr",image:"ocr",description:JSON.stringify({target:"comment",source:"default"})},
     "edit":{name:"edit",image:"edit",description:JSON.stringify({showOnNoteEdit:false})},
-    "execute":{name:"execute",image:"execute",description:"MNUtil.showHUD('Hello world')"}
+    "execute":{name:"execute",image:"execute",description:"MNUtil.showHUD('Hello world')"},
+    "sidebar":{name:"sidebar",image:"sidebar",description:"Toggle sidebar"},
   }
 }
 static execute(){
@@ -2527,13 +2777,14 @@ static checkCouldSave(actionName){
   if (actionName.includes("color")) {
     return true
   }
-  let whiteNamelist = ["search","copy","chatglm","ocr","edit","execute","searchInEudic"]
+  let whiteNamelist = ["search","copy","chatglm","ocr","edit","execute","searchInEudic","pasteAsTitle"]
   if (whiteNamelist.includes(actionName)) {
     return true
   }
   MNUtil.showHUD("Only available for Custom Action!")
   return false
 }
+
 }
 class toolbarSandbox{
   static async execute(code){
