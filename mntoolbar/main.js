@@ -700,14 +700,14 @@ try {
           toolbarUtils.addErrorLog(error, "onRefreshToolbarButton")
         }
       },
-      toggleAddon:function (sender) {
-        if (typeof MNUtil === 'undefined') return
+      openSetting:function () {
+        if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
+        self.openSetting()
+      },
+      toggleToolbar:function () {
+        if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
         self.init(mainPath)
         self.ensureView(true)
-        if (!self.addonBar) {
-          self.addonBar = sender.superview.superview
-          self.addonController.addonBar = self.addonBar
-        }
         if (toolbarConfig.isFirst) {
           let buttonFrame = self.addonBar.frame
           // self.addonController.moveButton.hidden = true
@@ -731,6 +731,51 @@ try {
           self.addonController.hide(self.addonBar.frame)
           toolbarConfig.save("MNToolbar_windowState")
         }
+      },
+      toggleDynamic:function () {
+        if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
+        if (typeof MNUtil === 'undefined') return
+        toolbarConfig.dynamic = !toolbarConfig.dynamic
+        if (toolbarConfig.dynamic) {
+          MNUtil.showHUD("Dynamic ✅")
+        }else{
+          MNUtil.showHUD("Dynamic ❌")
+          if (self.testController) {
+            self.testController.view.hidden = true
+          }
+          // self.testController.view.hidden = true
+        }
+        toolbarConfig.save("MNToolbar_dynamic")
+        // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbar_dynamic")
+        if (self.testController) {
+          self.testController.dynamic = toolbarConfig.dynamic
+        }
+        MNUtil.refreshAddonCommands()
+      },
+      toggleAddon:function (button) {
+      try {
+        if (typeof MNUtil === 'undefined') return
+        let self = getMNToolbarClass()
+        if (!self.addonBar) {
+          self.addonBar = button.superview.superview
+          self.addonController.addonBar = self.addonBar
+        }
+        var commandTable = [
+            {title:'⚙️   Setting',object:self,selector:'openSetting:',param:[1,2,3]},
+            {title:'🛠️   Toolbar',object:self,selector:'toggleToolbar:',param:[1,3,2],checked:!self.addonController.view.hidden},
+            {title:'🌟   Dynamic',object:self,selector:'toggleDynamic:',param:[1,3,2],checked:toolbarConfig.dynamic},
+            // {title:'🗃️   Open Sidebar',object:self,selector:'openSideBar:',param:[1,2,3]}
+          ];
+        if (self.addonBar.frame.x < 100) {
+          self.popoverController = MNUtil.getPopoverAndPresent(button,commandTable,200,4)
+        }else{
+          self.popoverController = MNUtil.getPopoverAndPresent(button,commandTable,200,0)
+        }
+      } catch (error) {
+        toolbarUtils.addErrorLog(error, "toggleAddon")
+      }
+        return
+        
       // self.addonController.view.hidden = !self.addonController.view.hidden
       }
     },

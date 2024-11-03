@@ -42,9 +42,8 @@ try {
       self.setButtonText(allActions,self.selectedItem)
       self.setTextview(self.selectedItem)
       self.settingView.hidden = false
-    } catch (error) {
-    MNUtil.showHUD(error)
-      
+    } catch (error) {  
+      toolbarUtils.addErrorLog(error, "viewDidLoad.setButtonText", info)
     }
 
 
@@ -55,6 +54,7 @@ try {
 
     self.createButton("moveButton")
     MNButton.setColor(self.moveButton, "#3a81fb",0.5)
+    // self.moveButton.showsTouchWhenHighlighted = true
     try {
     self.settingViewLayout()
       
@@ -882,8 +882,10 @@ try {
  */
 settingController.prototype.setButtonText = function (names=toolbarConfig.getAllActions(),highlight=self.selectedItem) {
     this.words = names
+    // MNUtil.showHUD("message")
     let actions = toolbarConfig.actions
     let defaultActions = toolbarConfig.getActions()
+    // MNUtil.copyJSON(names)
     names.map((word,index)=>{
       let buttonName = "nameButton"+index
       if (!this[buttonName]) {
