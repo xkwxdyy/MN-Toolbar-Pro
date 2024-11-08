@@ -159,6 +159,7 @@ viewWillLayoutSubviews: function() {
     // if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
     var commandTable = [
       {title:'🌟 Dynamic',object:self,selector:'toggleDynamic:',param:1.0,checked:toolbarConfig.dynamic},
+      {title:'🌟 预处理模式',object:self,selector:'togglePreprocessMode:',param:1.0,checked:toolbarConfig.preprocessMode},
       {title:'⚙️ Setting',object:self,selector:'setting:',param:1.0}
     ];
     self.popoverController = MNUtil.getPopoverAndPresent(sender, commandTable,200)
@@ -192,6 +193,27 @@ try {
 } catch (error) {
   MNUtil.showHUD(error)
 }
+  },
+  // 卡片预处理模式
+  togglePreprocessMode: function () {
+    try {
+        self.onClick = true
+        self.checkPopoverController()
+        if (typeof MNUtil === 'undefined') return
+        toolbarConfig.preprocessMode = !toolbarConfig.preprocessMode
+        if (toolbarConfig.preprocessMode) {
+          MNUtil.showHUD("预处理模式 ✅")
+        }else{
+          MNUtil.showHUD("预处理模式 ❌")
+          if (self.preprocessMode) {
+            self.preprocessMode.view.hidden = true
+          }
+        }
+        toolbarConfig.save("MNToolbar_preprocessMode")
+        MNUtil.refreshAddonCommands()
+    } catch (error) {
+      MNUtil.showHUD(error)
+    }
   },
   /**
    * 
@@ -1290,13 +1312,6 @@ toolbarController.prototype.customAction = async function (actionName) {//这里
         break;
       case "hideAddonBar":
         MNUtil.postNotification("toggleMindmapToolbar", {target:"addonBar"})
-        break;
-      case "TemplateMakeNotes":
-        MNUtil.undoGrouping(()=>{
-          focusNotes.forEach(focusNote=>{
-            MNUtil.TemplateMakeNote(focusNote)
-          })
-        })
         break;
       case "makeCards":
         try {
@@ -5213,19 +5228,37 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
           }
         )
         break
+      case "addToReview":
+        focusNotes.forEach(focusNote=>{
+          focusNote.addToReview()
+        })
+        break;
       case "TemplateMakeNotes":
         MNUtil.undoGrouping(()=>{
           try {
-            focusNotes.forEach(focusNote=>{
-              toolbarUtils.TemplateMakeNote(focusNote)
-              if (focusNote.getNoteTypeZh()=="顶层" || focusNote.getNoteTypeZh()=="归类") {
-                focusNote.descendantNodes.descendant.forEach(descendantNote => {
-                  toolbarUtils.TemplateMakeNote(descendantNote)
-                })
-
-                focusNote.focusInMindMap(0.5)
-              }
-            })
+            if (self.preprocessMode) {
+              focusNotes.forEach(focusNote=>{
+                toolbarUtils.TemplateMakeNote(focusNote)
+                if (focusNote.getNoteTypeZh()=="顶层" || focusNote.getNoteTypeZh()=="归类") {
+                  focusNote.descendantNodes.descendant.forEach(descendantNote => {
+                    toolbarUtils.TemplateMakeNote(descendantNote)
+                  })
+  
+                  focusNote.focusInMindMap(0.5)
+                }
+              })
+            } else {
+              focusNotes.forEach(focusNote=>{
+                toolbarUtils.TemplateMakeNote(focusNote)
+                focusNote.addToReview()
+                if (focusNote.getNoteTypeZh()=="顶层" || focusNote.getNoteTypeZh()=="归类") {
+                  focusNote.descendantNodes.descendant.forEach(descendantNote => {
+                    toolbarUtils.TemplateMakeNote(descendantNote)
+                  })
+                  focusNote.focusInMindMap(0.5)
+                }
+              })
+            }
           } catch (error) {
             MNUtil.showHUD(error);
           }

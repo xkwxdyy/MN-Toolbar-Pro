@@ -30,6 +30,7 @@ JSB.newAddon = function (mainPath) {
         MNUtil.addObserver(self, 'onPopupMenuOnNote:', 'PopupMenuOnNote')
         MNUtil.addObserver(self, 'onPopupMenuOnSelection:', 'PopupMenuOnSelection')
         MNUtil.addObserver(self, 'onToggleDynamic:', 'toggleDynamic')
+        MNUtil.addObserver(self, 'onTogglePreprocessMode:', 'togglePreprocessMode')
         MNUtil.addObserver(self, 'onClosePopupMenuOnNote:', 'ClosePopupMenuOnNote')
         MNUtil.addObserver(self, 'onRemoveMNToolbar:', 'removeMNToolbar')
         MNUtil.addObserver(self, 'onToggleMindmapToolbar:', 'toggleMindmapToolbar')
@@ -42,6 +43,7 @@ JSB.newAddon = function (mainPath) {
         if (typeof MNUtil === 'undefined') return
         MNUtil.removeObserver(self,'PopupMenuOnNote')
         MNUtil.removeObserver(self,'toggleDynamic')
+        MNUtil.removeObserver(self,'togglePreprocessMode')
         MNUtil.removeObserver(self,'ClosePopupMenuOnNote')
         MNUtil.removeObserver(self,'removeMNToolbar')
         MNUtil.removeObserver(self,'removeMNToolbar')
@@ -458,6 +460,20 @@ JSB.newAddon = function (mainPath) {
         // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbar_dynamic")
         self.testController.dynamic = toolbarConfig.dynamic
       },
+      onTogglePreprocessMode:function (sender) {
+        
+        if (typeof MNUtil === 'undefined') return
+        toolbarConfig.preprocessMode = !toolbarConfig.preprocessMode
+        self.addonController.preprocessMode = toolbarConfig.preprocessMode
+        if (toolbarConfig.preprocessMode) {
+          MNUtil.showHUD("预处理模式 ✅")
+        }else{
+          self.testController.view.hidden = true
+        }
+        toolbarConfig.save("MNToolbar_preprocessMode")
+        // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbar_dynamic")
+        self.testController.preprocessMode = toolbarConfig.preprocessMode
+      },
       onToggleMindmapToolbar:function (sender) {
         if ("target" in sender.userInfo) {
           switch (sender.userInfo.target) {
@@ -752,6 +768,26 @@ try {
         }
         MNUtil.refreshAddonCommands()
       },
+      togglePreprocessMode:function () {
+        if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
+        if (typeof MNUtil === 'undefined') return
+        toolbarConfig.preprocessMode = !toolbarConfig.preprocessMode
+        if (toolbarConfig.preprocessMode) {
+          MNUtil.showHUD("预处理模式 ✅")
+        }else{
+          MNUtil.showHUD("预处理模式 ❌")
+          if (self.testController) {
+            self.testController.view.hidden = true
+          }
+          // self.testController.view.hidden = true
+        }
+        toolbarConfig.save("MNToolbar_preprocessMode")
+        // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbar_dynamic")
+        if (self.testController) {
+          self.testController.preprocessMode = toolbarConfig.preprocessMode
+        }
+        MNUtil.refreshAddonCommands()
+      },
       toggleAddon:function (button) {
       try {
         if (typeof MNUtil === 'undefined') return
@@ -764,6 +800,7 @@ try {
             {title:'⚙️   Setting',object:self,selector:'openSetting:',param:[1,2,3]},
             {title:'🛠️   Toolbar',object:self,selector:'toggleToolbar:',param:[1,3,2],checked:!self.addonController.view.hidden},
             {title:'🌟   Dynamic',object:self,selector:'toggleDynamic:',param:[1,3,2],checked:toolbarConfig.dynamic},
+            {title:'🌟   预处理模式',object:self,selector:'togglePreprocessMode:',param:[1,3,2],checked:toolbarConfig.preprocessMode},
             // {title:'🗃️   Open Sidebar',object:self,selector:'openSideBar:',param:[1,2,3]}
           ];
         if (self.addonBar.frame.x < 100) {

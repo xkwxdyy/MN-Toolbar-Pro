@@ -95,7 +95,7 @@ class toolbarUtils {
        * - 制卡的那次需要加入
        * - 后续点击制卡都不需要加入
        */
-      note.addToReview()
+      // note.addToReview()
     }
     /**
      * 【Done】聚焦
@@ -107,6 +107,10 @@ class toolbarUtils {
      */
     note.refresh()
     note.refreshAll()
+  }
+
+  static addToReview(note) {
+    note.addToReview()
   }
 
   // TODO:
@@ -5816,6 +5820,7 @@ class toolbarConfig {
     try {
     this.mainPath = mainPath
     this.dynamic = this.getByDefault("MNToolbar_dynamic",false)
+    this.preprocessMode = this.getByDefault("MNToolbar_preprocessMode",false)
     this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})
     this.windowState = this.getByDefault("MNToolbar_windowState",this.defaultWindowState)
     /**
@@ -6752,6 +6757,13 @@ static template(action) {
         },
       ]
       break;
+    // // 尝试制卡的双击操作
+    // case "TemplateMakeNotes":
+    //   config.action = "TemplateMakeNotes"
+    //   config.doubleClick = {
+    //     "action": "addToReview"
+    //   }
+    //   break;
     default:
       break;
   }
@@ -6813,6 +6825,9 @@ static save(key,value = undefined) {
         break;
       case "MNToolbar_dynamic":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.dynamic,key)
+        break;
+      case "MNToolbar_preprocessMode":
+        NSUserDefaults.standardUserDefaults().setObjectForKey(this.preprocessMode,key)
         break;
       case "MNToolbar_action":
         NSUserDefaults.standardUserDefaults().setObjectForKey(this.action,key)
