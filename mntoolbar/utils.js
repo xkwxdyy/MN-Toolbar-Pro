@@ -6994,12 +6994,12 @@ static template(action) {
       ]
       break;
     // // 尝试制卡的双击操作
-    // case "TemplateMakeNotes":
-    //   config.action = "TemplateMakeNotes"
-    //   config.doubleClick = {
-    //     "action": "addToReview"
-    //   }
-    //   break;
+    case "TemplateMakeNotes":
+      config.action = "TemplateMakeNotes"
+      config.doubleClick = {
+        "action": "addToReview"
+      }
+      break;
     default:
       break;
   }
