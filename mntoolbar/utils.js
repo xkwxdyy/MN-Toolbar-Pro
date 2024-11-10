@@ -5950,7 +5950,6 @@ class toolbarConfig {
     this.windowState = this.getByDefault("MNToolbar_windowState",this.defaultWindowState)
     this.buttonNumber = this.getDefaultActionKeys().length
     //数组格式,存的是每个action的key
-     */
     referenceIds = this.getByDefault("MNToolbar_referenceIds",{})
     /**
      * 夏大鱼羊 - end
