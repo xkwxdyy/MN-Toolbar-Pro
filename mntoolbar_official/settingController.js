@@ -12,6 +12,7 @@ try {
     self.currentFrame = self.view.frame
     self.isMainWindow = true
     self.title = "main"
+    self.preAction = ""
     self.test = [0]
     self.moveDate = Date.now()
     self.color = [true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]
@@ -31,22 +32,9 @@ try {
     if (!self.settingView) {
       self.createSettingView()
     }
-    
 } catch (error) {
   MNUtil.showHUD(error)
 }
-    self.selectedItem = toolbarConfig.action[0]
-    let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
-
-    try {
-      self.setButtonText(allActions,self.selectedItem)
-      self.setTextview(self.selectedItem)
-      self.settingView.hidden = false
-    } catch (error) {  
-      toolbarUtils.addErrorLog(error, "viewDidLoad.setButtonText", info)
-    }
-
-
     self.createButton("maxButton","maxButtonTapped:")
     self.maxButton.setTitleForState('➕', 0);
     self.maxButton.titleLabel.font = UIFont.systemFontOfSize(10);
@@ -55,12 +43,7 @@ try {
     self.createButton("moveButton")
     MNButton.setColor(self.moveButton, "#3a81fb",0.5)
     // self.moveButton.showsTouchWhenHighlighted = true
-    try {
     self.settingViewLayout()
-      
-    } catch (error) {
-      MNUtil.showHUD(error)
-    }
 
     self.moveGesture = new UIPanGestureRecognizer(self,"onMoveGesture:")
     self.moveButton.addGestureRecognizer(self.moveGesture)
@@ -68,10 +51,22 @@ try {
     self.moveGesture.addTargetAction(self,"onMoveGesture:")
 
     self.resizeGesture = new UIPanGestureRecognizer(self,"onResizeGesture:")
-    self.saveButton.addGestureRecognizer(self.resizeGesture)
+    self.resizeButton.addGestureRecognizer(self.resizeGesture)
     self.resizeGesture.view.hidden = false
     self.resizeGesture.addTargetAction(self,"onResizeGesture:")
     // self.settingController.view.hidden = false
+    self.selectedItem = toolbarConfig.action[0]
+    let allActions = toolbarConfig.action.concat(toolbarConfig.getDefaultActionKeys().slice(toolbarConfig.action.length))
+
+    try {
+      self.setButtonText(allActions,self.selectedItem)
+      MNUtil.delay(0.5).then(()=>{
+        self.setTextview(self.selectedItem)
+      })
+      self.settingView.hidden = false
+    } catch (error) {  
+      toolbarUtils.addErrorLog(error, "viewDidLoad.setButtonText", info)
+    }
   },
   viewWillAppear: function(animated) {
   },
@@ -439,7 +434,10 @@ viewWillLayoutSubviews: function() {
     }
   },
   configRunTapped: async function (button) {
+    let self = getSettingController()
   try {
+    // self.runJavaScript(`editor.setMode("code")`)
+    // return
     let selected = self.selectedItem
     if (!toolbarConfig.checkCouldSave(selected)) {
       return
@@ -628,34 +626,34 @@ settingController.prototype.settingViewLayout = function (){
     this.configView.frame = MNUtil.genFrame(0,0,width-2,height-60)
     this.advanceView.frame = MNUtil.genFrame(0,0,width-2,height-60)
     this.popupEditView.frame = MNUtil.genFrame(0,0,width-2,height-60)
+    this.resizeButton.frame = {x:width-20,y:height-75,width:20,height:20}
     if (width < 650) {
-      this.webviewInput.frame = {x:5,y:205,width:width-10,height:height-300}
-      this.titleInput.frame = {x:5,y:165,width:width-50,height:35}
-      this.runButton.frame = {x:width-40,y:165,width:35,height:35}
-      this.copyButton.frame = {x:5,y:height-90,width:60,height:30}
-      this.pasteButton.frame = {x:70,y:height-90,width:60,height:30}
-
-      this.saveButton.frame = {x:width-75,y:height-90,width:70,height:30}
-      this.scrollview.frame = {x:5,y:5,width:width-10,height:155}
+      this.webviewInput.frame = {x:5,y:195,width:width-10,height:height-255}
+      this.titleInput.frame = {x:5,y:155,width:width-80,height:35}
+      this.runButton.frame = {x:width-40,y:195,width:35,height:35}
+      this.saveButton.frame = {x:width-70,y:155,width:65,height:35}
+      this.copyButton.frame = {x:width-160,y:199.5,width:55,height:26}
+      this.pasteButton.frame = {x:width-100,y:199.5,width:60,height:26}
+      this.scrollview.frame = {x:5,y:5,width:width-10,height:145}
       this.scrollview.contentSize = {width:width-20,height:height};
-      this.moveTopButton.frame = {x:width-40,y:15,width:30,height:30}
-      this.moveUpButton.frame = {x:width-40,y:50,width:30,height:30}
-      this.moveDownButton.frame = {x:width-40,y:85,width:30,height:30}
-      this.configReset.frame = {x:width-40,y:120,width:30,height:30}
+      this.moveTopButton.frame = {x:width-40,y:10,width:30,height:30}
+      this.moveUpButton.frame = {x:width-40,y:45,width:30,height:30}
+      this.moveDownButton.frame = {x:width-40,y:80,width:30,height:30}
+      this.configReset.frame = {x:width-40,y:115,width:30,height:30}
     }else{
-      this.webviewInput.frame = {x:355,y:45,width:width-360,height:height-140}
-      this.titleInput.frame = {x:355,y:5,width:width-400,height:35}
-      this.runButton.frame = {x:width-40,y:5,width:35,height:35}
-      this.copyButton.frame = {x:355,y:height-90,width:60,height:30}
-      this.pasteButton.frame = {x:420,y:height-90,width:60,height:30}
+      this.webviewInput.frame = {x:305,y:45,width:width-310,height:height-105}
+      this.titleInput.frame = {x:305,y:5,width:width-380,height:35}
+      this.saveButton.frame = {x:width-70,y:5,width:65,height:35}
+      this.runButton.frame = {x:width-40,y:45,width:35,height:35}
+      this.copyButton.frame = {x:width-160,y:49.5,width:55,height:26}
+      this.pasteButton.frame = {x:width-100,y:49.5,width:60,height:26}
 
-      this.saveButton.frame = {x:width-75,y:height-90,width:70,height:30}
-      this.scrollview.frame = {x:5,y:5,width:345,height:height-65}
-      this.scrollview.contentSize = {width:345,height:height};
-      this.moveTopButton.frame = {x:315,y:15,width:30,height:30}
-      this.moveUpButton.frame = {x:315,y:50,width:30,height:30}
-      this.moveDownButton.frame = {x:315,y:85,width:30,height:30}
-      this.configReset.frame = {x:315,y:120,width:30,height:30}
+      this.scrollview.frame = {x:5,y:5,width:295,height:height-65}
+      this.scrollview.contentSize = {width:295,height:height};
+      this.moveTopButton.frame = {x:263,y:15,width:30,height:30}
+      this.moveUpButton.frame = {x:263,y:50,width:30,height:30}
+      this.moveDownButton.frame = {x:263,y:85,width:30,height:30}
+      this.configReset.frame = {x:263,y:120,width:30,height:30}
     }
 
 
@@ -836,12 +834,17 @@ try {
 
   this.creatTextView("titleInput","configView","#9bb2d6")
 
-  let text  = "123"
+  let text  = "{}"
   this.setWebviewContent(text)
 
   this.titleInput.text = text.title
+  // this.titleInput.textColor = MNUtil.hexColorAlpha("#444444", 1.0)
+  this.titleInput.textColor = MNUtil.hexColorAlpha("#ffffff", 1.0)
+  this.titleInput.font = UIFont.boldSystemFontOfSize(16);
   this.titleInput.contentInset = {top: 0,left: 0,bottom: 0,right: 0}
   this.titleInput.textContainerInset = {top: 0,left: 0,bottom: 0,right: 0}
+  this.titleInput.layer.backgroundColor = MNUtil.hexColorAlpha("#457bd3", 0.8)
+
   this.createButton("configReset","resetButtonTapped:","configView")
   this.configReset.layer.opacity = 1.0
   this.configReset.setTitleForState("🔄",0)
@@ -857,20 +860,28 @@ try {
   this.moveTopButton.setTitleForState("🔝",0)
 
   this.createButton("copyButton","configCopyTapped:","configView")
-  this.copyButton.layer.opacity = 1.0
-  this.copyButton.setTitleForState("Copy",0)
+  MNButton.setConfig(this.copyButton, {opacity:0.8,color:"#457bd3",title:"Copy",bold:true})
+  this.copyButton.layer.cornerRadius = 6
+  // this.copyButton.layer.opacity = 1.0
+  // this.copyButton.setTitleForState("Copy",0)
 
   this.createButton("pasteButton","configPasteTapped:","configView")
-  this.pasteButton.layer.opacity = 1.0
-  this.pasteButton.setTitleForState("Paste",0)
+  MNButton.setConfig(this.pasteButton, {opacity:0.8,color:"#457bd3",title:"Paste",bold:true})
+  this.pasteButton.layer.cornerRadius = 6
+  // this.pasteButton.layer.opacity = 1.0
+  // this.pasteButton.setTitleForState("Paste",0)
 
   this.createButton("saveButton","configSaveTapped:","configView")
   // this.saveButton.layer.opacity = 1.0
   // this.saveButton.setTitleForState("Save",0)
-  MNButton.setConfig(this.saveButton, {opacity:0.8,color:"#e06c75",title:"Save",bold:true})
+  MNButton.setConfig(this.saveButton, {opacity:0.8,color:"#e06c75",title:"Save","font":18,bold:true})
+
+  this.createButton("resizeButton",undefined,"configView")
+  this.resizeButton.setImageForState(toolbarConfig.curveImage,0)
+  MNButton.setConfig(this.resizeButton, {cornerRadius:20,color:"#ffffff",alpha:0.})
 
   this.createButton("runButton","configRunTapped:","configView")
-  MNButton.setConfig(this.runButton, {opacity:0.8,title:"▶️",font:22})
+  MNButton.setConfig(this.runButton, {opacity:1.0,title:"▶️",font:25,color:"#ffffff",alpha:0.})
   
   let color = ["#ffffb4","#ccfdc4","#b4d1fb","#f3aebe","#ffff54","#75fb4c","#55bbf9","#ea3323","#ef8733","#377e47","#173dac","#be3223","#ffffff","#dadada","#b4b4b4","#bd9fdc"]
 } catch (error) {
@@ -921,14 +932,33 @@ settingController.prototype.setTextview = function (name) {
       let description = action.description
       this.titleInput.text= text
       if (MNUtil.isValidJSON(description)) {
-        this.setWebviewContent(description)
+        if (this.preAction === "execute") {
+          this.preAction = name
+          this.loadWebviewContent()
+          MNUtil.delay(0.5).then(()=>{
+            this.setWebviewContent(description)
+          })
+        }else{
+          this.preAction = name
+          this.setWebviewContent(description)
+        }
       }else{
         actions = toolbarConfig.getActions()
         description = action.description
         if (name === "execute") {
+          this.preAction = "execute"
           this.setJSContent(description)
         }else{
-          this.setWebviewContent(description)
+          if (this.preAction === "execute") {
+            this.preAction = name
+            this.loadWebviewContent()
+            MNUtil.delay(0.5).then(()=>{
+              this.setWebviewContent(description)
+            })
+          }else{
+            this.preAction = name
+            this.setWebviewContent(description)
+          }
         }
       }
       // if (!text.system) {
@@ -1182,12 +1212,18 @@ settingController.prototype.createWebviewInput = function (superView) {
   this.webviewInput.layer.masksToBounds = true;
   this.webviewInput.layer.borderColor = MNUtil.hexColorAlpha("#9bb2d6",0.8);
   this.webviewInput.layer.borderWidth = 0
-  this.webviewInput.layer.opacity = 0.9
-  // this.webviewInput.loadFileURLAllowingReadAccessToURL(
-  //   NSURL.fileURLWithPath(this.mainPath + '/test.html'),
+  this.webviewInput.layer.opacity = 0.85
+  this.webviewInput.scrollEnabled = false
+  this.webviewInput.scrollView.scrollEnabled = false
+  this.webviewInput.loadFileURLAllowingReadAccessToURL(
+    NSURL.fileURLWithPath(this.mainPath + '/jsoneditor.html'),
+    NSURL.fileURLWithPath(this.mainPath + '/')
+  );
+  // this.webviewInput.loadHTMLStringBaseURL(
+  //   toolbarUtils.jsonEditor(),
   //   NSURL.fileURLWithPath(this.mainPath + '/')
   // );
-  this.webviewInput.loadHTMLStringBaseURL(toolbarUtils.html(`Loading...`))
+  // this.webviewInput.loadHTMLStringBaseURL(toolbarUtils.html(`Loading...`))
     } catch (error) {
     MNUtil.showHUD(error)
   }
@@ -1198,8 +1234,25 @@ settingController.prototype.createWebviewInput = function (superView) {
 /**
  * @this {settingController}
  */
+settingController.prototype.loadWebviewContent = function () {
+  this.webviewInput.loadFileURLAllowingReadAccessToURL(
+    NSURL.fileURLWithPath(this.mainPath + '/jsoneditor.html'),
+    NSURL.fileURLWithPath(this.mainPath + '/')
+  );
+}
+/**
+ * @this {settingController}
+ */
 settingController.prototype.setWebviewContent = function (content) {
-  this.webviewInput.loadHTMLStringBaseURL(toolbarUtils.html(content))
+  if (!MNUtil.isValidJSON(content)) {
+    content = "{}"
+  }
+  this.runJavaScript(`updateContent('${encodeURIComponent(content)}')`)
+  // this.webviewInput.loadHTMLStringBaseURL(toolbarUtils.html(content))
+  // this.webviewInput.loadHTMLStringBaseURL(
+  //   toolbarUtils.jsonEditor(JSON.stringify(content)),
+  //   NSURL.fileURLWithPath(this.mainPath + '/')
+  // );
 }
 
 /**
@@ -1213,9 +1266,11 @@ settingController.prototype.setJSContent = function (content) {
  * @this {settingController}
  */
 settingController.prototype.getWebviewContent = async function () {
-  let content = await this.runJavaScript(`updateContent(); document.body.innerText`)
+  // let content = await this.runJavaScript(`updateContent(); document.body.innerText`)
+  let content = await this.runJavaScript(`getContent()`)
+  let tem = decodeURIComponent(content)
   this.webviewInput.endEditing(true)
-  return content
+  return tem
 }
 
 /** @this {settingController} */

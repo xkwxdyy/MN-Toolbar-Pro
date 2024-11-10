@@ -4084,6 +4084,42 @@ static getMNImagesFromMarkdown(markdown) {
         break;
     }
   }
+  static _replace_get_ptt_(des) {
+    let mod= des.mod ?? "g"
+    let ptt
+    if ("reg" in des) {
+      ptt = new RegExp(des.reg,mod)
+    }else{
+      ptt = new RegExp(this.escapeStringRegexp(des.from),mod)
+    }
+    return ptt
+  }
+  static _replace_get_content_(note,des) {
+    let content = ""
+    switch (des.target) {
+      case "title":
+        content = note.noteTitle
+        break;
+      case "excerpt":
+        content = note.excerptText ?? ""
+        break;
+      default:
+        break;
+    }
+    return content
+  }
+  static _replace_set_content_(note,des,content) {
+    switch (des.target) {
+      case "title":
+        note.noteTitle = content
+        break;
+      case "excerpt":
+        note.excerptText = content
+        break;
+      default:
+        break;
+    }
+  }
   /**
    * 关闭弹出菜单,如果delay为true则延迟0.5秒后关闭
    * @param {PopupMenu} menu 
@@ -4396,12 +4432,17 @@ static getMNImagesFromMarkdown(markdown) {
     }
   }
   static addErrorLog(error,source,info){
-    MNUtil.showHUD("MN Toolbar Error ("+source+"): "+error)
-    if (info) {
-      this.errorLog.push({error:error.toString(),source:source,info:info,time:(new Date(Date.now())).toString()})
-    }else{
-      this.errorLog.push({error:error.toString(),source:source,time:(new Date(Date.now())).toString()})
+    // MNUtil.showHUD("MN Toolbar Error ("+source+"): "+error)
+    let log = {
+      error:error.toString(),
+      source:source,
+      time:(new Date(Date.now())).toString(),
+      mnaddon:"MNToolbar"
     }
+    if (info) {
+      log.info = info
+    }
+    this.errorLog.push(log)
     MNUtil.copyJSON(this.errorLog)
   }
   static removeComment(des){
@@ -5063,6 +5104,58 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
 </html>
 `
   }
+  static jsonEditor(){
+    return `
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <!-- when using the mode "code", it's important to specify charset utf-8 -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+    <title>Vditor</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link href="jsoneditor.css" rel="stylesheet" type="text/css">
+    <script src="jsoneditor.js"></script>
+</head>
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    font-size: large;
+    height: 100vh !important;
+    min-height: 100vh !important;
+}
+</style>
+<body>
+    <div id="jsoneditor"></div>
+
+    <script>
+        // create the editor
+        const container = document.getElementById("jsoneditor")
+        const options = {}
+        const editor = new JSONEditor(container, options)
+
+        // set json
+        const initialJson = {}
+        editor.set(initialJson)
+
+        // get json
+        const updatedJson = editor.get()
+        function updateContent(data) {
+          let tem = decodeURIComponent(data)
+          // MNUtil.copy(tem)
+          editor.set(JSON.parse(tem))
+        }
+        function getContent() {
+          let tem = JSON.stringify(editor.get(),null,2)
+          return encodeURIComponent(tem)
+        }
+    </script>
+</body>
+</html>`
+  }
   static html(content){
     return `<!DOCTYPE html>
 <html lang="en">
@@ -5675,6 +5768,7 @@ class toolbarConfig {
   }
   // static defaultAction
   static isFirst = true
+  static cloudStore
   static mainPath
   static action = []
   static showEditorOnNoteEdit = false
@@ -5702,6 +5796,7 @@ class toolbarConfig {
   "delHighlight",
   "sendHighlight",
   "foldHighlight",
+  "paintHighlight",
   "sourceHighlight",
   "setTitleHighlight",
   "setCommentHighlight",
@@ -5736,6 +5831,7 @@ class toolbarConfig {
   "insertTranslation",
   "addToTOC",
   "addToReview",
+  "addSelToReivew",
   "speechText",
   "speechHighlight",
   "goWiki",
@@ -5782,6 +5878,7 @@ class toolbarConfig {
     copyOCR:{enabled:false,target:"",name:"copyOCR"},
     foldHighlight:{enabled:false,target:"",name:"foldHighlight"},
     addToTOC:{enabled:false,target:"",name:"addToTOC"},
+    addSelToReivew:{enabled:false,target:"",name:"addSelToReview"},
     highlightType1:{enabled:false,target:"",name:"highlightType1"},
     highlightType2:{enabled:false,target:"",name:"highlightType2"},
     highlightType3:{enabled:false,target:"",name:"highlightType3"},
@@ -5811,9 +5908,37 @@ class toolbarConfig {
     imageboxOnPage:{enabled:false,target:"",name:"imageboxOnPage"},
     setBlankLayer:{enabled:false,target:"",name:"setBlankLayer"},
     sourceHighlightOfNote:{enabled:false,target:"",name:"sourceHighlightOfNote"},
+    paintHighlight:{enabled:false,target:"",name:"paintHighlight"},
+  }
+  static defalutImageScale = {
+    "color0":2.4,
+    "color1":2.4,
+    "color2":2.4,
+    "color3":2.4,
+    "color4":2.4,
+    "color5":2.4,
+    "color6":2.4,
+    "color7":2.4,
+    "color8":2.4,
+    "color9":2.4,
+    "color10":2.4,
+    "color11":2.4,
+    "color12":2.4,
+    "color13":2.4,
+    "color14":2.4,
+    "color15":2.4
   }
   static imageConfigs = {}
   static imageScale = {}
+  static defaultSyncConfig = {
+    iCloudSync: true,
+    lastSyncTime: 0,
+    lastModifyTime: 0
+  }
+  /**
+   * @type {{iCloudSync:boolean,lastSyncTime:number,lastModifyTime:number}}
+   */
+  static syncConfig = {}
   // static defaultConfig = {showEditorWhenEditingNote:false}
   static init(mainPath){
     // this.config = this.getByDefault("MNToolbar_config",this.defaultConfig)
@@ -5823,8 +5948,8 @@ class toolbarConfig {
     this.preprocessMode = this.getByDefault("MNToolbar_preprocessMode",false)
     this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})
     this.windowState = this.getByDefault("MNToolbar_windowState",this.defaultWindowState)
-    /**
-     * 夏大鱼羊 - begin
+    this.buttonNumber = this.getDefaultActionKeys().length
+    //数组格式,存的是每个action的key
      */
     referenceIds = this.getByDefault("MNToolbar_referenceIds",{})
     /**
@@ -5870,7 +5995,10 @@ class toolbarConfig {
     // this.popupConfig = this.getByDefault("MNToolbar_popupConfig", this.defaultPopupReplaceConfig)
     // this.popupConfig = this.defaultPopupReplaceConfig
     this.popupConfig = this.getByDefault("MNToolbar_popupConfig", this.defaultPopupReplaceConfig)
+    this.syncConfig = this.getByDefault("MNToolbar_syncConfig", this.defaultSyncConfig)
     this.initImage()
+    // this.readCloudConfig()
+    // this.writeCloudConfig()
   }
   static getPopupConfig(key){
     if (this.popupConfig[key] !== undefined) {
@@ -5878,6 +6006,109 @@ class toolbarConfig {
     }else{
       return this.defaultPopupReplaceConfig[key]
     }
+  }
+  static addCloudChangeObserver(observer, selector, name) {
+    NSNotificationCenter.defaultCenter().addObserverSelectorName(observer, selector, name, this.cloudStore)
+  }
+  static deepEqual(obj1, obj2) {
+    if (obj1 === obj2) return true;
+
+    if (typeof obj1 !== 'object' || obj1 === null ||
+        typeof obj2 !== 'object' || obj2 === null) {
+        return false;
+    }
+
+    let keys1 = Object.keys(obj1);
+    let keys2 = Object.keys(obj2);
+
+    if (keys1.length !== keys2.length) return false;
+
+    for (let key of keys1) {
+        if (!keys2.includes(key)) {
+            return false;
+        }
+        if (["modifiedTime","lastSyncTime"].includes(key)) {
+          return true
+        }
+        if (!this.deepEqual(obj1[key], obj2[key])) {
+          return false;
+        }
+    }
+    return true;
+  }
+  static getAllConfig(){
+    let config = {
+      windowState: this.windowState,
+      syncConfig: this.syncConfig,
+      dynamic: this.dynamic,
+      addonLogos: this.addonLogos,
+      actionKeys: this.action,
+      actions: this.actions,
+      buttonConfig:this.buttonConfig,
+      popupConfig:this.popupConfig
+    }
+    return config
+  }
+  static readCloudConfig(){
+    try {
+      // let keyValueStore = NSUbiquitousKeyValueStore.defaultStore()
+      // keyValueStore.removeObjectForKey("MNToolbar_windowState")
+      // keyValueStore.setObjectForKey(this.windowState,"MNToolbar_windowState")
+      let cloudConfig = this.cloudStore.objectForKey("MNToolbar_totalConfig")
+      if (cloudConfig && cloudConfig.syncConfig) {
+        let same = this.deepEqual(cloudConfig, this.getAllConfig())
+        if (same) {
+          return false
+        }
+        // MNUtil.copyJSON(cloudConfig)
+        if (this.syncConfig.lastSyncTime < cloudConfig.syncConfig.lastSyncTime ) {
+          // MNUtil.copy("Import from iCloud")
+          this.windowState = cloudConfig.windowState
+          this.syncConfig = cloudConfig.syncConfig
+          this.dynamic = cloudConfig.dynamic
+          this.addonLogos = cloudConfig.addonLogos
+          this.action = cloudConfig.actionKeys
+          this.actions = cloudConfig.actions
+          this.buttonConfig = cloudConfig.buttonConfig
+          this.popupConfig = cloudConfig.popupConfig
+          this.writeCloudConfig()
+          return true
+
+              // self.setButtonText(allActions,self.selectedItem)
+    // self.toolbarController.setToolbarButton(allActions)
+          // MNUtil.showHUD("Import from iCloud")
+        }else{
+          this.writeCloudConfig()
+          // MNUtil.copy("Upload to iCloud")
+          return false
+        }
+      }else{
+        this.writeCloudConfig()
+        // MNUtil.copy("No cloud config, write to cloud")
+        return false
+      }
+    } catch (error) {
+      MNUtil.copy(error.toString())
+      // toolbarUtils.addErrorLog(error, "readCloudConfig")
+      return false
+    }
+  }
+  static writeCloudConfig(){
+    this.syncConfig.lastSyncTime = Date.now()
+    this.syncConfig.lastModifyTime = Date.now()
+    let config = {
+      windowState: this.windowState,
+      syncConfig: this.syncConfig,
+      dynamic: this.dynamic,
+      addonLogos: this.addonLogos,
+      actionKeys: this.action,
+      actions: this.actions,
+      buttonConfig:this.buttonConfig,
+      popupConfig:this.popupConfig
+    }
+    // MNUtil.copyJSON(config)
+    this.cloudStore.setObjectForKey(config,"MNToolbar_totalConfig")
+
   }
   static initImage(){
     try {
@@ -5892,9 +6123,14 @@ class toolbarConfig {
         let scale = tem.scale ?? 2
         this.imageConfigs[key] = MNUtil.getImage(this.buttonImageFolder+"/"+tem.path,scale)
       }else{
-        this.imageConfigs[key] = MNUtil.getImage(this.mainPath+"/"+this.getAction(key).image+".png")
+        let scale = 2
+        if (key in toolbarConfig.defalutImageScale) {
+          scale = toolbarConfig.defalutImageScale[key]
+        }
+        this.imageConfigs[key] = MNUtil.getImage(this.mainPath+"/"+this.getAction(key).image+".png",scale)
       }
     })
+    this.curveImage = MNUtil.getImage(this.mainPath+"/curve.png",2)
     // MNUtil.copyJSON(this.imageConfigs)
       } catch (error) {
       toolbarUtils.addErrorLog(error, "initImage")
@@ -6851,6 +7087,7 @@ static save(key,value = undefined) {
         toolbarUtils.showHUD("Not supported")
         break;
     }
+    // this.readCloudConfig()
   }
   NSUserDefaults.standardUserDefaults().synchronize()
 }

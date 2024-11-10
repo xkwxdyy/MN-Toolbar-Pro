@@ -1,0 +1,477 @@
+{
+  "windowState": {
+    "dynamicButton": 13,
+    "splitMode": false,
+    "sideMode": "",
+    "open": true,
+    "frame": {
+      "y": 86.44921875,
+      "x": 934.234375,
+      "width": 40,
+      "height": 645
+    }
+  },
+  "syncConfig": {
+    "iCloudSync": true,
+    "lastSyncTime": 0
+  },
+  "dynamic": true,
+  "addonLogos": {
+    "MNSnipaste": true,
+    "MNChatAI": true,
+    "MNAutoStyle": true,
+    "MNEditor": true,
+    "MNBrowser": true,
+    "MNOCR": true
+  },
+  "actionKeys": [
+    "custom9",
+    "sidebar",
+    "color3",
+    "custom3",
+    "custom2",
+    "custom1",
+    "copy",
+    "searchInEudic",
+    "switchTitleorExcerpt",
+    "copyAsMarkdownLink",
+    "search",
+    "bigbang",
+    "snipaste",
+    "chatglm",
+    "setting",
+    "pasteAsTitle",
+    "clearFormat",
+    "color0",
+    "color1",
+    "color2",
+    "color4",
+    "color5",
+    "color6",
+    "color7",
+    "color8",
+    "color9",
+    "color10",
+    "color11",
+    "color12",
+    "color13",
+    "color14",
+    "color15",
+    "custom4",
+    "custom5",
+    "custom6",
+    "custom7",
+    "custom8",
+    "ocr",
+    "edit",
+    "execute"
+  ],
+  "actions": {
+    "custom5": {
+      "name": "Custom 5",
+      "image": "custom5",
+      "description": "{\n    \"action\": \"toggleTextFirst\"\n}"
+    },
+    "color9": {
+      "name": "Set Color 10",
+      "image": "color9",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "edit": {
+      "name": "edit",
+      "image": "edit",
+      "description": "{\"showOnNoteEdit\":false}"
+    },
+    "color8": {
+      "name": "Set Color 9",
+      "image": "color8",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "custom4": {
+      "name": "Custom 4",
+      "image": "custom4",
+      "description": "{\n    \"action\": \"copy\",\n    \"target\": \"menu\"\n}"
+    },
+    "color14": {
+      "name": "Set Color 15",
+      "image": "color14",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "color7": {
+      "name": "Set Color 8",
+      "image": "color7",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "custom9": {
+      "name": "Custom 9",
+      "image": "custom9",
+      "description": "{\n  \"action\": \"menu\",\n  \"menuItems\": [\n    \"🔽 我是标题\",\n    {\n      \"action\": \"copy\",\n      \"menuTitle\": \"123\",\n      \"content\": \"test\"\n    },\n    {\n      \"action\": \"toggleView\",\n      \"targets\": [\n        \"mindmapToolbar\",\n        \"addonBar\"\n      ],\n      \"autoClose\": false,\n      \"menuTitle\": \"toggle\"\n    }\n  ]\n}"
+    },
+    "search": {
+      "name": "Search",
+      "image": "search",
+      "description": "{\n    \"action\": \"search\",\n    \"engine\": \"Baidu\"\n}"
+    },
+    "color6": {
+      "name": "Set Color 7",
+      "image": "color6",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "custom3": {
+      "name": "Custom 3",
+      "image": "custom3",
+      "description": "{\n    \"action\": \"noteHighlight\",\n    \"asTitle\": true,\n    \"color\": 5,\n    \"tags\": [\n        \"test\",\n        \"skfj\"\n    ],\n    \"parentNote\": \"marginnote4app://note/C241571E-C8CA-4125-9F53-80ADAD40B209\"\n}"
+    },
+    "color13": {
+      "name": "Set Color 14",
+      "image": "color13",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "color5": {
+      "name": "Set Color 6",
+      "image": "color5",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "custom8": {
+      "name": "Custom 8",
+      "image": "custom8",
+      "description": "{\n    \"action\": \"replace\",\n    \"target\": \"excerpt\",\n    \"reg\": \"\\\\d.\\\\s\\\\*\\\\*\",\n    \"to\": \"**\"\n}"
+    },
+    "color4": {
+      "name": "Set Color 5",
+      "image": "color4",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "pasteAsTitle": {
+      "name": "Paste As Title",
+      "image": "pasteAsTitle",
+      "description": "Paste As Title"
+    },
+    "custom2": {
+      "name": "Custom 2",
+      "image": "custom2",
+      "description": "{\n    \"action\": \"setButtonImage\",\n    \"imageConfig\": {\n        \"edit\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=6rM43YNMgkta&format=png&color=000000\",\n            \"scale\": 4\n        },\n        \"setting\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=fvKS3AKw1AyE&format=png&color=000000\"\n        },\n        \"copyAsMarkdownLink\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=xPX4qmtKvtBp&format=png&color=000000\"\n        },\n        \"search\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=Ef10FbRv65UX&format=png&color=000000\",\n            \"scale\": 5\n        },\n        \"chatglm\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=GBu1KXnCZZ8j&format=png&color=000000\",\n            \"scale\": 4\n        },\n        \"ocr\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=oSX8oETBI2XZ&format=png&color=000000\"\n        },\n        \"copy\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=XCFPVmds73Zu&format=png&color=000000\",\n            \"scale\": 3.5\n        },\n        \"snipaste\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=wUqJRyU3Sxwa&format=png&color=000000\",\n            \"scale\": 4\n        },\n        \"switchTitleorExcerpt\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=Kg8sNz3aBgKR&format=png&color=000000\"\n        },\n        \"bigbang\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=U0K83Zn5yOQ3&format=png&color=000000\",\n            \"scale\": 4\n        },\n        \"searchInEudic\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=wNZ3FTgUzSQX&format=png&color=000000\",\n            \"scale\": 3.5\n        },\n        \"pasteAsTitle\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=79AC4ECfeYk9&format=png&color=000000\"\n        },\n        \"clearFormat\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=eaULhUeZjbCV&format=png&color=000000\"\n        },\n        \"execute\": {\n            \"url\": \"https://img.icons8.com/?size=100&id=QOKa01OgdTdY&format=png&color=000000\"\n        }\n    }\n}"
+    },
+    "color12": {
+      "name": "Set Color 13",
+      "image": "color12",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "clearFormat": {
+      "name": "Clear Format",
+      "image": "clearFormat",
+      "description": "Clear Format"
+    },
+    "color3": {
+      "name": "Set Color 4",
+      "image": "color3",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "custom7": {
+      "name": "Custom 7",
+      "image": "custom7",
+      "description": "{\n  \"action\": \"replace\",\n  \"target\": \"excerpt\",\n  \"steps\": [\n    {\n      \"reg\": \"\\\\，|、|,,|,\",\n      \"to\": \",\"\n    },\n    {\n      \"reg\": \"\\\\；|;\",\n      \"to\": \"; \"\n    },\n    {\n      \"reg\": \"“|”|-|’|\\\"|=|\\\\d+\\\\.|•|英汉翻译\\\\s*\",\n      \"to\": \"\"\n    },\n    {\n      \"reg\": \"\\\\t\",\n      \"to\": \"\"\n    },\n    {\n      \"reg\": \" +\",\n      \"to\": \" \"\n    },\n    {\n      \"reg\": \"\\\\s{2,}\",\n      \"to\": \"\\n\"\n    }\n  ]\n}"
+    },
+    "color2": {
+      "name": "Set Color 3",
+      "image": "color2",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "custom1": {
+      "name": "Custom 1",
+      "image": "custom1",
+      "description": "{\n    \"action\": \"replace\",\n    \"target\": \"excerpt\",\n    \"reg\": \"\\\\s?\\\\([^()]*\\\\)\\\\s?\",\n    \"to\": \"\"\n}"
+    },
+    "color11": {
+      "name": "Set Color 12",
+      "image": "color11",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "color1": {
+      "name": "Set Color 2",
+      "image": "color1",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "copy": {
+      "name": "Copy",
+      "image": "copyExcerptPic",
+      "description": "{\n    \"target\": \"menu\"\n}"
+    },
+    "execute": {
+      "name": "execute",
+      "image": "execute",
+      "description": "MNUtil.showHUD('Hello world')"
+    },
+    "chatglm": {
+      "name": "ChatAI",
+      "image": "ai",
+      "description": "{\n    \"target\": \"menu\"\n}"
+    },
+    "custom6": {
+      "name": "Custom 6",
+      "image": "custom6",
+      "description": "{\n    \"action\": \"mergeText\",\n    \"target\": \"title\",\n    \"source\": [\n        \"{{noteIndex}}、{{title}}\"\n    ]\n}"
+    },
+    "color0": {
+      "name": "Set Color 1",
+      "image": "color0",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "switchTitleorExcerpt": {
+      "name": "Switch title",
+      "image": "switchTitleorExcerpt",
+      "description": "Switch title"
+    },
+    "searchInEudic": {
+      "name": "Search in Eudic",
+      "image": "searchInEudic",
+      "description": "Search in Eudic"
+    },
+    "bigbang": {
+      "name": "Bigbang",
+      "image": "bigbang",
+      "description": "Bigbang"
+    },
+    "copyAsMarkdownLink": {
+      "name": "Copy md link",
+      "image": "copyAsMarkdownLink",
+      "description": "Copy md link"
+    },
+    "ocr": {
+      "name": "ocr",
+      "image": "ocr",
+      "description": "{\"target\":\"comment\",\"source\":\"default\"}"
+    },
+    "color10": {
+      "name": "Set Color 11",
+      "image": "color10",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    },
+    "snipaste": {
+      "name": "Snipaste",
+      "image": "snipaste",
+      "description": "Snipaste"
+    },
+    "setting": {
+      "name": "Setting",
+      "image": "setting",
+      "description": "Setting"
+    },
+    "color15": {
+      "name": "Set Color 16",
+      "image": "color15",
+      "description": "{\n  \"fillPattern\": -1\n}"
+    }
+  },
+  "buttonConfig": {
+    "color": "defaultNotebookColor",
+    "alpha": 0.85
+  },
+  "popupConfig": {
+    "addToTOC": {
+      "enabled": false,
+      "target": "color15",
+      "name": "addToTOC"
+    },
+    "splitBook": {
+      "enabled": false,
+      "target": "color2",
+      "name": "splitBook"
+    },
+    "goWiki": {
+      "enabled": true,
+      "target": "chatglm",
+      "name": "goWiki"
+    },
+    "deleteNote": {
+      "enabled": false,
+      "target": "",
+      "name": "deleteNote"
+    },
+    "highStyleColor0": {
+      "enabled": false,
+      "target": "",
+      "name": "highStyleColor0"
+    },
+    "foldHighlight": {
+      "enabled": true,
+      "target": "color3",
+      "name": "foldHighlight"
+    },
+    "addToReview": {
+      "enabled": false,
+      "target": "custom9",
+      "name": "addToReview"
+    },
+    "highStyleColor2": {
+      "enabled": false,
+      "target": "",
+      "name": "highStyleColor2"
+    },
+    "toggleTitle": {
+      "enabled": false,
+      "target": "",
+      "name": "toggleTitle"
+    },
+    "highlightType4": {
+      "enabled": false,
+      "target": "",
+      "name": "highlightType4"
+    },
+    "moveNoteTo": {
+      "enabled": false,
+      "target": "",
+      "name": "moveNoteTo"
+    },
+    "copyOCR": {
+      "enabled": false,
+      "target": "ocr",
+      "name": "copyOCR"
+    },
+    "delHighlight": {
+      "enabled": false,
+      "target": "",
+      "name": "delHighlight"
+    },
+    "commentNote": {
+      "enabled": true,
+      "target": "edit",
+      "name": "commentNote"
+    },
+    "linkNoteTo": {
+      "enabled": false,
+      "target": "",
+      "name": "linkNoteTo"
+    },
+    "noteHighlight": {
+      "enabled": true,
+      "target": "edit",
+      "name": "noteHighlight"
+    },
+    "highlightShortcut1": {
+      "enabled": false,
+      "target": "",
+      "name": "highlightShortcut1"
+    },
+    "collapseBlank": {
+      "enabled": false,
+      "target": "search",
+      "name": "collapseBlank"
+    },
+    "highlightType3": {
+      "enabled": false,
+      "target": "",
+      "name": "highlightType3"
+    },
+    "toggleCopyMode": {
+      "enabled": false,
+      "target": "chatglm",
+      "name": "toggleCopyMode"
+    },
+    "blankHighlight": {
+      "enabled": false,
+      "target": "",
+      "name": "blankHighlight"
+    },
+    "goDictionary": {
+      "enabled": false,
+      "target": "",
+      "name": "goDictionary"
+    },
+    "editHashtags": {
+      "enabled": false,
+      "target": "",
+      "name": "editHashtags"
+    },
+    "mergeHighlight": {
+      "enabled": false,
+      "target": "",
+      "name": "mergeHighlight"
+    },
+    "highlightShortcut2": {
+      "enabled": false,
+      "target": "",
+      "name": "highlightShortcut2"
+    },
+    "highStyleColor1": {
+      "enabled": false,
+      "target": "",
+      "name": "highStyleColor1"
+    },
+    "moreOperations": {
+      "enabled": false,
+      "target": "",
+      "name": "moreOperations"
+    },
+    "highlightType2": {
+      "enabled": false,
+      "target": "",
+      "name": "highlightType2"
+    },
+    "highStyleColor3": {
+      "enabled": false,
+      "target": "",
+      "name": "highStyleColor3"
+    },
+    "copy": {
+      "enabled": false,
+      "target": "custom9",
+      "name": "copy"
+    },
+    "goWikiNote": {
+      "enabled": true,
+      "target": "chatglm",
+      "name": "goWikiNote"
+    },
+    "highlightShortcut3": {
+      "enabled": false,
+      "target": "",
+      "name": "highlightShortcut3"
+    },
+    "speechHighlight": {
+      "enabled": true,
+      "target": "chatglm",
+      "name": "speechHighlight"
+    },
+    "insertBlank": {
+      "enabled": false,
+      "target": "custom4",
+      "name": "insertBlank"
+    },
+    "sendHighlight": {
+      "enabled": false,
+      "target": "",
+      "name": "sendHighlight"
+    },
+    "focusCurrentNote": {
+      "enabled": false,
+      "target": "",
+      "name": "focusCurrentNote"
+    },
+    "highlightType1": {
+      "enabled": false,
+      "target": "",
+      "name": "highlightType1"
+    },
+    "pasteToNote": {
+      "enabled": false,
+      "target": "",
+      "name": "pasteToNote"
+    },
+    "goPalette": {
+      "enabled": false,
+      "target": "",
+      "name": "goPalette"
+    },
+    "highlightShortcut4": {
+      "enabled": false,
+      "target": "",
+      "name": "highlightShortcut4"
+    },
+    "speechText": {
+      "enabled": true,
+      "target": "chatglm",
+      "name": "speechText"
+    }
+  }
+}

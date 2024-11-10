@@ -385,6 +385,9 @@ lastPopover: function (button) {
   },
   copyAsMarkdownLink(button) {
     self.onClick = true
+        MNUtil.postNotification("cloudConfigChange", {})
+        return
+
 try {
   
 
@@ -519,8 +522,14 @@ try {
   },
   snipaste: function (button) {
     self.onClick = true
-    let focusNote = MNNote.getFocusNote()
-    MNUtil.postNotification("snipasteNote",{noteid:focusNote.noteId})
+    let selection = MNUtil.currentSelection
+    if (selection.onSelection && !selection.isText) {
+      let imageData = selection.image
+      MNUtil.postNotification("snipasteImage", {imageData:imageData})
+    }else{
+      let focusNote = MNNote.getFocusNote()
+      MNUtil.postNotification("snipasteNote",{noteid:focusNote.noteId})
+    }
     if (button.menu) {
       button.menu.dismissAnimated(true)
       return
@@ -1032,6 +1041,7 @@ toolbarController.prototype.hideAfterDelay = function (delay = 0.5,button = unde
  */
 toolbarController.prototype.setToolbarButton = function (actionNames = toolbarConfig.action,newActions=undefined) {
 try {
+  // MNUtil.showHUD("setToolbarButton")
   let buttonColor = toolbarUtils.getButtonColor()
   this.view.layer.shadowColor = buttonColor
   
@@ -1048,6 +1058,7 @@ try {
   }else{
     toolbarConfig.action = actionNames
   }
+
   // MNUtil.copyJSON(actionNames)
   // let activeActionNumbers = actionNames.length
   for (let index = 0; index < this.maxButtonNumber; index++) {
@@ -1076,6 +1087,7 @@ try {
     this.dynamicToolbar.setToolbarButton(actionNames,newActions)
   }
   this.refreshHeight()
+  // MNUtil.copy("setToolbarButton")
 } catch (error) {
   MNUtil.showHUD("Error in setToolbarButton: "+error)
 }
@@ -1141,819 +1153,6 @@ toolbarController.prototype.setToolbarLayout = function () {
 toolbarController.prototype.checkPopoverController = function () {
   if (this.popoverController) {this.popoverController.dismissPopoverAnimated(true);}
 }
-toolbarController.prototype.customAction = async function (actionName) {//这里actionName指的是key
-  try {
-    if (!toolbarUtils.checkSubscribe(true)) {
-      return
-    }
-    let des = JSON.parse(toolbarConfig.actions[actionName].description)
-    let focusNote = MNNote.getFocusNote()? MNNote.getFocusNote():undefined
-    let focusNotes = MNNote.getFocusNotes() ? MNNote.getFocusNotes():undefined
-    // MNUtil.showHUD("message"+(focusNote instanceof MNNote))
-    let color,config
-    let targetNoteId
-    let parentNote
-    let focusNoteType
-    let focusNoteColorIndex = focusNote? focusNote.note.colorIndex : 0
-    switch (des.action) {
-      /* 夏大鱼羊定制 - start */
-      case "pasteAsChildNotesByIdArrFromClipboard":
-        MNUtil.undoGrouping(()=>{
-          try {
-            // 先把 MNUtils.clipboardText 转成数组
-            let idsArr = MNUtil.clipboardText.split(",")
-            // 再把数组中的 ID 对应的卡片作为选中卡片的子卡片
-            focusNote.pasteChildNotesByIdArr(idsArr)
-          } catch (error) {
-            MNUtil.showHUD(error);
-          }
-        })
-        break;
-      case "convertNoteToNonexcerptVersion":
-        MNUtil.showHUD("卡片转化为非摘录版本")
-        try {
-          MNUtil.undoGrouping(()=>{
-            focusNotes.forEach(focusNote=>{
-              if (focusNote.excerptText) {
-                toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
-              }
-            })
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
-      case "ifExceptVersion":
-        if (focusNote.excerptText) {
-          MNUtil.showHUD("摘录版本")
-        } else {
-          MNUtil.showHUD("非摘录版本")
-        }
-        break;
-      case "showColorIndex":
-        MNUtil.showHUD("ColorIndex: " + focusNote.note.colorIndex)
-        break;
-      case "showCommentType":
-        let focusNoteComments = focusNote.comments
-        let chosenComment = focusNoteComments[des.index-1]
-        MNUtil.showHUD("CommentType: " + chosenComment.type)
-        break;
-      case "convetHtmlToMarkdown":
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.convetHtmlToMarkdown(focusNote)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
-      case "addThought":
-        MNUtil.undoGrouping(()=>{
-          try {
-            toolbarUtils.addThought(focusNotes)
-          } catch (error) {
-            MNUtil.showHUD(error)
-          }
-        })
-        break;
-      case "clearContentKeepText":
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.clearContentKeepText(focusNote)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
-      case "clearContentKeepExcerptAndImage":
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.clearContentKeepExcerptAndImage(focusNote)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
-      case "addTopic":
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.addTopic(focusNote)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-        break;
-      case "addTemplate":
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.addTemplate(focusNote,focusNoteColorIndex)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-        break;
-      case "achieveCards":
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.achieveCards(focusNote)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-        break;
-      case "renewCards":
-        try {
-          MNUtil.undoGrouping(()=>{
-            focusNotes.forEach(focusNote=>{
-              toolbarUtils.renewCards(focusNote)
-            })
-          })
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-        break;
-      case "changeChildNotesPrefix":
-        MNUtil.undoGrouping(()=>{
-          try {
-            toolbarUtils.changeChildNotesPrefix(focusNote)
-            focusNote.descendantNodes.descendant.forEach(descendantNote => {
-              if ([0, 1, 4].includes(descendantNote.note.colorIndex)) {
-                try {
-                  // MNUtil.undoGrouping(()=>{
-                    toolbarUtils.changeChildNotesPrefix(descendantNote)
-                  // })
-                } catch (error) {
-                  MNUtil.showHUD(error);
-                }
-              }
-            })
-          } catch (error) {
-            MNUtil.showHUD(error);
-          }
-        })
-        break;
-      case "moveUpLinkNotes":
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.moveUpLinkNotes(focusNotes)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-        break;
-      case "renewProof":
-        try {
-          MNUtil.undoGrouping(()=>{
-            toolbarUtils.renewProof(focusNotes)
-          })
-        } catch (error) {
-          MNUtil.showHUD(error);
-        }
-        break;
-      case "hideAddonBar":
-        MNUtil.postNotification("toggleMindmapToolbar", {target:"addonBar"})
-        break;
-      case "makeCards":
-        try {
-          // MNUtil.showHUD("制卡")
-          MNUtil.undoGrouping(()=>{
-            // focusNotes.forEach(focusNote=>{
-            for (let i = 0; i < focusNotes.length; i++) {
-              focusNote = focusNotes[i]
-              /* 初始化 */
-              let ifParentNoteChosen = false
-
-              toolbarUtils.renewCards(focusNote)
-
-              /* 先将卡变成非摘录版本 */
-              // 如果是非摘录版本的就不处理，否则已有链接会失效（卡片里的失去箭头，被链接的失效，因为此时的卡片被合并了，id 不是原来的 id 了）
-              if (focusNote.excerptText) {
-                toolbarUtils.convertNoteToNonexcerptVersion(focusNote)
-                // 注意此时 focusNote 变成非摘录版本后，下面的代码中 focusNote 就失焦了（因为被合并到其它卡片了）
-                // 所以下面的代码不会执行，这就产生了一个效果：
-                // 点击第一次：将摘录版本变成非摘录版本
-                // 点击第二次：开始制卡
-                // 误打误撞产生最佳效果了属于是
-                break
-              }
-
-              /* 确定卡片类型 */
-              switch (focusNoteColorIndex) {
-                case 0: // 淡黄色
-                  focusNoteType = "classification"
-                  break;
-                case 2: // 淡蓝色：定义类
-                  focusNoteType = "definition"
-                  break;
-                case 3: // 淡粉色：反例
-                  focusNoteType = "antiexample"
-                  break;
-                case 4: // 黄色：归类
-                  focusNoteType = "classification"
-                  break;
-                case 6: // 蓝色：应用
-                  focusNoteType = "application"
-                  break;
-                case 9: // 深绿色：思想方法
-                  focusNoteType = "method"
-                  break;
-                case 10: // 深蓝色：定理命题
-                  focusNoteType = "theorem"
-                  break;
-                case 13: // 淡灰色：问题
-                  focusNoteType = "question"
-                  break;
-                case 15: // 淡紫色：例子
-                  focusNoteType = "example"
-                  break;
-              }
-
-              /* 预处理 */
-              /* 只对淡蓝色、淡粉色、深绿色、深蓝色、淡紫色的卡片进行制卡 */
-              if (
-                [0, 2, 3, 4, 6, 9, 10, 13, 15].includes(focusNoteColorIndex) &&
-                !focusNote.noteTitle.startsWith("【文献")  // 防止文献卡片被制卡
-              ) {
-
-                /* 检测父卡片的存在和颜色 */
-                parentNote = focusNote.parentNote
-                if (parentNote) {
-                  // 有父节点
-                  // 检测父卡片是否是淡黄色、淡绿色或黄色的，不是的话获取父卡片的父卡片，直到是为止，获取第一次出现特定颜色的父卡片作为 parentNote
-                  while (parentNote) {
-                    if (parentNote.colorIndex == 0 || parentNote.colorIndex == 1 || parentNote.colorIndex == 4) {
-                      ifParentNoteChosen = true
-                      break
-                    }
-                    parentNote = parentNote.parentNote
-                  }
-                  if (!ifParentNoteChosen) {
-                    parentNote = undefined
-                  }
-                }
-              } else {
-                MNUtil.showHUD("此卡片不支持制卡！")
-                return // 使用 return 来提前结束函数, 避免了在内部函数中使用 break 导致的语法错误。
-              }
-
-              let parentNoteType = toolbarUtils.getClassificationNoteTypeByTitle(parentNote.noteTitle)
-              if (
-                [2,3,6,9,10,13,15].includes(focusNoteColorIndex) ||
-                !focusNote.noteTitle.match(/“.*”相关.*/)
-              ) {
-                switch (parentNoteType) {
-                  case "定义":
-                    focusNoteType = "definition"
-                    focusNote.note.colorIndex = 2
-                    break
-                  case "命题":
-                    focusNoteType = "theorem"
-                    focusNote.note.colorIndex = 10
-                    break
-                  case "反例":
-                    focusNoteType = "antiexample"
-                    focusNote.note.colorIndex = 3
-                    break
-                  case "例子":
-                    focusNoteType = "example"
-                    focusNote.note.colorIndex = 15
-                    break
-                  case "思想方法":
-                    focusNoteType = "method"
-                    focusNote.note.colorIndex = 9
-                    break
-                  case "问题":
-                    focusNoteType = "question"
-                    focusNote.note.colorIndex = 13
-                    break
-                  case "应用":
-                    focusNoteType = "application"
-                    focusNote.note.colorIndex = 6
-                    break
-                }
-              }
-              
-              if ([2, 3, 6, 9, 10, 13, 15].includes(focusNote.note.colorIndex)) {
-                MNUtil.excuteCommand("AddToReview")
-              }
-
-              /* 开始制卡 */
-              /* 合并第一层模板 */
-              toolbarUtils.makeCardsAuxFirstLayerTemplate(focusNote, focusNoteType)
-              /* 与父卡片的链接 */
-              try {
-                // MNUtil.undoGrouping(()=>{
-                  toolbarUtils.makeCardsAuxLinkToParentNote(focusNote, focusNoteType, parentNote)
-                // })
-              } catch (error) {
-                MNUtil.showHUD(error);
-              }
-              /* 修改卡片前缀 */
-              toolbarUtils.makeCardsAuxChangefocusNotePrefix(focusNote, parentNote)
-              /* 合并第二层模板 */
-              toolbarUtils.makeCardsAuxSecondLayerTemplate(focusNote, focusNoteType)
-
-              // bug：先应用再证明时，无反应
-              /* 移动“应用：”和链接部分到最下方 */
-              toolbarUtils.makeCardsAuxMoveDownApplicationsComments(focusNote)
-              /* 
-                移动“证明：”到最上方
-                但要注意
-                - 反例类型的是“反例及证明：”
-                - 思想方法类型的是“原理：”
-              */
-              if (focusNoteType !== "definition" && focusNoteType !== "classification") {
-                try {
-                  toolbarUtils.makeCardsAuxMoveProofHtmlComment(focusNote,focusNoteType)
-                } catch (error) {
-                  MNUtil.showHUD(error)
-                }
-              }
-              focusNote.refresh()
-              if (focusNotes.length == 1) {
-                try {
-                  // MNUtil.undoGrouping(()=>{
-                    focusNote.focusInMindMap()
-                  // })
-                } catch (error) {
-                  MNUtil.showHUD(error);
-                }
-              }
-            }
-          })
-        } catch (error) {
-          MNUtil.showHUD(error)
-        }
-        break;
-      /* 夏大鱼羊定制 - end */
-      case "cloneAndMerge":
-      try {
-        MNUtil.showHUD("cloneAndMerge")
-        targetNoteId= MNUtil.getNoteIdByURL(des.target)
-        MNUtil.undoGrouping(()=>{
-          try {
-          MNNote.getFocusNotes().forEach(focusNote=>{
-            toolbarUtils.cloneAndMerge(focusNote.note, targetNoteId)
-          })
-          } catch (error) {
-            MNUtil.showHUD(error)
-          }
-        })
-      } catch (error) {
-        MNUtil.showHUD(error)
-      }
-        break;
-      case "cloneAsChildNote":
-        MNUtil.showHUD("cloneAsChildNote")
-        targetNoteId= MNUtil.getNoteIdByURL(des.target)
-        MNUtil.undoGrouping(()=>{
-          MNNote.getFocusNotes().forEach(focusNote=>{
-            toolbarUtils.cloneAsChildNote(focusNote, targetNoteId)
-          })
-        })
-        break;
-      case "addChildNote":
-        MNUtil.showHUD("addChildNote")
-        config = {}
-        if (des.title) {
-          config.title = toolbarUtils.detectAndReplace(des.title)
-        }
-        if (des.content) {
-          config.content = toolbarUtils.detectAndReplace(des.content)
-        }
-        if (des.markdown) {
-          config.markdown = des.content
-        }
-        color = undefined
-        if (des.color) {
-          switch (des.color) {
-            case "{{parent}}":
-              color = focusNote.colorIndex
-              break;
-            default:
-              if (typeof des.color === "number") {
-                color = des.color
-              }else{
-                color = parseInt(des.color.trim())
-              }
-              break;
-          }
-          config.color = color
-        }
-        focusNote.createChildNote(config)
-        break;
-      case "addBrotherNote":
-        MNUtil.showHUD("addBrotherNote")
-        config = {}
-        if (des.title) {
-          config.title = toolbarUtils.detectAndReplace(des.title)
-        }
-        if (des.content) {
-          config.content = toolbarUtils.detectAndReplace(des.content)
-        }
-        if (des.markdown) {
-          config.markdown = des.markdown
-        }
-        color = undefined
-        if (des.color) {
-          switch (des.color) {
-            case "{{parent}}":
-              color = focusNote.parentNote.colorIndex
-              break;
-            case "{{current}}":
-              color = focusNote.colorIndex
-              break;
-            default:
-              if (typeof des.color === "number") {
-                color = des.color
-              }else{
-                color = parseInt(des.color.trim())
-              }
-              break;
-          }
-          config.color = color
-        }
-        focusNote.createBrotherNote(config)
-        break;
-      case "copy":
-        MNUtil.showHUD("copy")
-        let target = des.target
-        let element = undefined
-        if (target) {
-          switch (target) {
-            case "selectionText":
-              element = MNUtil.selectionText
-              break;
-            case "title":
-              if (focusNote) {
-                element = focusNote.noteTitle
-              }
-              break;
-            case "excerpt":
-              if (focusNote) {
-                element = focusNote.excerptText
-              }
-              break
-            case "notesText":
-              if (focusNote) {
-                element = focusNote.notesText
-              }
-              break;
-            case "commtent":
-              if (focusNote) {
-                let index = 1
-                if (des.index) {
-                  index = des.index
-                }
-                let comments = focusNote.comments
-                let commentsLength = comments.length
-                if (index > commentsLength) {
-                  index = commentsLength
-                }
-                element = comments[index-1].text
-              }
-              break;
-            case "noteId":
-              if (focusNote) {
-                element = focusNote.noteId
-              }
-              break;
-            default:
-              break;
-          }
-        }
-        let copyContent = des.content
-        if (copyContent) {
-          let replacedText = toolbarUtils.detectAndReplace(copyContent,element)
-          MNUtil.copy(replacedText)
-        }else{//没有提供content参数则直接复制目标内容
-          MNUtil.copy(element)
-        }
-        break;
-      case "addComment":
-        MNUtil.showHUD("addComment")
-        let comment = des.content
-        let markdown = des.markdown ?? true
-        if (comment) {
-          let replacedText = toolbarUtils.detectAndReplace(des.content)
-          let focusNotes = MNNote.getFocusNotes()
-          MNUtil.undoGrouping(()=>{
-            focusNotes.forEach(note => {
-              if (markdown) {
-                if ("index" in des) {
-                  note.appendMarkdownComment(replacedText,des.index)
-                }else{
-                  note.appendMarkdownComment(replacedText)
-                }
-              }else{
-                if ("index" in des) {
-                  note.appendTextComment(replacedText,des.index)
-                }else{
-                  note.appendTextComment(replacedText)
-                }
-              }
-            })
-          })
-        }
-        break;
-      case "removeComment":
-        MNUtil.showHUD("removeComment")
-        toolbarUtils.removeComment(des)
-        break;
-      case "moveComment":
-        MNUtil.showHUD("moveComment")
-        toolbarUtils.moveComment(des)
-        break;
-      case "link":
-        let linkType = des.linkType ?? "Both"
-        let targetUrl = des.target
-        if (targetUrl === "{{clipboardText}}") {
-          targetUrl = MNUtil.clipboardText
-        }
-        // MNUtil.showHUD(targetUrl)
-        let targetNote = MNNote.new(targetUrl)
-        MNUtil.undoGrouping(()=>{
-          if (targetNote) {
-            MNNote.getFocusNotes().forEach(note=>{
-              note.appendNoteLink(targetNote,linkType)
-            })
-          }else{
-            MNUtil.showHUD("Invalid target note!")
-          }
-        })
-        break;
-      case "clearContent":
-        toolbarUtils.clearContent(des)
-        break;
-      case "setContent":
-        MNUtil.undoGrouping(()=>{
-          let content = des.content ?? "content"
-          let replacedText = toolbarUtils.detectAndReplace(content)
-          toolbarUtils.setContent(replacedText, des)
-        })
-        break;
-      case "showInFloatWindow":
-        let targetNoteid
-        switch (des.target) {
-          case "{{noteInClipboard}}":
-          case "noteInClipboard":
-            targetNoteid = MNNote.new(MNUtil.clipboardText).noteId
-            break;
-          case "{{currentNote}}":
-          case "currentNote":
-            targetNoteid = MNNote.getFocusNote().noteId
-            break;
-          case "{{currentChildMap}}":
-          case "currentChildMap":
-            if (MNUtil.mindmapView ) {
-              targetNoteid = MNUtil.mindmapView.mindmapNodes[0].note.childMindMap.noteId
-            }else{
-              targetNoteid = undefined
-            }
-            break;
-          case "{{parentNote}}":
-          case "parentNote":
-            targetNoteid = MNNote.getFocusNote().parentNote.noteId
-            break;
-          case "{{currentNoteInMindMap}}":
-          case "currentNoteInMindMap":
-            let notebookController = MNUtil.notebookController
-            let currentNotebookId = notebookController.notebookId
-            
-            if (!notebookController.view.hidden && notebookController.mindmapView && notebookController.focusNote) {
-              targetNoteid = notebookController.focusNote.noteId
-            }else{
-              let testNote = MNUtil.currentDocController.focusNote
-              targetNoteid = testNote.realGroupNoteIdForTopicId(currentNotebookId)
-            }
-            break;
-          case "menu":
-
-          default:
-            targetNoteid= MNUtil.getNoteIdByURL(des.target)
-            break;
-        }
-        if (targetNoteid) {
-          MNNote.focusInFloatMindMap(targetNoteid)
-        }else{
-          MNUtil.showHUD("No Note found!")
-        }
-        // toolbarUtils.studyController().focusNoteInFloatMindMapById(targetNoteid)
-        break;
-      case "openURL":
-        if (des.url) {
-          let url = toolbarUtils.detectAndReplace(des.url)
-          url = encodeURI(url)
-          MNUtil.openURL(url)
-          break;
-          // MNUtil.showHUD("message")
-        }
-        MNUtil.showHUD("No valid argument!")
-        break;
-      case "command":
-        let urlPre = "marginnote4app://command/"
-        if (des.commands) {
-          for (let i = 0; i < des.commands.length; i++) {
-            const command = des.commands[i];
-            let url = urlPre+command
-            MNUtil.openURL(url)
-            await MNUtil.delay(0.1)
-          }
-          break
-        }
-        if (des.command) {
-          let url = urlPre+des.command
-          MNUtil.openURL(url)
-          break
-        }
-        MNUtil.showHUD("No valid argument!")
-        break
-      case "shortcut":
-        let shortcutName = des.name
-        let url = "shortcuts://run-shortcut?name="+encodeURIComponent(shortcutName)
-        if (des.input) {
-          url = url+"&input="+encodeURIComponent(des.input)
-        }
-        if (des.text) {
-          let text = toolbarUtils.detectAndReplace(des.text)
-          url = url+"&text="+encodeURIComponent(text)
-        }
-        MNUtil.openURL(url)
-        break
-      case "replace":
-        let mod= des.mod ?? "g"
-        let ptt
-        if ("reg" in des) {
-          ptt = new RegExp(des.reg,mod)
-        }else{
-          ptt = new RegExp(toolbarUtils.escapeStringRegexp(des.from),mod)
-        }
-        let range = des.range ?? "currentNotes"
-        let targetNotes = toolbarUtils.getNotesByRange(range)
-        MNUtil.undoGrouping(()=>{
-          targetNotes.forEach(note=>{
-            toolbarUtils.replace(note, ptt, des)
-          })
-        })
-        break
-      case "mergeText":
-        MNUtil.undoGrouping(()=>{
-          let range = des.range ?? "currentNotes"
-          let targetNotes = toolbarUtils.getNotesByRange(range)
-          targetNotes.forEach((note,index)=>{
-            let mergedText = toolbarUtils.getMergedText(note, des, index)
-            if (mergedText === undefined) {
-              return
-            }
-            switch (des.target) {
-              case "excerptText":
-                note.excerptText = mergedText
-                if ("markdown" in des) {
-                  note.excerptTextMarkdown = des.markdown
-                }
-                break;
-              case "title":
-                note.noteTitle = mergedText
-                break;
-              case "newComment":
-                if ("markdown" in des && des.markdown) {
-                  note.appendMarkdownComment(mergedText)
-                }else{
-                  note.appendTextComment(mergedText)
-                }
-                break;
-              case "clipboard":
-                MNUtil.copy(mergedText)
-                break;
-              default:
-                break;
-            }
-          })
-        })
-        if (toolbarUtils.sourceToRemove.length) {
-          MNUtil.undoGrouping(()=>{
-            // MNUtil.showHUD("remove")
-            toolbarUtils.sourceToRemove.forEach(note=>{
-              note.excerptText = ""
-            })
-            MNUtil.delay(1).then(()=>{
-              toolbarUtils.sourceToRemove = []
-            })
-          })
-        }
-        if (Object.keys(toolbarUtils.commentToRemove).length) {
-          MNUtil.undoGrouping(()=>{
-            let commentInfos = Object.keys(toolbarUtils.commentToRemove)
-            commentInfos.forEach(noteId => {
-              let note = MNNote.new(noteId)
-              let sortedIndex = MNUtil.sort(toolbarUtils.commentToRemove[noteId],"decrement")
-              sortedIndex.forEach(commentIndex=>{
-                if (commentIndex < 0) {
-                  note.noteTitle = ""
-                }else{
-                  note.removeCommentByIndex(commentIndex)
-                }
-              })
-            })
-            MNUtil.delay(1).then(()=>{
-              toolbarUtils.commentToRemove = {}
-            })
-          })
-        }
-        break;
-      case "chatAI":
-        if (des.prompt) {
-          MNUtil.postNotification("customChat",{prompt:des.prompt})
-          break;
-        }
-        if(des.user){
-          let question = {user:des.user}
-          if (des.system) {
-            question.system = des.system
-          }
-          MNUtil.postNotification("customChat",question)
-          // MNUtil.showHUD("Not supported yet...")
-          break;
-        }
-        MNUtil.showHUD("No valid argument!")
-        break
-      case "addImageComment":
-        let source = des.source ?? "photo"
-        this.compression = des.compression ?? true
-        this.currentNoteId = focusNote.noteId
-        switch (source) {
-          case "camera":
-            this.imagePickerController = UIImagePickerController.new()
-            this.imagePickerController.delegate = this  // 设置代理
-            this.imagePickerController.sourceType = 1  // 设置图片源为相机
-            // this.imagePickerController.allowsEditing = true  // 设置图片源为相册
-            MNUtil.studyController.presentViewControllerAnimatedCompletion(this.imagePickerController,true,undefined)
-            break;
-          case "photo":
-            this.imagePickerController = UIImagePickerController.new()
-            this.imagePickerController.delegate = this  // 设置代理
-            this.imagePickerController.sourceType = 0  // 设置图片源为相册
-            // this.imagePickerController.allowsEditing = true  // 设置图片源为相册
-            MNUtil.studyController.presentViewControllerAnimatedCompletion(this.imagePickerController,true,undefined)
-            break;
-          case "file":
-            let UTI = ["public.image"]
-            let path = await MNUtil.importFile(UTI)
-            let imageData = MNUtil.getFile(path)
-            MNUtil.showHUD("Import: "+MNUtil.getFileName(path))
-            MNUtil.copyImage(imageData)
-            focusNote.paste()
-            break;
-          default:
-            MNUtil.showHUD("unknown source")
-            break;
-        }
-        // this.presentViewControllerAnimatedCompletion(this.imagePickerController,true,undefined)
-        // 展示图片选择器
-        // present(imagePickerController, animated: true, completion: nil)
-        break;
-      case "focus":
-        toolbarUtils.focus(focusNote, des)
-        break 
-      case "toggleView":
-        if ("targets" in des) {
-          des.targets.map(target=>{
-            MNUtil.postNotification("toggleMindmapToolbar", {target:target})
-          })
-        }else{
-          MNUtil.postNotification("toggleMindmapToolbar", {target:des.target})
-        }
-        break
-      case "setButtonImage":
-        await MNUtil.delay(0.01)
-        if ("imageConfig" in des) {
-          let config = des.imageConfig
-          let keys = Object.keys(config)
-          for (let i = 0; i < keys.length; i++) {
-            let url = config[keys[i]].url
-            let scale = config[keys[i]].scale??3
-            MNUtil.showHUD("setButtonImage: "+keys[i])
-            toolbarConfig.setImageByURL(keys[i], url,false,scale)
-          }
-          // await Promise.all(asyncActions)
-          MNUtil.postNotification("refreshToolbarButton", {})
-        }else{
-          MNUtil.showHUD("Missing imageConfig")
-        }
-        break;
-      default:
-        MNUtil.showHUD("Not supported yet...")
-        break;
-    }
-    // if (this.dynamicWindow) {
-    //   this.hideAfterDelay()
-    // }
-    // copyJSON(des)
-  } catch (error) {
-    toolbarUtils.addErrorLog(error, "customAction")
-    // MNUtil.showHUD(error)
-  }
-}
 /**
  * @this {toolbarController}
  * @param {UIButton} button 
@@ -1965,6 +1164,7 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
     if (checkSubscribe && !toolbarUtils.checkSubscribe(true)) {
       return
     }
+    // MNUtil.copyJSON(des)
     if (this.customActionMenu(button,des)) {
       // MNUtil.showHUD("reject")
       //如果返回true则表示菜单弹出已执行，则不再执行下面的代码
@@ -1982,9 +1182,9 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
     let userInput
     let bibTextIndex, bibContent
     let bibContentArr = []
-    let currentDocmd5
-    let path, UTI
-    let currentDocName
+      case "paste":
+        toolbarUtils.paste(des)
+        break;
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
       case "test":
@@ -5505,6 +4705,7 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
         if (des.color) {
           switch (des.color) {
             case "{{parent}}":
+            case "parent":
               color = focusNote.colorIndex
               break;
             default:
@@ -5535,9 +4736,11 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
         if (des.color) {
           switch (des.color) {
             case "{{parent}}":
+            case "parent":
               color = focusNote.parentNote.colorIndex
               break;
             case "{{current}}":
+            case "current":
               color = focusNote.colorIndex
               break;
             default:
@@ -5654,22 +4857,50 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
         }
         MNUtil.openURL(url)
         break
+      case "toggleTextFirst":
+        MNUtil.showHUD("toggleTextFirst")
+        targetNotes = toolbarUtils.getNotesByRange(des.range ?? "currentNotes")
+        MNUtil.undoGrouping(()=>{
+          targetNotes.forEach(note=>{
+            note.textFirst = !note.textFirst
+          })
+        })
+        break
+      case "toggleMarkdown":
+        MNUtil.showHUD("toggleMarkdown")
+        targetNotes = toolbarUtils.getNotesByRange(des.range ?? "currentNotes")
+        MNUtil.undoGrouping(()=>{
+          targetNotes.forEach(note=>{
+            note.excerptTextMarkdown = !note.excerptTextMarkdown
+          })
+        })
+        break
       case "replace":
-        let mod= des.mod ?? "g"
-        let ptt
-        if ("reg" in des) {
-          ptt = new RegExp(des.reg,mod)
-        }else{
-          ptt = new RegExp(toolbarUtils.escapeStringRegexp(des.from),mod)
-        }
         let range = des.range ?? "currentNotes"
-        let targetNotes = toolbarUtils.getNotesByRange(range)
+        targetNotes = toolbarUtils.getNotesByRange(range)
+        if ("steps" in des) {//如果有steps则表示是多步替换,优先执行
+          let nSteps = des.steps.length
+          MNUtil.undoGrouping(()=>{
+            targetNotes.forEach(note=>{
+              let content= toolbarUtils._replace_get_content_(note, des)
+              for (let i = 0; i < nSteps; i++) {
+                let step = des.steps[i]
+                let ptt = toolbarUtils._replace_get_ptt_(step)
+                content = content.replace(ptt, step.to)
+              }
+              toolbarUtils._replace_set_content_(note, des, content)
+            })
+          })
+          break;
+        }
+        //如果没有steps则直接执行
+        let ptt = toolbarUtils._replace_get_ptt_(des)
         MNUtil.undoGrouping(()=>{
           targetNotes.forEach(note=>{
             toolbarUtils.replace(note, ptt, des)
           })
         })
-        break
+        break;
       case "mergeText":
         MNUtil.undoGrouping(()=>{
           let range = des.range ?? "currentNotes"

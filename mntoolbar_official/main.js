@@ -34,6 +34,14 @@ JSB.newAddon = function (mainPath) {
         MNUtil.addObserver(self, 'onRefreshToolbarButton:', 'refreshToolbarButton')
         MNUtil.addObserver(self, 'onOpenToolbarSetting:', 'openToolbarSetting')
         MNUtil.addObserver(self, 'onTextDidBeginEditing:', 'UITextViewTextDidBeginEditingNotification')
+        // MNUtil.addObserver(self, 'onTest:', 'cloudConfigChange')
+        MNUtil.addObserver(self, 'onAddonBroadcast:', 'AddonBroadcast');
+        try {
+          
+        // toolbarConfig.addCloudChangeObserver(self, 'onCloudConfigChange:', 'NSUbiquitousKeyValueStoreDidChangeExternallyNotification')
+        } catch (error) {
+          toolbarUtils.addErrorLog(error, "addCloudChangeObserver")
+        }
       },
 
       sceneDidDisconnect: function () { // Window disconnect 在插件页面关闭插件（不是删除）
@@ -46,6 +54,7 @@ JSB.newAddon = function (mainPath) {
         MNUtil.removeObserver(self,'UITextViewTextDidBeginEditingNotification')
         MNUtil.removeObserver(self,'refreshToolbarButton')
         MNUtil.removeObserver(self,'openToolbarSetting')
+        MNUtil.removeObserver(self,'NSUbiquitousKeyValueStoreDidChangeExternallyNotification')
         // MNUtil.showHUD("remove")
       },
 
@@ -417,6 +426,47 @@ JSB.newAddon = function (mainPath) {
 
         }
 
+      },
+      onAddonBroadcast: function (sender) {
+        if (typeof MNUtil === 'undefined') return
+        if (self.window !== MNUtil.currentWindow) {
+          return
+        }
+        let message = sender.userInfo.message
+        if (/onCloudConfigChange/.test(message)) {
+          MNUtil.showHUD(message)
+          // toolbarConfig.readCloudConfig()
+        }
+      },
+
+      onCloudConfigChange: function (sender) {
+        //这个会闪退
+        Application.sharedInstance().showHUD("message", self.window, 2)
+        // if (typeof MNUtil === 'undefined') return
+        // if (self.window !== MNUtil.currentWindow) {
+        //   return
+        // }
+            // toolbarUtils.addErrorLog("error", "onCloudConfigChange")
+        // let res =  getAllProperties(sender.userInfo)
+        // MNUtil.copyJSON(res)
+        // let shouldUpdate = toolbarConfig.readCloudConfig()
+        // if (shouldUpdate) {
+        //   try {
+        //     // MNUtil.copy("update")
+        //   let allActions = toolbarConfig.getAllActions()
+        //   // MNUtil.copyJSON(allActions)
+        //   // if (self.settingController) {
+        //   //   self.settingController.setButtonText(allActions,self.settingController.selectedItem)
+        //   // }
+        //   // self.addonController.view.hidden = true
+        //   self.addonController.setToolbarButton(allActions)
+        //   } catch (error) {
+        //     MNUtil.copy(error.toString())
+        //     // toolbarUtils.addErrorLog(error, "onCloudConfigChange")
+        //   }
+        // }
+        
+        // MNUtil.openURL("marginnote4app://addon/onCloudConfigChange")
       },
       /**
        * 
