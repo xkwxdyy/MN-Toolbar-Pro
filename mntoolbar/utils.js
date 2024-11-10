@@ -5944,6 +5944,7 @@ class toolbarConfig {
     // this.config = this.getByDefault("MNToolbar_config",this.defaultConfig)
     try {
     this.mainPath = mainPath
+    // this.cloudStore = NSUbiquitousKeyValueStore.defaultStore()
     this.dynamic = this.getByDefault("MNToolbar_dynamic",false)
     this.preprocessMode = this.getByDefault("MNToolbar_preprocessMode",false)
     this.addonLogos = this.getByDefault("MNToolbar_addonLogos",{})

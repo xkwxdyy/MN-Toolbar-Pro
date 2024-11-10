@@ -1170,7 +1170,7 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
       //如果返回true则表示菜单弹出已执行，则不再执行下面的代码
       return
     }
-    let focusNote = MNNote.getFocusNote()? MNNote.getFocusNote():undefined
+    // MNUtil.showHUD("customActionByDes")
     let focusNotes = MNNote.getFocusNotes() ? MNNote.getFocusNotes():undefined
     // MNUtil.showHUD("message"+(focusNote instanceof MNNote))
     let color,config
@@ -1182,9 +1182,6 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
     let userInput
     let bibTextIndex, bibContent
     let bibContentArr = []
-      case "paste":
-        toolbarUtils.paste(des)
-        break;
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
       case "test":
@@ -4650,6 +4647,9 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
         })
         break;
       /* 夏大鱼羊定制 - end */
+      case "paste":
+        toolbarUtils.paste(des)
+        break;
       case "cloneAndMerge":
       try {
         MNUtil.showHUD("cloneAndMerge")
