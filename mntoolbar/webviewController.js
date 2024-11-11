@@ -1171,6 +1171,7 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
       return
     }
     // MNUtil.showHUD("customActionByDes")
+    let focusNote = MNNote.getFocusNote() ? MNNote.getFocusNote():undefined
     let focusNotes = MNNote.getFocusNotes() ? MNNote.getFocusNotes():undefined
     // MNUtil.showHUD("message"+(focusNote instanceof MNNote))
     let color,config
@@ -1182,6 +1183,9 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
     let userInput
     let bibTextIndex, bibContent
     let bibContentArr = []
+    let currentDocmd5
+    let path, UTI
+    let currentDocName
     switch (des.action) {
       /* 夏大鱼羊定制 - start */
       case "test":
