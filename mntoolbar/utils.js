@@ -3881,6 +3881,7 @@ static getAction(actionName){
   }
   return this.getActions()[actionName]
 }
+
 static getActions() {
   return {
     "custom1":{name:"制卡",image:"makeCards",description: this.template("TemplateMakeNotes")},
@@ -3908,8 +3909,8 @@ static getActions() {
     "custom14":{name:"MN",image:"MN_white",description: this.template("menu_MN")},
   }
 }
-
 static execute(){
+
 
 }
 static getDefaultActionKeys() {

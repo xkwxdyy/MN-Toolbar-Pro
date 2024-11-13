@@ -730,26 +730,11 @@ try {
         }
         MNUtil.refreshAddonCommands()
       },
-      togglePreprocessMode:function () {
-        if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
+      openDocument:function (button) {
         if (typeof MNUtil === 'undefined') return
         MNUtil.postNotification("openInBrowser", {url:"https://mnaddon.craft.me/toolbar"})
-        if (toolbarConfig.preprocessMode) {
-        // if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
-        }else{
-          MNUtil.showHUD("预处理模式 ❌")
-          if (self.testController) {
-            self.testController.view.hidden = true
-          }
-          // self.testController.view.hidden = true
-        }
-        toolbarConfig.save("MNToolbar_preprocessMode")
-        // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbar_dynamic")
-        if (self.testController) {
-          self.testController.preprocessMode = toolbarConfig.preprocessMode
-        }
-        MNUtil.refreshAddonCommands()
       },
+        // if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
       toggleAddon:function (button) {
       try {
         if (typeof MNUtil === 'undefined') return
