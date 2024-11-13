@@ -38,7 +38,7 @@ JSB.newAddon = function (mainPath) {
         MNUtil.addObserver(self, 'onOpenToolbarSetting:', 'openToolbarSetting')
         MNUtil.addObserver(self, 'onTextDidBeginEditing:', 'UITextViewTextDidBeginEditingNotification')
         // MNUtil.addObserver(self, 'onTest:', 'cloudConfigChange')
-        MNUtil.addObserver(self, 'onAddonBroadcast:', 'AddonBroadcast');
+        // MNUtil.addObserver(self, 'onAddonBroadcast:', 'AddonBroadcast');
         try {
           
         // toolbarConfig.addCloudChangeObserver(self, 'onCloudConfigChange:', 'NSUbiquitousKeyValueStoreDidChangeExternallyNotification')
@@ -58,7 +58,7 @@ JSB.newAddon = function (mainPath) {
         MNUtil.removeObserver(self,'UITextViewTextDidBeginEditingNotification')
         MNUtil.removeObserver(self,'refreshToolbarButton')
         MNUtil.removeObserver(self,'openToolbarSetting')
-        MNUtil.removeObserver(self,'NSUbiquitousKeyValueStoreDidChangeExternallyNotification')
+        // MNUtil.removeObserver(self,'NSUbiquitousKeyValueStoreDidChangeExternallyNotification')
         // MNUtil.showHUD("remove")
       },
 
@@ -610,100 +610,12 @@ try {
           //   self.testController.view.hidden = true
           // })
         }
+        let textView = param.object
+        toolbarUtils.textView = textView
         if (!toolbarConfig.showEditorOnNoteEdit) {
           return
         }
-        // if (MNUtil.studyController.docMapSplitMode === 2) {
-        //   return
-        // }
-        // if (MNUtil.notebookController.outlineView && !MNUtil.notebookController.outlineView.hidden) {
-        //   return
-        // }
-        // //0:未知
-        // //1：未知
-        // //8:studyView
-        // //9:侧边栏
-        // MNUtil.showHUD("message"+MNUtil.studyController.view.superview.subviews.length)
-        // MNUtil.studyController.view.superview.subviews[7].hidden = true
-        // // param.object.superview.superview.superview.hidden = true
-        // return
-        // let noteView = MNUtil.notebookController.mindmapView.mindmapNodes[0].frame
-        let textView = param.object
-        // let check = []
-        // check.push(textView.superview === MNUtil.studyView)
-        // check.push(textView.superview.superview === MNUtil.studyView)
-        // check.push(textView.superview.superview.superview === MNUtil.studyView)
-        // check.push(textView.superview.superview.superview.superview === MNUtil.studyView)
-        // check.push(textView.superview.superview.superview.superview.superview === MNUtil.studyView)
-        // check.push(textView.superview.superview.superview.superview.superview.superview === MNUtil.studyView)
-        // check.push(textView.superview.superview.superview.superview.superview.superview.superview === MNUtil.studyView)
-        // check.push(textView.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.studyView)
-        // check.push(textView.superview.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.studyView)
-        // MNUtil.copyJSON(check)
-        // if (textView.superview.superview.superview.superview.superview !== MNUtil.mindmapView) {
-        //   return
-        // }
-        // MNUtil.notebookController.view
-        // let check = []
-        // check.push(textView.isDescendantOfView(MNUtil.studyController.view))
-        // check.push(textView.isDescendantOfView(MNUtil.notebookController.view))
-        // check.push(textView.isDescendantOfView(MNUtil.readerController.view))
-        // check.push(textView.isDescendantOfView(MNUtil.mindmapView))
-        // check.push(textView.isDescendantOfView(MNUtil.notebookController.outlineView))
-        // // check.push(textView.isDescendantOfView(MNUtil.readerController.currentDocumentController.view))
-        // // check.push(textView.isDescendantOfView(MNUtil.notebookController.view))
-        // // check.push(textView.isDescendantOfView(MNUtil.notebookController.view))
-        // // check.push(textView.isDescendantOfView(MNUtil.notebookController.view))
-        // MNUtil.copyJSON(check)
-        // MNUtil.showHUD("message"+textView.isDescendantOfView(MNUtil.notebookController.view))
-        // MNUtil.copyJSON(beginFrame)
         let mindmapView = toolbarUtils.getMindmapview(textView)
-
-        // if (textView.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("message")
-        // }
-        // if (textView.superview.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("message")
-        // }
-        // if (textView.superview.superview.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("message")
-        // }
-        // if (textView.superview.superview.superview.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("message")
-        // }
-        // if (textView.superview.superview.superview.superview.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("message")
-        // }
-        // if (textView.superview.superview.superview.superview.superview.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("message")
-        // }
-        // if (textView.superview.superview.superview.superview.superview.superview.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("message")
-        // }
-
-        // if (textView.superview.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("折叠")
-        // }
-        // if (textView.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("message")
-        // }
-        // if (textView.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("message")
-        // }
-        // if (textView.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("message")
-        // }
-        // if (textView.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview.superview === MNUtil.readerController.view) {
-        //   MNUtil.showHUD("页边")
-        // }
-
-        // let mindmapView
-        // if (textView.isDescendantOfView(MNUtil.mindmapView)) {
-        //   mindmapView = MNUtil.mindmapView
-        // }else{
-        //   mindmapView = textView.superview.superview.superview.superview.superview
-        //   MNUtil.floatMindMapView = mindmapView
-        // }
         if (toolbarUtils.checkExtendView(textView)) {
           if (textView.text && textView.text.trim()) {
            //do nothing 
@@ -735,13 +647,13 @@ try {
             let noteId = focusNote.noteId
             let studyFrame = MNUtil.studyView.bounds
             if (beginFrame.x+450 > studyFrame.width) {
-              let endFrame = MNUtil.genFrame(studyFrame.width-450, beginFrame.y-10, 450, 500)
+              let endFrame = Frame.gen(studyFrame.width-450, beginFrame.y-10, 450, 500)
               if (beginFrame.y+490 > studyFrame.height) {
                 endFrame.y = studyFrame.height-500
               }
               MNUtil.postNotification("openInEditor",{noteId:noteId,beginFrame:beginFrame,endFrame:endFrame})
             }else{
-              let endFrame = MNUtil.genFrame(beginFrame.x, beginFrame.y-10, 450, 500)
+              let endFrame = Frame.gen(beginFrame.x, beginFrame.y-10, 450, 500)
               if (beginFrame.y+490 > studyFrame.height) {
                 endFrame.y = studyFrame.height-500
               }
@@ -778,9 +690,9 @@ try {
           let buttonFrame = self.addonBar.frame
           // self.addonController.moveButton.hidden = true
           if (buttonFrame.x === 0) {
-            self.addonController.view.frame = {x:40,y:buttonFrame.y,width:40,height:290}
+            Frame.set(self.addonController.view,40,buttonFrame.y,40,290)
           }else{
-            self.addonController.view.frame = {x:buttonFrame.x-40,y:buttonFrame.y,width:40,height:290}
+            Frame.set(self.addonController.view,buttonFrame.x-40,buttonFrame.y,40,290)
           }
           self.addonController.currentFrame = self.addonController.view.frame
           toolbarConfig.isFirst = false;
@@ -821,9 +733,9 @@ try {
       togglePreprocessMode:function () {
         if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
         if (typeof MNUtil === 'undefined') return
-        toolbarConfig.preprocessMode = !toolbarConfig.preprocessMode
+        MNUtil.postNotification("openInBrowser", {url:"https://mnaddon.craft.me/toolbar"})
         if (toolbarConfig.preprocessMode) {
-          MNUtil.showHUD("预处理模式 ✅")
+        // if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
         }else{
           MNUtil.showHUD("预处理模式 ❌")
           if (self.testController) {
@@ -850,7 +762,7 @@ try {
             {title:'⚙️   Setting',object:self,selector:'openSetting:',param:[1,2,3]},
             {title:'🛠️   Toolbar',object:self,selector:'toggleToolbar:',param:[1,3,2],checked:!self.addonController.view.hidden},
             {title:'🌟   Dynamic',object:self,selector:'toggleDynamic:',param:[1,3,2],checked:toolbarConfig.dynamic},
-            {title:'🌟   预处理模式',object:self,selector:'togglePreprocessMode:',param:[1,3,2],checked:toolbarConfig.preprocessMode},
+            {title:'📄   Document',object:self,selector:'openDocument:',param:[1,3,2]},
             // {title:'🗃️   Open Sidebar',object:self,selector:'openSideBar:',param:[1,2,3]}
           ];
         if (self.addonBar.frame.x < 100) {
@@ -922,8 +834,8 @@ try {
       this.addonController.view.frame = this.lastFrame
       this.addonController.currentFrame = this.lastFrame
     }else{
-      this.addonController.view.frame = MNUtil.genFrame(10,10,40,200)
-      this.addonController.currentFrame = MNUtil.genFrame(10,10,40,200)
+      Frame.set(this.addonController.view,10,10,40,200)
+      this.addonController.currentFrame = this.addonController.view.frame
     }
     if (toolbarConfig.windowState.frame) {
       this.addonController.view.frame = toolbarConfig.windowState.frame;

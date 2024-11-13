@@ -7,7 +7,7 @@ var settingController = JSB.defineClass('settingController : UIViewController <N
     let self = getSettingController()
 try {
     self.init()
-    self.view.frame = {x:50,y:50,width:355,height:475}
+    Frame.set(self.view,50,50,355,500)
     self.lastFrame = self.view.frame;
     self.currentFrame = self.view.frame
     self.isMainWindow = true
@@ -39,9 +39,14 @@ try {
     self.maxButton.setTitleForState('➕', 0);
     self.maxButton.titleLabel.font = UIFont.systemFontOfSize(10);
     MNButton.setColor(self.maxButton, "#3a81fb",0.5)
+    self.maxButton.width = 18
+    self.maxButton.height = 18
+
 
     self.createButton("moveButton")
     MNButton.setColor(self.moveButton, "#3a81fb",0.5)
+    self.moveButton.width = 150
+    self.moveButton.height = 17
     // self.moveButton.showsTouchWhenHighlighted = true
     self.settingViewLayout()
 
@@ -185,10 +190,14 @@ viewWillLayoutSubviews: function() {
     self.custom = true;
     self.dynamic = false;
     self.onAnimate = true
+    let targetFrame = Frame.gen(40, 0, frame.width-80, frame.height)
+    if (MNUtil.isIOS) {
+      targetFrame = Frame.gen(0, 0, frame.width, frame.height)
+    }
     // self.hideAllButton()
     MNUtil.animate(()=>{
-      self.currentFrame = {x:40,y:0,width:frame.width-80,height:frame.height}
-      self.view.frame = {x:40,y:0,width:frame.width-80,height:frame.height}
+      self.currentFrame = targetFrame
+      self.view.frame = targetFrame
       self.settingViewLayout()
     },0.3).then(()=>{
       self.onAnimate = false
@@ -249,43 +258,31 @@ viewWillLayoutSubviews: function() {
       let translation = gesture.translationInView(toolbarUtils.studyController().view)
       let locationToBrowser = gesture.locationInView(self.view)
       let locationToButton = gesture.locationInView(gesture.view)
-      let buttonFrame = self.moveButton.frame
       let newY = locationToButton.y-translation.y 
       let newX = locationToButton.x-translation.x
       if (gesture.state === 1) {
         self.locationToBrowser = {x:locationToBrowser.x-translation.x,y:locationToBrowser.y-translation.y}
         self.locationToButton = {x:newX,y:newY}
       }
-      // if ((newY<buttonFrame.height && newY>0 && newX<buttonFrame.width && newX>0 && Math.abs(translation.y)<20 && Math.abs(translation.x)<20) || !self.locationToBrowser) {
-
-      // }
     }
     self.moveDate = Date.now()
     // let location = {x:locationToMN.x - self.locationToBrowser.x,y:locationToMN.y -self.locationToBrowser.y}
     let location = {x:locationToMN.x - self.locationToButton.x-gesture.view.frame.x,y:locationToMN.y -self.locationToButton.y-gesture.view.frame.y}
 
-    let frame = self.view.frame
-    var viewFrame = self.view.bounds;
-    let studyFrame = toolbarUtils.studyController().view.bounds
-    let y = location.y
-    if (y<=0) {
-      y = 0
-    }
-    if (y>=studyFrame.height-15) {
-      y = studyFrame.height-15
-    }
-    let x = location.x
+    let studyFrame = MNUtil.studyView.bounds
+    let y = toolbarUtils.constrain(location.y, 0, studyFrame.height-15)
+    let x = toolbarUtils.constrain(location.x, 0, studyFrame.width-15)
     
     if (self.custom) {
       // Application.sharedInstance().showHUD(self.custom, self.view.window, 2);
       self.customMode = "None"
       MNUtil.animate(()=>{
-        self.view.frame = MNUtil.genFrame(x,y,self.lastFrame.width,self.lastFrame.height)
+        Frame.set(self.view,x,y,self.lastFrame.width,self.lastFrame.height)
         self.currentFrame  = self.view.frame
         self.settingViewLayout()
       },0.1)
     }else{
-      self.view.frame = MNUtil.genFrame(x,y,frame.width,frame.height)
+      Frame.set(self.view,x,y)
       self.currentFrame  = self.view.frame
     }
     self.custom = false;
@@ -296,18 +293,9 @@ viewWillLayoutSubviews: function() {
     self.customMode = "none"
     let baseframe = gesture.view.frame
     let locationToBrowser = gesture.locationInView(self.view)
-    let frame = self.view.frame
-    let width = locationToBrowser.x+baseframe.width*0.5
-    let height = locationToBrowser.y+baseframe.height*0.5
-    if (width <= 355) {
-      width = 355
-    }
-    if (height <= 475) {
-      height = 475
-    }
-    //  Application.sharedInstance().showHUD(`{x:${translation.x},y:${translation.y}}`, self.view.window, 2);
-    //  self.view.frame = {x:frame.x,y:frame.y,width:frame.width+translationX,height:frame.height+translationY}
-    self.view.frame = {x:frame.x,y:frame.y,width:width,height:height}
+    let width = toolbarUtils.constrain(locationToBrowser.x+baseframe.width*0.3, 355, MNUtil.studyView.frame.width)
+    let height = toolbarUtils.constrain(locationToBrowser.y+baseframe.height*0.3, 475, MNUtil.studyView.frame.height)
+    Frame.setSize(self.view,width,height)
     self.currentFrame  = self.view.frame
   },
   advancedButtonTapped: function (params) {
@@ -334,6 +322,222 @@ viewWillLayoutSubviews: function() {
     MNButton.setColor(self.configButton, "#457bd3", 0.8)
     MNButton.setColor(self.advancedButton, "#9bb2d6", 0.8)
     MNButton.setColor(self.popupButton, "#9bb2d6", 0.8)
+  },
+  chooseTemplate: async function (button) {
+    let self = getSettingController()
+    let selected = self.selectedItem
+    if (!toolbarConfig.checkCouldSave(selected)) {
+      return
+    }
+    var templateNames = [
+      "🔨 empty action",
+      "🔨 empty action with double click",
+      "🔨 empty action with finish action",
+      "🔨 insert snippet",
+      "🔨 insert snippet with menu",
+      "🔨 add note index",
+      "🔨 toggle mindmap",
+      "🔨 copy with menu",
+      "🔨 copy markdown link",
+      "🔨 toggle markdown",
+      "🔨 toggle textFirst",
+      "🔨 chatAI with menu",
+      "🔨 search with menu",
+      "🔨 OCR as chat mode reference",
+      "🔨 toggle full doc and tab bar",
+      "🔨 merge text of merged notes",
+      "🔨 create & move to main mindmap",
+      "🔨 create & move as child note",
+      "🔨 move note to main mindmap",
+      "🔨 menu with actions"
+    ]
+    var templates = [
+      {
+          "description": "空白动作",
+          "action": "xxx",
+      },
+      {
+        "description": "空白动作 带双击动作",
+        "action": "xxx",
+        "doubleClick": {
+          "action": "xxx"
+        }
+      },
+      {
+        "description": "空白动作 带结束动作",
+        "action": "xxx",
+        "onFinish": {
+          "action": "xxx"
+        }
+      },
+      {
+        "description": "在输入框中插入文本片段",
+        "action": "insertSnippet",
+        "content": "test"
+      },
+      {
+        "description": "弹出菜单,选择要在输入框中插入的文本片段",
+        "action": "insertSnippet",
+        "target": "menu",
+        "menuItems": [
+          {
+            "menuTitle": "插入序号1️⃣",
+            "content": "1️⃣ "
+          },
+          {
+            "menuTitle": "插入序号2️⃣",
+            "content": "2️⃣ "
+          },
+          {
+            "menuTitle": "插入序号3️⃣",
+            "content": "3️⃣ "
+          },
+          {
+            "menuTitle": "插入序号4️⃣",
+            "content": "4️⃣ "
+          },
+          {
+            "menuTitle": "插入序号5️⃣",
+            "content": "5️⃣ "
+          },
+          {
+            "menuTitle": "插入序号6️⃣",
+            "content": "6️⃣ "
+          },
+          {
+            "menuTitle": "插入序号7️⃣",
+            "content": "7️⃣ "
+          },
+          {
+            "menuTitle": "插入序号8️⃣",
+            "content": "8️⃣ "
+          },
+          {
+            "menuTitle": "插入序号9️⃣",
+            "content": "9️⃣ "
+          }
+        ]
+      },
+      {
+          "description": "多选状态下,给选中的卡片标题加序号",
+          "action": "mergeText",
+          "target": "title",
+          "source": [
+              "{{noteIndex}}、{{title}}"
+          ]
+      },
+
+      {
+          "description": "开关脑图界面",
+          "action": "command",
+          "command": "ToggleMindMap"
+      },
+      {
+          "description": "弹出菜单以选择需要复制的内容",
+          "action": "copy",
+          "target": "menu"
+      },
+      {
+        "description": "复制markdown链接, 以卡片内容为标题,卡片url为链接",
+        "action": "copy",
+        "content": "[{{note.allText}}]({{{note.url}}})"
+      },
+      {
+        "description": "切换摘录markdown渲染",
+        "action": "toggleMarkdown"
+      },
+      {
+        "description": "切换摘录文本优先",
+        "action": "toggleTextFirst"
+      },
+      {
+        "description": "弹出菜单选择需要执行的prompt",
+        "action": "chatAI",
+        "target": "menu"
+      },
+      {
+        "description": "弹出菜单选择需要在Browser中搜索的内容",
+        "action": "search",
+        "target": "menu"
+      },
+      {
+        "action": "ocr",
+        "target": "chatModeReference"
+      },
+      {
+          "description": "开关文档全屏和标签页",
+          "action": "command",
+          "commands": [
+              "ToggleFullDoc",
+              "ToggleTabsBar"
+          ]
+      },
+      {
+          "description": "把合并的卡片的文本合并到主卡片的摘录中",
+          "action": "mergeText",
+          "target": "excerptText",
+          "source": [
+              "{{excerptTexts}},"
+          ],
+          "removeSource": true
+      },
+      {
+        "description": "创建摘录并移动到主脑图",
+        "action": "noteHighlight",
+        "mainMindMap": true
+      },
+      {
+        "description": "创建摘录并移动到指定卡片下",
+        "action": "noteHighlight",
+        "parentNote": "marginnote4app://note/xxx"
+      },
+      {
+        "description": "将当前笔记移动到主脑图中",
+        "action": "moveNote",
+        "target": "mainMindMap"
+      },
+    	{
+        "description": "弹出菜单以选择要执行的动作",
+        "action": "menu",
+        "menuItems": [
+            "🔽 我是标题",
+            {
+                "action": "copy",
+                "menuTitle": "123",
+                "content": "test"
+            },
+            {
+                "action": "toggleView",
+                "targets": [
+                    "mindmapToolbar",
+                    "addonBar"
+                ],
+                "autoClose": false,
+                "menuTitle": "🉑toggle"
+            }
+        ]
+      }
+
+    ]
+    var commandTable = templateNames.map((templateName,index)=>{
+      return {
+        title:templateName,
+        object:self,
+        selector:'setTemplate:',
+        param:templates[index]
+      }
+    })
+    commandTable.unshift({
+      title:"⬇️ Choose a template:",
+      object:self,
+      selector:'hideTemplateChooser:',
+      param:undefined
+    })
+    self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,300,4)
+  },
+  setTemplate: async function (config) {
+    self.checkPopoverController()
+    self.updateWebviewContent(JSON.stringify(config))
   },
   configCopyTapped: async function (params) {
     // MNUtil.copy(self.selectedItem)
@@ -588,7 +792,6 @@ settingController.prototype.createSwitch = function (switchName,targetAction,sup
     this[switchName] = UISwitch.new()
     this.popupEditView.addSubview(this[switchName])
     this[switchName].on = false
-    // this[switchName].frame = MNUtil.genFrame(10, 10, 100, 50)
     this[switchName].hidden = false
     if (targetAction) {
       this[switchName].addTargetActionForControlEvents(this, targetAction, 1 << 12);
@@ -620,40 +823,41 @@ settingController.prototype.settingViewLayout = function (){
     let viewFrame = this.view.bounds
     let width = viewFrame.width
     let height = viewFrame.height
-    this.maxButton.frame = MNUtil.genFrame(width*0.5+80,0,18,18)
-    this.moveButton.frame = MNUtil.genFrame(width*0.5-75, 0, 150, 17)
-    this.settingView.frame = {x:0,y:55,width:width,height:height-55}
-    this.configView.frame = MNUtil.genFrame(0,0,width-2,height-60)
-    this.advanceView.frame = MNUtil.genFrame(0,0,width-2,height-60)
-    this.popupEditView.frame = MNUtil.genFrame(0,0,width-2,height-60)
-    this.resizeButton.frame = {x:width-20,y:height-75,width:20,height:20}
+    Frame.set(this.maxButton,width*0.5+80,0)
+    Frame.set(this.moveButton,width*0.5-75, 0)
+    Frame.set(this.settingView,0,55,width,height-55)
+    Frame.set(this.configView,0,0,width-2,height-60)
+    Frame.set(this.advanceView,0,0,width-2,height-60)
+    Frame.set(this.popupEditView,0,0,width-2,height-60)
+    Frame.set(this.resizeButton,width-25,height-80)
     if (width < 650) {
-      this.webviewInput.frame = {x:5,y:195,width:width-10,height:height-255}
-      this.titleInput.frame = {x:5,y:155,width:width-80,height:35}
-      this.runButton.frame = {x:width-40,y:195,width:35,height:35}
-      this.saveButton.frame = {x:width-70,y:155,width:65,height:35}
-      this.copyButton.frame = {x:width-160,y:199.5,width:55,height:26}
-      this.pasteButton.frame = {x:width-100,y:199.5,width:60,height:26}
-      this.scrollview.frame = {x:5,y:5,width:width-10,height:145}
-      this.scrollview.contentSize = {width:width-20,height:height};
-      this.moveTopButton.frame = {x:width-40,y:10,width:30,height:30}
-      this.moveUpButton.frame = {x:width-40,y:45,width:30,height:30}
-      this.moveDownButton.frame = {x:width-40,y:80,width:30,height:30}
-      this.configReset.frame = {x:width-40,y:115,width:30,height:30}
+      Frame.set(this.webviewInput, 5, 195, width-10, height-255)
+      Frame.set(this.titleInput,5,155,width-80,35)
+      Frame.set(this.saveButton,width-70,155)
+      Frame.set(this.templateButton,width-188,199.5)
+      Frame.set(this.runButton,width-35,199.5)
+      Frame.set(this.copyButton,width-158,199.5)
+      Frame.set(this.pasteButton,width-99,199.5)
+      Frame.set(this.scrollview,5,5,width-10,145)
+      // this.scrollview.contentSize = {width:width-20,height:height};
+      Frame.set(this.moveTopButton, width-40, 10)
+      Frame.set(this.moveUpButton, width-40, 45)
+      Frame.set(this.moveDownButton, width-40, 80)
+      Frame.set(this.configReset, width-40, 115)
     }else{
-      this.webviewInput.frame = {x:305,y:45,width:width-310,height:height-105}
-      this.titleInput.frame = {x:305,y:5,width:width-380,height:35}
-      this.saveButton.frame = {x:width-70,y:5,width:65,height:35}
-      this.runButton.frame = {x:width-40,y:45,width:35,height:35}
-      this.copyButton.frame = {x:width-160,y:49.5,width:55,height:26}
-      this.pasteButton.frame = {x:width-100,y:49.5,width:60,height:26}
-
-      this.scrollview.frame = {x:5,y:5,width:295,height:height-65}
-      this.scrollview.contentSize = {width:295,height:height};
-      this.moveTopButton.frame = {x:263,y:15,width:30,height:30}
-      this.moveUpButton.frame = {x:263,y:50,width:30,height:30}
-      this.moveDownButton.frame = {x:263,y:85,width:30,height:30}
-      this.configReset.frame = {x:263,y:120,width:30,height:30}
+      Frame.set(this.webviewInput,305,45,width-310,height-105)
+      Frame.set(this.titleInput,305,5,width-380,35)
+      Frame.set(this.saveButton,width-70,5)
+      Frame.set(this.templateButton,width-188,49.5)
+      Frame.set(this.runButton,width-35,49.5)
+      Frame.set(this.copyButton,width-158,49.5)
+      Frame.set(this.pasteButton,width-99,49.5)
+      Frame.set(this.scrollview,5,5,295,height-65)
+      // this.scrollview.contentSize = {width:295,height:height};
+      Frame.set(this.moveTopButton, 263, 15)
+      Frame.set(this.moveUpButton, 263, 50)
+      Frame.set(this.moveDownButton, 263, 85)
+      Frame.set(this.configReset, 263, 120)
     }
 
 
@@ -663,49 +867,38 @@ settingController.prototype.settingViewLayout = function (){
     settingFrame.height = 40
     settingFrame.width = settingFrame.width
     this.tabView.frame = settingFrame
-    settingFrame.width = 85
-    settingFrame.y = 5
-    settingFrame.x = 5
-    settingFrame.height = 30
-    this.configButton.frame = settingFrame
-    settingFrame.x = 95
-    settingFrame.width = 75
-    this.popupButton.frame = settingFrame
-    settingFrame.x = 175
-    settingFrame.width = 100
-    this.advancedButton.frame = settingFrame
-    settingFrame.x = width-35
-    settingFrame.width = 30
-    this.closeButton.frame = settingFrame
-
+    Frame.set(this.configButton, 5, 5)
+    Frame.set(this.popupButton, 95, 5)
+    Frame.set(this.advancedButton, 175, 5)
+    Frame.set(this.closeButton, width-35, 5)
     let scrollHeight = 5
     if (MNUtil.appVersion().type === "macOS") {
       for (let i = 0; i < toolbarConfig.allPopupButtons.length; i++) {
         let replaceButtonName = "replacePopupButton_"+toolbarConfig.allPopupButtons[i]
         let replaceSwtichName = "replacePopupSwtich_"+toolbarConfig.allPopupButtons[i]
-        this[replaceButtonName].frame = MNUtil.genFrame(5, 5+i*40, width-10, 35)
-        this[replaceSwtichName].frame = MNUtil.genFrame(width-33, 5+i*40, 20, 35)
+        Frame.set(this[replaceButtonName], 5, 5+i*40, width-10)
+        Frame.set(this[replaceSwtichName], width-33, 5+i*40)
         scrollHeight = (i+1)*40+5
       }
     }else{
       for (let i = 0; i < toolbarConfig.allPopupButtons.length; i++) {
         let replaceButtonName = "replacePopupButton_"+toolbarConfig.allPopupButtons[i]
         let replaceSwtichName = "replacePopupSwtich_"+toolbarConfig.allPopupButtons[i]
-        this[replaceButtonName].frame = MNUtil.genFrame(5, 5+i*40, width-65, 35)
-        this[replaceSwtichName].frame = MNUtil.genFrame(width-55, 6.5+i*40, 20, 35)
+        Frame.set(this[replaceButtonName], 5, 5+i*40, width-65)
+        Frame.set(this[replaceSwtichName], width-55, 6.5+i*40)
         scrollHeight = (i+1)*40+5
       }
     }
-    this.popupScroll.frame = MNUtil.genFrame(0, 0, width, height-55)
+    Frame.set(this.popupScroll, 0, 0, width, height-55)
     this.popupScroll.contentSize = {width:width,height:scrollHeight}
-    this.editorButton.frame = MNUtil.genFrame(10, 15, (width-25)/2, 35)
-    this.chatAIButton.frame = MNUtil.genFrame(15+(width-25)/2, 15, (width-25)/2, 35)
-    this.snipasteButton.frame = MNUtil.genFrame(10, 55, (width-25)/2, 35)
-    this.autoStyleButton.frame = MNUtil.genFrame(15+(width-25)/2, 55, (width-25)/2, 35)
-    this.browserButton.frame = MNUtil.genFrame(10, 95, (width-25)/2, 35)
-    this.OCRButton.frame = MNUtil.genFrame(15+(width-25)/2, 95, (width-25)/2, 35)
-    this.hexInput.frame = MNUtil.genFrame(10, 150, width-135, 35)
-    this.hexButton.frame = MNUtil.genFrame(width-120, 150, 110, 35)
+    Frame.set(this.editorButton, 10, 15, (width-25)/2,35)
+    Frame.set(this.chatAIButton, 15+(width-25)/2, 15, (width-25)/2,35)
+    Frame.set(this.snipasteButton, 10, 55, (width-25)/2,35)
+    Frame.set(this.autoStyleButton, 15+(width-25)/2, 55, (width-25)/2,35)
+    Frame.set(this.browserButton, 10, 95, (width-25)/2,35)
+    Frame.set(this.OCRButton, 15+(width-25)/2, 95, (width-25)/2,35)
+    Frame.set(this.hexInput, 10, 150, width-135,35)
+    Frame.set(this.hexButton, width-120, 150, 110,35)
 }
 
 
@@ -733,16 +926,24 @@ try {
 
   this.createButton("configButton","configButtonTapped:","tabView")
   MNButton.setConfig(this.configButton, {color:"#457bd3",alpha:0.9,opacity:1.0,title:"Buttons",font:17,radius:10,bold:true})
+  this.configButton.width = 85
+  this.configButton.height = 30
 
   this.createButton("popupButton","popupButtonTapped:","tabView")
   MNButton.setConfig(this.popupButton, {alpha:0.9,opacity:1.0,title:"Popup",font:17,radius:10,bold:true})
+  this.popupButton.width = 75
+  this.popupButton.height = 30
 
   this.createButton("advancedButton","advancedButtonTapped:","tabView")
   MNButton.setConfig(this.advancedButton, {alpha:0.9,opacity:1.0,title:"Advanced",font:17,radius:10,bold:true})
+  this.advancedButton.width = 100
+  this.advancedButton.height = 30
 
   this.createButton("closeButton","closeButtonTapped:","tabView")
   MNButton.setConfig(this.closeButton, {color:"#e06c75",alpha:0.9,opacity:1.0,radius:10,bold:true})
   MNButton.setImage(this.closeButton, MNUtil.getImage(toolbarConfig.mainPath+"/stop.png"))
+  this.closeButton.width = 30
+  this.closeButton.height = 30
 
   // this.createButton("editorButton","toggleAddonLogo:","advanceView")
   try {
@@ -750,18 +951,23 @@ try {
       let replaceButtonName = "replacePopupButton_"+buttonName
       let replaceSwtichName = "replacePopupSwtich_"+buttonName
       this.createButton(replaceButtonName,"changePopupReplace:","popupScroll")
-      this[replaceButtonName].id = buttonName
+      let replaceButton = this[replaceButtonName]
+      replaceButton.height = 35
+      replaceButton.id = buttonName
       let target = toolbarConfig.getPopupConfig(buttonName).target
       if (target) {
         let actionName = toolbarConfig.getAction(toolbarConfig.getPopupConfig(buttonName).target).name
-        MNButton.setConfig(this[replaceButtonName], {color:"#558fed",alpha:0.9,opacity:1.0,title:buttonName+": "+actionName,font:17,radius:10,bold:true})
+        MNButton.setConfig(replaceButton, {color:"#558fed",alpha:0.9,opacity:1.0,title:buttonName+": "+actionName,font:17,radius:10,bold:true})
       }else{
-        MNButton.setConfig(this[replaceButtonName], {color:"#558fed",alpha:0.9,opacity:1.0,title:buttonName+": ",font:17,radius:10,bold:true})
+        MNButton.setConfig(replaceButton, {color:"#558fed",alpha:0.9,opacity:1.0,title:buttonName+": ",font:17,radius:10,bold:true})
       }
       this.createSwitch(replaceSwtichName, "togglePopupReplace:", "popupScroll")
-      this[replaceSwtichName].id = buttonName
-      this[replaceSwtichName].on = toolbarConfig.getPopupConfig(buttonName).enabled
-      this[replaceSwtichName].hidden = false
+      let replaceSwtich = this[replaceSwtichName]
+      replaceSwtich.id = buttonName
+      replaceSwtich.on = toolbarConfig.getPopupConfig(buttonName).enabled
+      replaceSwtich.hidden = false
+      replaceSwtich.width = 20
+      replaceSwtich.height = 35
     })
   } catch (error) {
     // toolbarUtils.addErrorLog(error, "replacePopupEditSwtich")
@@ -848,26 +1054,47 @@ try {
   this.createButton("configReset","resetButtonTapped:","configView")
   this.configReset.layer.opacity = 1.0
   this.configReset.setTitleForState("🔄",0)
+  this.configReset.width = 30
+  this.configReset.height = 30
 
   this.createButton("moveUpButton","moveForwardTapped:","configView")
   this.moveUpButton.layer.opacity = 1.0
   this.moveUpButton.setTitleForState("🔼",0)
+  this.moveUpButton.width = 30
+  this.moveUpButton.height = 30
+
   this.createButton("moveDownButton","moveBackwardTapped:","configView")
   this.moveDownButton.layer.opacity = 1.0
   this.moveDownButton.setTitleForState("🔽",0)
+  this.moveDownButton.width = 30
+  this.moveDownButton.height = 30
+
   this.createButton("moveTopButton","moveTopTapped:","configView")
   this.moveTopButton.layer.opacity = 1.0
   this.moveTopButton.setTitleForState("🔝",0)
+  this.moveTopButton.width = 30 //写入属性而不是写入frame中,作为固定参数使用,配合Frame.setLoc可以方便锁死按钮大小
+  this.moveTopButton.height = 30
+
+  this.createButton("templateButton","chooseTemplate:","configView")
+  MNButton.setConfig(this.templateButton, {opacity:0.8,color:"#457bd3"})
+  this.templateButton.layer.cornerRadius = 6
+  this.templateButton.setImageForState(toolbarConfig.templateImage,0)
+  this.templateButton.width = 26
+  this.templateButton.height = 26
 
   this.createButton("copyButton","configCopyTapped:","configView")
   MNButton.setConfig(this.copyButton, {opacity:0.8,color:"#457bd3",title:"Copy",bold:true})
   this.copyButton.layer.cornerRadius = 6
+  this.copyButton.width = 55
+  this.copyButton.height = 26
   // this.copyButton.layer.opacity = 1.0
   // this.copyButton.setTitleForState("Copy",0)
 
   this.createButton("pasteButton","configPasteTapped:","configView")
   MNButton.setConfig(this.pasteButton, {opacity:0.8,color:"#457bd3",title:"Paste",bold:true})
   this.pasteButton.layer.cornerRadius = 6
+  this.pasteButton.width = 60
+  this.pasteButton.height = 26
   // this.pasteButton.layer.opacity = 1.0
   // this.pasteButton.setTitleForState("Paste",0)
 
@@ -875,14 +1102,24 @@ try {
   // this.saveButton.layer.opacity = 1.0
   // this.saveButton.setTitleForState("Save",0)
   MNButton.setConfig(this.saveButton, {opacity:0.8,color:"#e06c75",title:"Save","font":18,bold:true})
+  this.saveButton.width = 65
+  this.saveButton.height = 35
 
   this.createButton("resizeButton",undefined,"configView")
   this.resizeButton.setImageForState(toolbarConfig.curveImage,0)
   MNButton.setConfig(this.resizeButton, {cornerRadius:20,color:"#ffffff",alpha:0.})
+  this.resizeButton.width = 25
+  this.resizeButton.height = 25
+
 
   this.createButton("runButton","configRunTapped:","configView")
-  MNButton.setConfig(this.runButton, {opacity:1.0,title:"▶️",font:25,color:"#ffffff",alpha:0.})
-  
+  MNButton.setConfig(this.runButton, {opacity:0.8,color:"#e06c75"})
+  this.runButton.layer.cornerRadius = 6
+  // MNButton.setConfig(this.runButton, {opacity:1.0,title:"▶️",font:25,color:"#ffffff",alpha:0.})
+  this.runButton.setImageForState(toolbarConfig.runImage,0)
+  this.runButton.width = 26
+  this.runButton.height = 26
+
   let color = ["#ffffb4","#ccfdc4","#b4d1fb","#f3aebe","#ffff54","#75fb4c","#55bbf9","#ea3323","#ef8733","#377e47","#173dac","#be3223","#ffffff","#dadada","#b4b4b4","#bd9fdc"]
 } catch (error) {
   toolbarUtils.addErrorLog(error, "createSettingView")
@@ -946,19 +1183,10 @@ settingController.prototype.setTextview = function (name) {
         actions = toolbarConfig.getActions()
         description = action.description
         if (name === "execute") {
-          this.preAction = "execute"
-          this.setJSContent(description)
+          this.setWebviewContent("{}")
         }else{
-          if (this.preAction === "execute") {
-            this.preAction = name
-            this.loadWebviewContent()
-            MNUtil.delay(0.5).then(()=>{
-              this.setWebviewContent(description)
-            })
-          }else{
-            this.preAction = name
-            this.setWebviewContent(description)
-          }
+          this.preAction = name
+          this.setWebviewContent(description)
         }
       }
       // if (!text.system) {
@@ -1243,7 +1471,7 @@ settingController.prototype.loadWebviewContent = function () {
 /**
  * @this {settingController}
  */
-settingController.prototype.setWebviewContent = function (content) {
+settingController.prototype.updateWebviewContent = function (content) {
   if (!MNUtil.isValidJSON(content)) {
     content = "{}"
   }
@@ -1254,7 +1482,20 @@ settingController.prototype.setWebviewContent = function (content) {
   //   NSURL.fileURLWithPath(this.mainPath + '/')
   // );
 }
-
+/**
+ * @this {settingController}
+ */
+settingController.prototype.setWebviewContent = function (content) {
+  if (!MNUtil.isValidJSON(content)) {
+    content = "{}"
+  }
+  this.runJavaScript(`setContent('${encodeURIComponent(content)}')`)
+  // this.webviewInput.loadHTMLStringBaseURL(toolbarUtils.html(content))
+  // this.webviewInput.loadHTMLStringBaseURL(
+  //   toolbarUtils.jsonEditor(JSON.stringify(content)),
+  //   NSURL.fileURLWithPath(this.mainPath + '/')
+  // );
+}
 /**
  * @this {settingController}
  */

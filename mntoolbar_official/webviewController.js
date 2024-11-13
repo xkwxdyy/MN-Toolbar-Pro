@@ -70,7 +70,8 @@ var toolbarController = JSB.defineClass('toolbarController : UIViewController <U
     self.screenButton = UIButton.buttonWithType(0);
     self.setButtonLayout(self.screenButton,"changeScreen:")
     self.screenButton.layer.cornerRadius = 7;
-
+    self.screenButton.width = 40
+    self.screenButton.height = 15
     // let command = self.keyCommandWithInputModifierFlagsAction('d',1 << 0,'test:')
     // let command = UIKeyCommand.keyCommandWithInputModifierFlagsAction('d',1 << 0,'test:')
     // <<< screen button <<<
@@ -109,14 +110,12 @@ viewWillLayoutSubviews: function() {
     var xRight    = xLeft + 40
     var yTop      = viewFrame.y
     var yBottom   = yTop + viewFrame.height
-    // self.moveButton.frame = {x: 0 ,y: 0,width: 40,height: 15};
-    self.screenButton.frame = {x: 0 ,y: yBottom-15,width: 40,height: 15};
-
+    Frame.set(self.screenButton, 0, yBottom-15)
     let initX = 0
     let initY = 0
     for (let index = 0; index < self.maxButtonNumber; index++) {
       initX = 0
-      self["ColorButton"+index].frame = {  x: xLeft+initX,  y: initY,  width: 40,  height: 40,};
+      Frame.set(self["ColorButton"+index], xLeft+initX, initY)
       initY = initY+45
       self["ColorButton"+index].hidden = (initY > (yBottom+5))
     }
@@ -210,6 +209,8 @@ try {
     self.hideAfterDelay()
   },
   execute: async function (button) {
+    MNUtil.showHUD("Action disabled")
+    return
     let code = toolbarConfig.getExecuteCode()
     toolbarSandbox.execute(code)
     if (button.menu) {
@@ -362,12 +363,9 @@ lastPopover: function (button) {
     toolbarUtils.dismissPopupMenu(button.menu,self.onClick)
   },
   copyAsMarkdownLink(button) {
+    MNUtil.currentWindow.becomeFirstResponder()
     self.onClick = true
-        MNUtil.postNotification("cloudConfigChange", {})
-        return
-
 try {
-  
 
     const nodes = MNNote.getFocusNotes()
 
@@ -554,12 +552,12 @@ try {
     let endFrame
     beginFrame.y = beginFrame.y-10
     if (beginFrame.x+490 > studyFrame.width) {
-      endFrame = MNUtil.genFrame(beginFrame.x-450, beginFrame.y-10, 450, 500)
+      endFrame = Frame.gen(beginFrame.x-450, beginFrame.y-10, 450, 500)
       if (beginFrame.y+490 > studyFrame.height) {
         endFrame.y = studyFrame.height-500
       }
     }else{
-      endFrame = MNUtil.genFrame(beginFrame.x+40, beginFrame.y-10, 450, 500)
+      endFrame = Frame.gen(beginFrame.x+40, beginFrame.y-10, 450, 500)
       if (beginFrame.y+490 > studyFrame.height) {
         endFrame.y = studyFrame.height-500
       }
@@ -605,7 +603,7 @@ try {
     if (button.menu) {
       button.menu.dismissAnimated(true)
       let beginFrame = button.convertRectToView(button.bounds,MNUtil.studyView)
-      let endFrame = MNUtil.genFrame(beginFrame.x-225, beginFrame.y-50, 450, 500)
+      let endFrame = Frame.gen(beginFrame.x-225, beginFrame.y-50, 450, 500)
       endFrame.y = toolbarUtils.constrain(endFrame.y, 0, studyFrame.height-500)
       endFrame.x = toolbarUtils.constrain(endFrame.x, 0, studyFrame.width-500)
       MNUtil.postNotification("openInEditor",{noteId:noteId,beginFrame:beginFrame,endFrame:endFrame})
@@ -614,13 +612,13 @@ try {
     let beginFrame = self.view.frame
     beginFrame.y = beginFrame.y-10
     if (beginFrame.x+490 > studyFrame.width) {
-      let endFrame = MNUtil.genFrame(beginFrame.x-450, beginFrame.y-10, 450, 500)
+      let endFrame = Frame.gen(beginFrame.x-450, beginFrame.y-10, 450, 500)
       if (beginFrame.y+490 > studyFrame.height) {
         endFrame.y = studyFrame.height-500
       }
       MNUtil.postNotification("openInEditor",{noteId:noteId,beginFrame:beginFrame,endFrame:endFrame})
     }else{
-      let endFrame = MNUtil.genFrame(beginFrame.x+40, beginFrame.y-10, 450, 500)
+      let endFrame = Frame.gen(beginFrame.x+40, beginFrame.y-10, 450, 500)
       if (beginFrame.y+490 > studyFrame.height) {
         endFrame.y = studyFrame.height-500
       }
@@ -633,7 +631,13 @@ try {
       MNUtil.showHUD("MN Toolbar: Please install 'MN OCR' first!")
       return
     }
-    toolbarUtils.ocr()
+    let des = toolbarConfig.getDescriptionByName("ocr")
+    await toolbarUtils.ocr(des)
+    if ("onFinish" in des) {
+      let finishAction = des.onFinish
+      await MNUtil.delay(0.5)
+      self.customActionByDes(button, finishAction)
+    }
     if (button.menu) {
       button.menu.dismissAnimated(true)
       return
@@ -789,7 +793,7 @@ try {
     if ((y+frame.height) > studyFrame.height) {
       frame.height = studyFrame.height - y
     }
-    self.view.frame = {x:x,y:y,width:40,height:toolbarUtils.checkHeight(frame.height,self.maxButtonNumber)}
+    Frame.set(self.view,x,y,40,toolbarUtils.checkHeight(frame.height,self.maxButtonNumber))
     self.currentFrame  = self.view.frame
     if (gesture.state === 3) {
       // self.resi
@@ -818,7 +822,7 @@ try {
       height = MNUtil.studyView.bounds.height - frame.y
     }
     height = toolbarUtils.checkHeight(height,self.maxButtonNumber)
-    self.view.frame = {x:frame.x,y:frame.y,width:40,height:height}
+    Frame.set(self.view,frame.x,frame.y,40,height)
     self.currentFrame  = self.view.frame
     if (gesture.state === 3) {
       let buttonNumber = Math.floor(height/45)
@@ -1041,26 +1045,31 @@ try {
   // let activeActionNumbers = actionNames.length
   for (let index = 0; index < this.maxButtonNumber; index++) {
     let actionName = actionNames[index]
+    let colorButton
     if (this["ColorButton"+index]) {
+      colorButton = this["ColorButton"+index]
     }else{
       this["ColorButton"+index] = UIButton.buttonWithType(0);
+      colorButton = this["ColorButton"+index]
+      colorButton.height = 40
+      colorButton.width = 40
       this["moveGesture"+index] = new UIPanGestureRecognizer(this,"onMoveGesture:")
-      this["ColorButton"+index].addGestureRecognizer(this["moveGesture"+index])
+      colorButton.addGestureRecognizer(this["moveGesture"+index])
       this["moveGesture"+index].view.hidden = false
     }
-    this["ColorButton"+index].index = index
+    colorButton.index = index
     if (actionName.includes("color")) {
-      this["ColorButton"+index].color = parseInt(actionName.slice(5))
-      this.setColorButtonLayout(this["ColorButton"+index],"setColor:",buttonColor)
+      colorButton.color = parseInt(actionName.slice(5))
+      this.setColorButtonLayout(colorButton,"setColor:",buttonColor)
     }else if(actionName.includes("custom")){
-      this.setColorButtonLayout(this["ColorButton"+index],"customAction:",buttonColor)
+      this.setColorButtonLayout(colorButton,"customAction:",buttonColor)
     }else{
-      this.setColorButtonLayout(this["ColorButton"+index],actionName+":",buttonColor)
+      this.setColorButtonLayout(colorButton,actionName+":",buttonColor)
     }
-    // MNButton.setImage(this["ColorButton"+index], toolbarConfig.imageConfigs[actionName])
+    // MNButton.setImage(colorButton, toolbarConfig.imageConfigs[actionName])
     // let image = (actionName in actions)?actions[actionName].image+".png":defaultActions[actionName].image+".png"
-    // this["ColorButton"+index].setImageForState(MNUtil.getImage(toolbarConfig.mainPath + `/`+image),0)
-    this["ColorButton"+index].setImageForState(toolbarConfig.imageConfigs[actionName],0)
+    // colorButton.setImageForState(MNUtil.getImage(toolbarConfig.mainPath + `/`+image),0)
+    colorButton.setImageForState(toolbarConfig.imageConfigs[actionName],0)
     // self["ColorButton"+index].setTitleForState("",0) 
     // self["ColorButton"+index].contentHorizontalAlignment = 1
   }
@@ -1118,14 +1127,14 @@ toolbarController.prototype.setToolbarLayout = function () {
     var yTop      = viewFrame.y
     var yBottom   = yTop + viewFrame.height
     // this.moveButton.frame = {x: 0 ,y: 0,width: 40,height: 15};
-    this.screenButton.frame = {x: 0 ,y: yBottom-15,width: 40,height: 15};
+    Frame.set(this.screenButton, 0, yBottom-15)
     this.view.bringSubviewToFront(this.screenButton)
 
     let initX = 0
     let initY = 0
     for (let index = 0; index < this.buttonNumber; index++) {
       initX = 0
-      this["ColorButton"+index].frame = {  x: xLeft+initX,  y: initY,  width: 40,  height: 40,};
+      Frame.set(this["ColorButton"+index], xLeft+initX, initY)
       initY = initY+45
       this["ColorButton"+index].hidden = (initY > yBottom)
     }
@@ -1163,6 +1172,13 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
     let title,content,color,config
     let targetNoteId
     switch (des.action) {
+      case "copy":
+        if (des.target || des.content) {
+          toolbarUtils.copy(des)
+        }else{
+          toolbarUtils.smartCopy()
+        }
+        break;
       case "paste":
         toolbarUtils.paste(des)
         break;
@@ -1192,18 +1208,33 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
           })
         })
         break;
+      case "ocr":
+        await toolbarUtils.ocr(des)
+        break;
+      case "insertSnippet":
+        let textView = toolbarUtils.textView
+        if (!textView || textView.hidden) {
+          MNUtil.showHUD("No textView")
+          break;
+        }
+        let textContent = toolbarUtils.detectAndReplace(des.content)
+        toolbarUtils.insertSnippetToTextView(textContent,textView)
+        break;
       case "noteHighlight":
         let newNote = await toolbarUtils.noteHighlight(des)
+        newNote.focusInMindMap(0.5)
         // if ("parentNote" in des) {
         //   await MNUtil.delay(5)
         //   let parentNote = MNNote.new(des.parentNote)
-
         //   parentNote.focusInMindMap()
         //   MNUtil.showHUD("as childNote of "+parentNote.noteId)
         //   MNUtil.undoGrouping(()=>{
         //     parentNote.addChild(newNote)
         //   })
         // }
+        break;
+      case "moveNote":
+        toolbarUtils.moveNote(des)
         break;
       case "addChildNote":
         MNUtil.showHUD("addChildNote")
@@ -1271,13 +1302,7 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
         }
         focusNote.createBrotherNote(config)
         break;
-      case "copy":
-        if (des.target) {
-          toolbarUtils.copy(des)
-        }else{
-          toolbarUtils.smartCopy()
-        }
-        break;
+
       case "crash":
         MNUtil.showHUD("crash")
         MNUtil.studyView.frame = {x:undefined}
@@ -1418,9 +1443,9 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
         })
         break;
       case "mergeText":
+        let noteRange = des.range ?? "currentNotes"
+        let targetNotes = toolbarUtils.getNotesByRange(noteRange)
         MNUtil.undoGrouping(()=>{
-          let range = des.range ?? "currentNotes"
-          let targetNotes = toolbarUtils.getNotesByRange(range)
           targetNotes.forEach((note,index)=>{
             let mergedText = toolbarUtils.getMergedText(note, des, index)
             if (mergedText === undefined) {
@@ -1686,6 +1711,7 @@ toolbarController.prototype.customActionMenu =  function (button,des) {
       return true
     }
 
+
     if (des.action === "chatAI" && des.target) {
       if (des.target === "openFloat") {
         MNUtil.postNotification("chatAIOpenFloat", {beginFrame:button.convertRectToView(button.bounds,MNUtil.studyView)})
@@ -1715,6 +1741,20 @@ toolbarController.prototype.customActionMenu =  function (button,des) {
         }
         return true
       }
+    }
+    if (des.action === "insertSnippet" && des.target && des.target === "menu") {
+      this.onClick = true
+      var commandTable = des.menuItems.map(item => {
+        item.action = "insertSnippet"
+        return {title:item.menuTitle,object:this,selector:'customActionByMenu:',param:{des:item,button:button}}
+      })
+      let width = 250
+      if (MNUtil.studyView.bounds.width - buttonX < (width+40)) {
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+      }else{
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+      }
+      return true
     }
     if (des.action === "paste" && des.target && des.target === "menu") {
       this.onClick = true

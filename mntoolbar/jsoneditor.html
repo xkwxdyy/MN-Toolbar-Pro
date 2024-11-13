@@ -40,7 +40,7 @@ body {
           //path: array
           // console.log(input);
           if (input === 'field') {
-            return ['menuTitle','name','input','text','target', 'action', 'menu', 'source','color','content','title','markdown','command','commands','OCR','fillPattern','asTitle','tags','tag','find','multi','type','index','removeSource','prompt','user','system','trim','replace','merge','linkType','target','from','to','steps','range','url','engine','targets','onFinish','doubleClick','menuItems','autoClose'];
+            return ['menuTitle','name','input','text','target', 'action', 'description','menu', 'source','color','content','title','markdown','command','commands','OCR','fillPattern','asTitle','tags','tag','find','multi','type','index','removeSource','prompt','user','system','trim','replace','merge','linkType','target','from','to','steps','range','url','engine','targets','onFinish','doubleClick','menuItems','autoClose','parentNote','mainMindMap','method'];
           }
           if (input === 'value') {
             let parent = path.at(-1)
@@ -48,12 +48,22 @@ body {
               parent = path.at(-2)
             }
             switch (parent) {
+              case 'method':
+                return ['replace','append']
+              case 'content':
+                return ['{{note.title}}','{{{note.url}}}']
               case 'targets':
                 return ['addonBar','mindmapToolbar']
               case 'source':
                 return ['photo','camera','file','parentNote','noteDoc','note','currentDoc'];
               case 'action':
-                return ['chatAI','command','setButtonImage','addImageComment','mergeText','toggleView','menu','shortcut','replace','showInFloatWindow','openURL','copy','addComment','export','removeComment','moveComment','paste','setContent','clearContent','search','noteHighlight','cloneAndMerge','cloneAsChildNote','addChildNote','addBrotherNote','crash','link','toggleTextFirst','toggleMarkdown','focus'];
+                return ['ocr','moveNote','chatAI','command','setButtonImage','addImageComment','mergeText','toggleView','menu','shortcut','replace','showInFloatWindow','openURL','copy','addComment','export','removeComment','moveComment','paste','setContent','clearContent','search','noteHighlight','cloneAndMerge','cloneAsChildNote','addChildNote','addBrotherNote','crash','link','toggleTextFirst','toggleMarkdown','focus'];
+              case 'trim':
+              case 'markdown':
+              case 'autoClose':
+              case 'asTitle':
+              case 'mainMindMap':
+                return ['true','false'];
               case 'steps':
                 return ['from','to','reg','mod'];
               case 'linkType':
@@ -61,7 +71,7 @@ body {
               case 'range':
                 return ['currentNotes','childNotes','descendants'];
               case 'target':
-                return ['addonBar','mindmapToolbar','default','title','excerpt','excerptText','newComment','clipboard','appendTitle','appendExcerpt','auto','menu','selectionText','selectionImage','excerptOCR','notesText','comment','noteId','noteURL','noteMarkdown','noteMarkdownOCR','noteWithDecendentsMarkdown','clipboardText','noteInClipboard','currentNote','currentChildMap','parentNote','currentNoteInMindMap','doc','mindmap','both','floatMindmap'];
+                return ['mainMindMap','addonBar','mindmapToolbar','default','title','excerpt','excerptText','newComment','clipboard','appendTitle','appendExcerpt','auto','menu','selectionText','selectionImage','excerptOCR','notesText','comment','noteId','noteURL','noteMarkdown','noteMarkdownOCR','noteWithDecendentsMarkdown','clipboardText','noteInClipboard','currentNote','currentChildMap','parentNote','currentNoteInMindMap','doc','mindmap','both','floatMindmap'];
               case 'command':
               case 'commands':
                 return ['GoNewFeatures','GoUserGuide','GoManual','InAppPurchase','DBVaults','ShareLicenses','SharePackage','GoiCloud','ExportPKG','ExportVault','ExportMapPDF','ExportDocPDF','ExportOmni','ExportWord','ExportMind','ExportAnki','BackupDB','ClearTemp','OpenTrash','OpenExtensions','GoSettings','EditUndo','EditRedo','EditCut','CommonCopy','EditPaste','EditSelAll','EditMarkdown','ToggleDocument','ToggleMindMap','ToggleCards','ToggleReview','ToggleResearch','ToggleMoreSettings','ToggleSidebar','FullTextSearch','DraftList','ManageDocs','ToggleFullDoc','ToggleBookLeft','ToggleBookBottom','ToggleTabsBar','ToggleAddFile','TabNextFile','TabPrevFile','ToggleSplit','BindSplit','EmphasisCloze','ToggleTextLink','SyncMindMapToBook','SyncBookToMindMap','SyncWindowPos','SyncDeletion','SetRefCopyMode','SetCloneCopyMode','UIStatusURL','BookTOC','BookPageList','BookMarkList','BookSketchList','BookCardList','EditDocLayers','ViewDocCardGroup','BookSearch','BookPageFlip','BookPageScroll','ExtendSplit','ExtendMargin','ExtendPopup','PdfCrop','BookPageNumber','GoBack','GoForward','BookMarkAdd','BookMarkRemove','EditPDFPages','AddToTOC','SplitBook','InsertBlank','Translate','FoldHighlight','SourceHighlight','EditTextBox','EditImageBox','ExcerptToolSettings','ExcerptToolSelect','ExcerptToolCustom0','ExcerptToolCustom1','ExcerptToolCustom2','ExcerptToolCustom3','HighlightShortcut1','HighlightShortcut2','HighlightShortcut3','HighlightShortcut4','ExcerptToolSketch','NotebookOutline','ViewMapCardGroup','EditMultiSel','FocusNote','FocusParent','NotebookOutlineEdit','EditOutlineIncLevel','EditOutlineDecLevel','SnippetMode','NewSiblingNote','NewChildNote','NewParentNote','ToggleExpand','EditGroupNotes','EditLinkNotes','EditMergeNotes','SelBranchStyle0','SelBranchStyle3','SelBranchStyle2','SelBranchStyle1','SelBranchStyle4','SelBranchStyle60','SelBranchStyle61','SelBranchStyle64','SelBranchStyle7','SelBranchStyle100','GlobalBranchStyle','ZoomToFit','ViewExpandAll','ViewCollapseAll','ViewExpandLevel0','ViewExpandLevel1','ViewExpandLevel2','ViewExpandLevel3','ViewExpandLevel4','ViewExpandLevel5','ViewExpandLevel6','ViewExpandLevel7','ViewExpandRows','ViewCollapseRows','EditArrangeNotes','MindmapSnippetMode','SelectBranch','ShowSketch','HideSketch','EditCopy','EditReference','EditCopyLink','EditDeleteNote','EditColorNoteIndex0','EditColorNoteIndex1','EditColorNoteIndex2','EditColorNoteIndex3','EditColorNoteIndex4','EditColorNoteIndex5','EditColorNoteIndex6','EditColorNoteIndex7','EditColorNoteIndex8','EditColorNoteIndex9','EditColorNoteIndex10','EditColorNoteIndex11','EditColorNoteIndex12','EditColorNoteIndex13','EditColorNoteIndex14','EditColorNoteIndex15','EditTagNote','EditAddTitle','EditAddText','EditAppendComment','ContinueExcerpt','EditTextMode','EditOcclusion','EditUnmergeNote','TextToTitle','ExpandExtend','CollapseExtend','SendToMap','RemoveFromMap','AddToReview','ClearFormat1','ClearFormat2','FlashcardSpeech','SetTitleHighlight','SetCommentHighlight','SetAsEmphasis','MergeTo','FlashcardsPlay','FlashcardsStop','FlashcardFlip','FlashcardLocal','FlashcardAgain','FlashcardHard','FlashcardGood','FlashcardEasy','FlashcardStarred']
@@ -139,6 +149,11 @@ body {
         // get json
         const updatedJson = editor.get()
         function updateContent(data) {
+          let tem = decodeURIComponent(data)
+          // MNUtil.copy(tem)
+          editor.update(JSON.parse(tem))
+        }
+        function setContent(data) {
           let tem = decodeURIComponent(data)
           // MNUtil.copy(tem)
           editor.set(JSON.parse(tem))

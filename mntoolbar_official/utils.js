@@ -1,3 +1,141 @@
+class Frame{
+  static gen(x,y,width,height){
+    return MNUtil.genFrame(x, y, width, height)
+  }
+  /**
+   * 
+   * @param {UIView} view 
+   * @param {number} x 
+   * @param {number} y 
+   * @param {number} width 
+   * @param {number} height 
+   */
+  static set(view,x,y,width,height){
+    let oldFrame = view.frame
+    let frame = view.frame
+    if (x !== undefined) {
+      frame.x = x
+    }else if (view.x !== undefined) {
+      frame.x = view.x
+    }
+    if (y !== undefined) {
+      frame.y = y
+    }else if (view.y !== undefined) {
+      frame.y = view.y
+    }
+    if (width !== undefined) {
+      frame.width = width
+    }else if (view.width !== undefined) {
+      frame.width = view.width
+    }
+    if (height !== undefined) {
+      frame.height = height
+    }else if (view.height !== undefined) {
+      frame.height = view.height
+    }
+    if (!this.sameFrame(oldFrame,frame)) {
+      view.frame = frame
+    }
+  }
+  static sameFrame(frame1,frame2){
+    if (frame1.x === frame2.x && frame1.y === frame2.y && frame1.width === frame2.width && frame1.height === frame2.height) {
+      return true
+    }
+    return false
+  }
+  /**
+   * 
+   * @param {UIView} view 
+   * @param {number} x
+   */
+  static setX(view,x){
+    let frame = view.frame
+    frame.x = x
+    view.frame = frame
+  }
+  /**
+   * 
+   * @param {UIView} view 
+   * @param {number} y
+   */
+  static setY(view,y){
+    let frame = view.frame
+    frame.y = y
+    view.frame = frame
+  }
+  /**
+   * 
+   * @param {UIView} view
+   * @param {number} x 
+   * @param {number} y 
+   */
+  static setLoc(view,x,y){
+    let frame = view.frame
+    frame.x = x
+    frame.y = y
+    if (view.width) {
+      frame.width = view.width
+    }
+    if (view.height) {
+      frame.height = view.height
+    }
+    view.frame = frame
+  }
+  /**
+   * 
+   * @param {UIView} view 
+   * @param {number} width 
+   * @param {number} height 
+   */
+  static setSize(view,width,height){
+    let frame = view.frame
+    frame.width = width
+    frame.height = height
+    view.frame = frame
+  }
+  /**
+   * 
+   * @param {UIView} view 
+   * @param {number} width
+   */
+  static setWidth(view,width){
+    let frame = view.frame
+    frame.width = width
+    view.frame = frame
+  }
+  /**
+   * 
+   * @param {UIView} view 
+   * @param {number} height
+   */
+  static setHeight(view,height){
+    let frame = view.frame
+    frame.height = height
+    view.frame = frame
+  }
+  /**
+   * 
+   * @param {UIView} view 
+   * @param {number} xDiff
+   */
+  static moveX(view,xDiff){
+    let frame = view.frame
+    frame.x = frame.x+xDiff
+    view.frame = frame
+  }
+  /**
+   * 
+   * @param {UIView} view 
+   * @param {number} yDiff
+   */
+  static moveY(view,yDiff){
+    let frame = view.frame
+    frame.y = frame.y+yDiff
+    view.frame = frame
+  }
+}
+
+
 
 // 获取UITextView实例的所有属性
 function getAllProperties(obj) {
@@ -26,7 +164,11 @@ class toolbarUtils {
    */
   static sourceToRemove = []
   static commentToRemove = {}
-
+  /**
+   * @type {UITextView}
+   * @static
+   */
+  static textView
   static init(){
   try {
     this.app = Application.sharedInstance()
@@ -158,6 +300,26 @@ static getMNImagesFromMarkdown(markdown) {
     return undefined
   }
 }
+/**
+ * 
+ * @param {string} text 
+ * @param {UITextView} textView
+ */
+static insertSnippetToTextView(text, textView) {
+
+  let textLength = text.length
+  let cursorLocation = textLength
+  if (/{{cursor}}/.test(text)) {
+    cursorLocation = text.indexOf("{{cursor}}")
+    text = text.replace(/{{cursor}}/g, "")
+    textLength = text.length
+  }
+  let selectedRange = textView.selectedRange
+  let pre = textView.text.slice(0,selectedRange.location)
+  let post = textView.text.slice(selectedRange.location+selectedRange.length)
+  textView.text = pre+text+post
+  textView.selectedRange = {location:selectedRange.location+cursorLocation,length:0}
+}
   static smartCopy(){
     MNUtil.showHUD("smartcopy")
     let selection = MNUtil.currentSelection
@@ -231,7 +393,6 @@ static getMNImagesFromMarkdown(markdown) {
   }
   static async copy(des) {
     let focusNote = MNNote.getFocusNote()
-    MNUtil.showHUD("copy")
     let target = des.target
     let element = undefined
     if (target) {
@@ -241,7 +402,18 @@ static getMNImagesFromMarkdown(markdown) {
           return
           break;
         case "selectionText":
-          element = MNUtil.selectionText
+          if (MNUtil.currentSelection.onSelection) {
+            element = MNUtil.selectionText
+          }else{
+            if (this.textView && this.textView.text) {
+              let selectedRange = this.textView.selectedRange
+              if (selectedRange.length) {
+                element = this.textView.text.slice(selectedRange.location,selectedRange.location+selectedRange.length)
+              }else{
+                element = this.textView.text
+              }
+            }
+          }
           break;
         case "selectionImage":
           MNUtil.copyImage(MNUtil.getDocImage(true))
@@ -985,11 +1157,29 @@ static getMNImagesFromMarkdown(markdown) {
   }
 
   static detectAndReplace(text,element=undefined) {
-    let config = this.getVarInfo(text)
+    let noteConfig = this.getNoteObject(MNNote.getFocusNote(),{},{parent:true,child:true})
+    let config = {note:noteConfig,date:this.getDateObject()}
     if (element !== undefined) {
       config.element = element
     }
-    return this.replacVar(text,config)
+    let hasClipboardText = text.includes("{{clipboardText}}")
+    let hasSelectionText = text.includes("{{selectionText}}")
+    let hasCurrentDocName = text.includes("{{currentDocName}}")
+    let hasCurrentDocAttach = text.includes("{{currentDocAttach}}")
+    if (hasClipboardText) {
+      config.clipboardText = MNUtil.clipboardText
+    }
+    if (hasSelectionText) {
+      config.selectionText = MNUtil.selectionText
+    }
+    if (hasCurrentDocName) {
+      config.currentDocName = MNUtil.getFileName(MNUtil.currentDocController.document.pathFile)
+    }
+    if (hasCurrentDocAttach && editorUtils) {
+      config.currentDocAttach = editorUtils.getAttachContentByMD5(MNUtil.currentDocmd5)
+    }
+    let output = MNUtil.render(text, config)
+    return output
   }
   /**
    * 
@@ -1155,12 +1345,12 @@ static getMNImagesFromMarkdown(markdown) {
     let endFrame
     beginFrame.y = beginFrame.y-10
     if (beginFrame.x+490 > studyFrame.width) {
-      endFrame = MNUtil.genFrame(beginFrame.x-450, beginFrame.y-10, 450, 500)
+      endFrame = Frame.gen(beginFrame.x-450, beginFrame.y-10, 450, 500)
       if (beginFrame.y+490 > studyFrame.height) {
         endFrame.y = studyFrame.height-500
       }
     }else{
-      endFrame = MNUtil.genFrame(beginFrame.x+40, beginFrame.y-10, 450, 500)
+      endFrame = Frame.gen(beginFrame.x+40, beginFrame.y-10, 450, 500)
       if (beginFrame.y+490 > studyFrame.height) {
         endFrame.y = studyFrame.height-500
       }
@@ -1201,17 +1391,21 @@ static getMNImagesFromMarkdown(markdown) {
       return undefined
     }
   }
-  static async ocr(){
+  /**
+   * 
+   * @param {{buffer:boolean,target:string,method:string}} des 
+   * @returns 
+   */
+  static async ocr(des){
     if (typeof ocrUtils === 'undefined') {
       MNUtil.showHUD("MN Toolbar: Please install 'MN OCR' first!")
       return
     }
 try {
-    let des = toolbarConfig.getDescriptionByName("ocr")
-    let foucsNote = MNNote.getFocusNote()
+    let focusNote = MNNote.getFocusNote()
     let imageData = MNUtil.getDocImage(true,true)
-    if (!imageData) {
-      imageData = MNNote.getImageFromNote(foucsNote)
+    if (!imageData && focusNote) {
+      imageData = MNNote.getImageFromNote(focusNote)
     }
     if (!imageData) {
       MNUtil.showHUD("No image found")
@@ -1231,12 +1425,19 @@ try {
     //     res = await ocrNetwork.OCR(imageData)
     //     break
     // }
+    let noteTargets = ["comment","excerpt"]
+    if (!focusNote && noteTargets.includes(des.target)) {
+      let selection = MNUtil.currentSelection
+      if (selection.onSelection) {
+        focusNote = MNNote.fromSelection()
+      }
+    }
     if (res) {
       switch (des.target) {
         case "comment":
-          if (foucsNote) {
+          if (focusNote) {
             MNUtil.undoGrouping(()=>{
-              foucsNote.appendMarkdownComment(res)
+              focusNote.appendMarkdownComment(res)
               MNUtil.showHUD("Append to comment")
             })
           }else{
@@ -1248,17 +1449,12 @@ try {
           MNUtil.showHUD("Save to clipboard")
           break;
         case "excerpt":
-          if (foucsNote) {
+          if (focusNote) {
             MNUtil.undoGrouping(()=>{
-              foucsNote.excerptText =  res
-              foucsNote.excerptTextMarkdown = true
+              focusNote.excerptText =  res
+              focusNote.excerptTextMarkdown = true
               MNUtil.showHUD("Set to excerpt")
             })
-            // if (foucsNote.excerptPic && !foucsNote.textFirst) {
-            //   MNUtil.delay(0.5).then(()=>{
-            //     MNUtil.excuteCommand("EditTextMode")
-            //   })
-            // }
           }else{
             MNUtil.copy(res)
           }
@@ -1375,6 +1571,62 @@ try {
       }
     }
   
+  }
+  static getDateObject(){
+    let dateObject = {
+      now:new Date(Date.now()).toLocaleString(),
+      tomorrow:new Date(Date.now()+86400000).toLocaleString(),
+      yesterday:new Date(Date.now()-86400000).toLocaleString(),
+      year:new Date().getFullYear(),
+      month:new Date().getMonth()+1,
+      day:new Date().getDate(),
+      hour:new Date().getHours(),
+      minute:new Date().getMinutes(),
+      second:new Date().getSeconds()
+    }
+    return dateObject
+  }
+  /**
+   * 
+   * @param {MNNote} note 
+   */
+  static getNoteObject(note,config={},opt={}) {
+    try {
+      
+
+    let noteConfig = config
+    noteConfig.id = note.noteId
+    noteConfig.notebook = {
+      id:note.notebookId,
+      name:MNUtil.getNoteBookById(note.notebookId).title,
+    }
+    noteConfig.title = note.noteTitle
+    noteConfig.url = note.noteURL
+    noteConfig.excerptText = note.excerptText
+    noteConfig.date = {
+      create:note.createDate.toLocaleString(),
+      modify:note.modifiedDate.toLocaleString(),
+    }
+    noteConfig.allText = note.allNoteText()
+    noteConfig.tags = note.tags
+    noteConfig.hashTags = note.tags.map(tag=> ("#"+tag))
+    if (note.docMd5 && MNUtil.getDocById(note.docMd5)) {
+      noteConfig.docName = MNUtil.getFileName(MNUtil.getDocById(note.docMd5).pathFile) 
+    }
+    if (note.childMindMap) {
+      noteConfig.childMindMap = this.getNoteObject(note.childMindMap)
+    }
+    if ("parent" in opt && opt.parent && note.parentNote) {
+      noteConfig.parent = this.getNoteObject(note.parentNote)
+    }
+    if ("child" in opt && opt.child && note.childNotes) {
+      noteConfig.child = note.childNotes.map(note=>this.getNoteObject(note))
+    }
+    return noteConfig
+    } catch (error) {
+      this.addErrorLog(error, "getNoteObject")
+      return {}
+    }
   }
   static htmlDev(content){
     return `<!DOCTYPE html>
@@ -1999,7 +2251,7 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
       OCRText = await this.getTextOCR(selection.image)
     }
     let focusNote = MNNote.new(MNUtil.currentDocController.highlightFromSelection())
-
+    focusNote = focusNote.realGroupNoteForTopicId()
     return new Promise((resolve, reject) => {
       MNUtil.undoGrouping(()=>{
         try {
@@ -2030,21 +2282,52 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
           MNUtil.showHUD("add tag: "+tag)
           focusNote.appendTags([tag])
         }
-        // if ("parentNote" in des) {
-        //   let parentNote = MNNote.new(des.parentNote)
-        //   // parentNote.focusInMindMap()
-        //   if (parentNote.realGroupNoteForTopicId()) {
-        //     parentNote = parentNote.realGroupNoteForTopicId()
-        //   }
-        //   MNUtil.showHUD("move to "+parentNote.noteId)
-        //   parentNote.addChild(focusNote)
-        // }
+        if ("mainMindMap" in des && des.mainMindMap) {
+          if (focusNote.parentNote) {
+            focusNote.removeFromParent()
+          }else{
+            MNUtil.showHUD("Already in main mindmap")
+          }
+        }else if ("parentNote" in des) {
+          let parentNote = MNNote.new(des.parentNote)
+          if (parentNote) {
+            parentNote = parentNote.realGroupNoteForTopicId()
+          }
+          if (parentNote.notebookId === focusNote.notebookId) {
+            MNUtil.showHUD("move to "+parentNote.noteId)
+            parentNote.addChild(focusNote)
+          }else{
+            MNUtil.showHUD("Not in same notebook")
+          }
+        }
         resolve(focusNote)
         } catch (error) {
           toolbarUtils.addErrorLog(error, "noteHighlight")
           resolve(undefined)
         }
       })
+    })
+  }
+  static async moveNote(des){
+    let focusNotes = MNNote.getFocusNotes()
+    MNUtil.undoGrouping(()=>{
+      if (des.target && des.target === "mainMindMap") {
+        focusNotes.map((note)=>{
+          let realNote = note.realGroupNoteForTopicId()
+          if (realNote.parentNote) {
+            realNote.removeFromParent()
+          }
+        })
+      }else{
+        let parentNote = MNNote.new(des.target)
+        if (parentNote) {
+          focusNotes.map((note)=>{
+            if (parentNote.notebookId === note.notebookId) {
+              parentNote.addChild(note)
+            }
+          })
+        }
+      }
     })
   }
   static async setColor(colorIndex){
@@ -2184,7 +2467,7 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
     let W = Number(rectArr[2])
     let studyFrame = MNUtil.studyView.frame
     let studyFrameX = studyFrame.x
-    let frame = MNUtil.genFrame(X-studyFrameX, Y, W, H)
+    let frame = Frame.gen(X-studyFrameX, Y, W, H)
     return frame
   }
   static getButtonColor(){
@@ -2711,6 +2994,8 @@ class toolbarConfig {
       }
     })
     this.curveImage = MNUtil.getImage(this.mainPath+"/curve.png",2)
+    this.runImage = MNUtil.getImage(this.mainPath+"/run.png",2.6)
+    this.templateImage = MNUtil.getImage(this.mainPath+"/template.png",2.2)
     // MNUtil.copyJSON(this.imageConfigs)
       } catch (error) {
       toolbarUtils.addErrorLog(error, "initImage")
@@ -3016,7 +3301,7 @@ static checkCouldSave(actionName){
   if (actionName.includes("color")) {
     return true
   }
-  let whiteNamelist = ["search","copy","chatglm","ocr","edit","execute","searchInEudic","pasteAsTitle"]
+  let whiteNamelist = ["search","copy","chatglm","ocr","edit","searchInEudic","pasteAsTitle"]
   if (whiteNamelist.includes(actionName)) {
     return true
   }
