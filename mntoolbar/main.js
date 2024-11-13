@@ -54,7 +54,6 @@ JSB.newAddon = function (mainPath) {
         MNUtil.removeObserver(self,'togglePreprocessMode')
         MNUtil.removeObserver(self,'ClosePopupMenuOnNote')
         MNUtil.removeObserver(self,'removeMNToolbar')
-        MNUtil.removeObserver(self,'removeMNToolbar')
         MNUtil.removeObserver(self,'UITextViewTextDidBeginEditingNotification')
         MNUtil.removeObserver(self,'refreshToolbarButton')
         MNUtil.removeObserver(self,'openToolbarSetting')
@@ -710,6 +709,26 @@ try {
           toolbarConfig.save("MNToolbar_windowState")
         }
       },
+      togglePreprocessMode:function () {
+        if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
+        if (typeof MNUtil === 'undefined') return
+        toolbarConfig.preprocessMode = !toolbarConfig.preprocessMode
+        if (toolbarConfig.preprocessMode) {
+          MNUtil.showHUD("预处理模式 ✅")
+        }else{
+          MNUtil.showHUD("预处理模式 ❌")
+          if (self.testController) {
+            self.testController.view.hidden = true
+          }
+          // self.testController.view.hidden = true
+        }
+        toolbarConfig.save("MNToolbar_preprocessMode")
+        // NSUserDefaults.standardUserDefaults().setObjectForKey(toolbarConfig.dynamic,"MNToolbar_dynamic")
+        if (self.testController) {
+          self.testController.preprocessMode = toolbarConfig.preprocessMode
+        }
+        MNUtil.refreshAddonCommands()
+      },
       toggleDynamic:function () {
         if (self.popoverController) {self.popoverController.dismissPopoverAnimated(true);}
         if (typeof MNUtil === 'undefined') return
@@ -747,6 +766,7 @@ try {
             {title:'⚙️   Setting',object:self,selector:'openSetting:',param:[1,2,3]},
             {title:'🛠️   Toolbar',object:self,selector:'toggleToolbar:',param:[1,3,2],checked:!self.addonController.view.hidden},
             {title:'🌟   Dynamic',object:self,selector:'toggleDynamic:',param:[1,3,2],checked:toolbarConfig.dynamic},
+            {title:'🌟   预处理模式',object:self,selector:'togglePreprocessMode:',param:[1,3,2],checked:toolbarConfig.preprocessMode},
             {title:'📄   Document',object:self,selector:'openDocument:',param:[1,3,2]},
             // {title:'🗃️   Open Sidebar',object:self,selector:'openSideBar:',param:[1,2,3]}
           ];
