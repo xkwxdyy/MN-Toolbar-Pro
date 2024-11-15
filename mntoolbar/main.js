@@ -206,6 +206,17 @@ JSB.newAddon = function (mainPath) {
         if (self.window !== MNUtil.currentWindow) {
           return
         }
+        if (self.settingController) {
+            MNUtil.delay(0.01).then(()=>{
+              self.settingController.blur()
+
+              // self.settingController.webviewInput.endEditing(true)
+              // // MNUtil.studyView.becomeFirstResponder()
+              // self.settingController.webviewInput.resignFirstResponder()
+              // // MNUtil.currentWindow.becomeFirstResponder()
+              // MNUtil.mindmapView.becomeFirstResponder()
+            })
+        }
         self.addonController.popupReplace()
         if (!toolbarConfig.dynamic) {
           return
@@ -221,8 +232,16 @@ JSB.newAddon = function (mainPath) {
         // var pasteBoard = UIPasteboard.generalPasteboard()
         // pasteBoard.string = url
         try {
-        self.addonController.popupReplace()
-          
+          self.addonController.popupReplace()
+          if (self.settingController) {
+            MNUtil.delay(0.01).then(()=>{
+              self.settingController.blur()
+              // self.settingController.webviewInput.resignFirstResponder()
+              // MNUtil.studyView.becomeFirstResponder()
+              // MNUtil.currentWindow.becomeFirstResponder()
+              // MNUtil.mindmapView.becomeFirstResponder()
+            })
+          }
         } catch (error) {
           
         }

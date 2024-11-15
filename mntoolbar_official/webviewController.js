@@ -197,9 +197,11 @@ try {
    * @param {UIButton} button 
    */
   setColor: function (button) {
-    let color = button.color
+    let actionName = "color"+button.color
+    let des = toolbarConfig.getDescriptionByName(actionName)
+    des.color = button.color
     MNUtil.delay(0.1).then(()=>{
-      toolbarUtils.setColor(color)
+      toolbarUtils.setColor(des)
     })
     if (button.menu) {
       button.menu.dismissAnimated(true)
@@ -459,27 +461,7 @@ try {
   },
   switchTitleorExcerpt(button) {
     self.onClick = true
-    let focusNotes = MNNote.getFocusNotes()
-    for (const note of focusNotes) {
-      let title = note.noteTitle ?? ""
-      let text = note.excerptText ?? ""
-      // 只允许存在一个
-      MNUtil.undoGrouping(()=>{
-        if ((title && text) && (title !== text)) {
-          note.noteTitle = ""
-          note.excerptText = title
-          note.appendMarkdownComment(text)
-        }else if (title || text) {
-          // 去除划重点留下的 ****
-          note.noteTitle = text.replace(/\*\*(.*?)\*\*/g, "$1")
-          note.excerptText = title
-        }else if (title == text) {
-          // 如果摘录与标题相同，MN 只显示标题，此时我们必然想切换到摘录
-          note.noteTitle = ""
-        }
-      })
-    }
-    // MNUtil.showHUD("标题转换完成")
+    toolbarUtils.switchTitleOrExcerpt()
     if (button.menu) {
       button.menu.dismissAnimated(true)
       return
@@ -632,12 +614,14 @@ try {
       return
     }
     let des = toolbarConfig.getDescriptionByName("ocr")
-    await toolbarUtils.ocr(des)
-    if ("onFinish" in des) {
-      let finishAction = des.onFinish
-      await MNUtil.delay(0.5)
-      self.customActionByDes(button, finishAction)
-    }
+    des.action = "ocr"
+
+    // await toolbarUtils.ocr(des)
+    self.customActionByDes(button, des)
+    // if ("onFinish" in des) {
+    //   let finishAction = des.onFinish
+    //   await MNUtil.delay(0.5)
+    // }
     if (button.menu) {
       button.menu.dismissAnimated(true)
       return
@@ -1182,6 +1166,9 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
       case "paste":
         toolbarUtils.paste(des)
         break;
+      case "switchTitleOrExcerpt":
+        toolbarUtils.switchTitleOrExcerpt()
+        break;
       case "cloneAndMerge":
       try {
         MNUtil.showHUD("cloneAndMerge")
@@ -1222,7 +1209,9 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
         break;
       case "noteHighlight":
         let newNote = await toolbarUtils.noteHighlight(des)
-        newNote.focusInMindMap(0.5)
+        if (newNote.notebookId === MNUtil.currentNotebookId) {
+          newNote.focusInMindMap(0.5)
+        }
         // if ("parentNote" in des) {
         //   await MNUtil.delay(5)
         //   let parentNote = MNNote.new(des.parentNote)
@@ -1417,30 +1406,7 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
         })
         break
       case "replace":
-        let range = des.range ?? "currentNotes"
-        targetNotes = toolbarUtils.getNotesByRange(range)
-        if ("steps" in des) {//如果有steps则表示是多步替换,优先执行
-          let nSteps = des.steps.length
-          MNUtil.undoGrouping(()=>{
-            targetNotes.forEach(note=>{
-              let content= toolbarUtils._replace_get_content_(note, des)
-              for (let i = 0; i < nSteps; i++) {
-                let step = des.steps[i]
-                let ptt = toolbarUtils._replace_get_ptt_(step)
-                content = content.replace(ptt, step.to)
-              }
-              toolbarUtils._replace_set_content_(note, des, content)
-            })
-          })
-          break;
-        }
-        //如果没有steps则直接执行
-        let ptt = toolbarUtils._replace_get_ptt_(des)
-        MNUtil.undoGrouping(()=>{
-          targetNotes.forEach(note=>{
-            toolbarUtils.replace(note, ptt, des)
-          })
-        })
+        toolbarUtils.replaceAction(des)
         break;
       case "mergeText":
         let noteRange = des.range ?? "currentNotes"
@@ -1773,6 +1739,25 @@ toolbarController.prototype.customActionMenu =  function (button,des) {
       }
       return true
     }
+
+    if (des.action === "ocr" && des.target && des.target === "menu") {
+      this.onClick = true
+      var commandTable = [
+        {title:"clipboard",object:this,selector:'customActionByMenu:',param:{des:{action:"ocr",target:"clipboard"},button:button}},
+        {title:"comment",object:this,selector:'customActionByMenu:',param:{des:{action:"ocr",target:"comment"},button:button}},
+        {title:"excerpt",object:this,selector:'customActionByMenu:',param:{des:{action:"ocr",target:"excerpt"},button:button}},
+        {title:"editor",object:this,selector:'customActionByMenu:',param:{des:{action:"ocr",target:"editor"},button:button}},
+        {title:"chatModeReference",object:this,selector:'customActionByMenu:',param:{des:{action:"ocr",target:"chatModeReference"},button:button}}
+      ]
+      let width = 250
+      if (MNUtil.studyView.bounds.width - buttonX < (width+40)) {
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,0)
+      }else{
+        this.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,width,4)
+      }
+      return true
+    }
+
     if (des.action === "search" && des.target && des.target === "menu") {
       this.onClick = true
       let names = browserConfig.entrieNames

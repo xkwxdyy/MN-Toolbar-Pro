@@ -2,7 +2,7 @@
 // JSB.require('base64')
 /** @return {settingController} */
 const getSettingController = ()=>self
-var settingController = JSB.defineClass('settingController : UIViewController <NSURLConnectionDelegate>', {
+var settingController = JSB.defineClass('settingController : UIViewController <NSURLConnectionDelegate,UIImagePickerControllerDelegate>', {
   viewDidLoad: function() {
     let self = getSettingController()
 try {
@@ -159,7 +159,8 @@ viewWillLayoutSubviews: function() {
   }
   },
   closeButtonTapped: async function() {
-    self.getWebviewContent()
+    self.blur()
+    // self.getWebviewContent()
     if (self.addonBar) {
       self.hide(self.addonBar.frame)
     }else{
@@ -326,205 +327,17 @@ viewWillLayoutSubviews: function() {
   chooseTemplate: async function (button) {
     let self = getSettingController()
     let selected = self.selectedItem
-    if (!toolbarConfig.checkCouldSave(selected)) {
+    let templateNames = toolbarUtils.getTempelateNames(selected)
+    if (!templateNames) {
       return
     }
-    var templateNames = [
-      "🔨 empty action",
-      "🔨 empty action with double click",
-      "🔨 empty action with finish action",
-      "🔨 insert snippet",
-      "🔨 insert snippet with menu",
-      "🔨 add note index",
-      "🔨 toggle mindmap",
-      "🔨 copy with menu",
-      "🔨 copy markdown link",
-      "🔨 toggle markdown",
-      "🔨 toggle textFirst",
-      "🔨 chatAI with menu",
-      "🔨 search with menu",
-      "🔨 OCR as chat mode reference",
-      "🔨 toggle full doc and tab bar",
-      "🔨 merge text of merged notes",
-      "🔨 create & move to main mindmap",
-      "🔨 create & move as child note",
-      "🔨 move note to main mindmap",
-      "🔨 menu with actions"
-    ]
-    var templates = [
-      {
-          "description": "空白动作",
-          "action": "xxx",
-      },
-      {
-        "description": "空白动作 带双击动作",
-        "action": "xxx",
-        "doubleClick": {
-          "action": "xxx"
-        }
-      },
-      {
-        "description": "空白动作 带结束动作",
-        "action": "xxx",
-        "onFinish": {
-          "action": "xxx"
-        }
-      },
-      {
-        "description": "在输入框中插入文本片段",
-        "action": "insertSnippet",
-        "content": "test"
-      },
-      {
-        "description": "弹出菜单,选择要在输入框中插入的文本片段",
-        "action": "insertSnippet",
-        "target": "menu",
-        "menuItems": [
-          {
-            "menuTitle": "插入序号1️⃣",
-            "content": "1️⃣ "
-          },
-          {
-            "menuTitle": "插入序号2️⃣",
-            "content": "2️⃣ "
-          },
-          {
-            "menuTitle": "插入序号3️⃣",
-            "content": "3️⃣ "
-          },
-          {
-            "menuTitle": "插入序号4️⃣",
-            "content": "4️⃣ "
-          },
-          {
-            "menuTitle": "插入序号5️⃣",
-            "content": "5️⃣ "
-          },
-          {
-            "menuTitle": "插入序号6️⃣",
-            "content": "6️⃣ "
-          },
-          {
-            "menuTitle": "插入序号7️⃣",
-            "content": "7️⃣ "
-          },
-          {
-            "menuTitle": "插入序号8️⃣",
-            "content": "8️⃣ "
-          },
-          {
-            "menuTitle": "插入序号9️⃣",
-            "content": "9️⃣ "
-          }
-        ]
-      },
-      {
-          "description": "多选状态下,给选中的卡片标题加序号",
-          "action": "mergeText",
-          "target": "title",
-          "source": [
-              "{{noteIndex}}、{{title}}"
-          ]
-      },
-
-      {
-          "description": "开关脑图界面",
-          "action": "command",
-          "command": "ToggleMindMap"
-      },
-      {
-          "description": "弹出菜单以选择需要复制的内容",
-          "action": "copy",
-          "target": "menu"
-      },
-      {
-        "description": "复制markdown链接, 以卡片内容为标题,卡片url为链接",
-        "action": "copy",
-        "content": "[{{note.allText}}]({{{note.url}}})"
-      },
-      {
-        "description": "切换摘录markdown渲染",
-        "action": "toggleMarkdown"
-      },
-      {
-        "description": "切换摘录文本优先",
-        "action": "toggleTextFirst"
-      },
-      {
-        "description": "弹出菜单选择需要执行的prompt",
-        "action": "chatAI",
-        "target": "menu"
-      },
-      {
-        "description": "弹出菜单选择需要在Browser中搜索的内容",
-        "action": "search",
-        "target": "menu"
-      },
-      {
-        "action": "ocr",
-        "target": "chatModeReference"
-      },
-      {
-          "description": "开关文档全屏和标签页",
-          "action": "command",
-          "commands": [
-              "ToggleFullDoc",
-              "ToggleTabsBar"
-          ]
-      },
-      {
-          "description": "把合并的卡片的文本合并到主卡片的摘录中",
-          "action": "mergeText",
-          "target": "excerptText",
-          "source": [
-              "{{excerptTexts}},"
-          ],
-          "removeSource": true
-      },
-      {
-        "description": "创建摘录并移动到主脑图",
-        "action": "noteHighlight",
-        "mainMindMap": true
-      },
-      {
-        "description": "创建摘录并移动到指定卡片下",
-        "action": "noteHighlight",
-        "parentNote": "marginnote4app://note/xxx"
-      },
-      {
-        "description": "将当前笔记移动到主脑图中",
-        "action": "moveNote",
-        "target": "mainMindMap"
-      },
-    	{
-        "description": "弹出菜单以选择要执行的动作",
-        "action": "menu",
-        "menuItems": [
-            "🔽 我是标题",
-            {
-                "action": "copy",
-                "menuTitle": "123",
-                "content": "test"
-            },
-            {
-                "action": "toggleView",
-                "targets": [
-                    "mindmapToolbar",
-                    "addonBar"
-                ],
-                "autoClose": false,
-                "menuTitle": "🉑toggle"
-            }
-        ]
-      }
-
-    ]
+    var templates = toolbarUtils.template
     var commandTable = templateNames.map((templateName,index)=>{
       return {
         title:templateName,
         object:self,
         selector:'setTemplate:',
-        param:templates[index]
+        param:templates[templateName]
       }
     })
     commandTable.unshift({
@@ -674,7 +487,10 @@ viewWillLayoutSubviews: function() {
       return
     }
     if (selected === "ocr") {
-      toolbarUtils.ocr()
+      let des = toolbarConfig.getDescriptionByName("ocr")
+      des.action = "ocr"
+      self.toolbarController.customActionByDes(button,des)
+      // toolbarUtils.ocr()
       return
     }
     if (selected === "execute") {
@@ -693,12 +509,20 @@ viewWillLayoutSubviews: function() {
 
   }
   },
-  toggleSelected:function (sender) {
-    if (self.selectedItem === sender.id) {
+  toggleSelected:function (button) {
+    if (self.selectedItem === button.id) {
+      let selected = self.selectedItem
+      var commandTable = [
+        {title:"➕ new icon from photo", object:self, selector:'changeIconFromPhoto:',param:selected},
+        {title:"➕ new icon from file", object:self, selector:'changeIconFromFile:',param:selected},
+        {title:"🔍 change icon scale", object:self, selector:'changeIconScale:',param:selected},
+        {title:"🔄 reset icon", object:self, selector:'resetIcon:',param:selected}
+      ]
+      self.popoverController = MNUtil.getPopoverAndPresent(button, commandTable,200,1)
       return
     }
-    sender.isSelected = !sender.isSelected
-    let title = sender.id
+    button.isSelected = !button.isSelected
+    let title = button.id
     self.selectedItem = title
     self.words.forEach((entryName,index)=>{
       if (entryName !== title) {
@@ -706,12 +530,96 @@ viewWillLayoutSubviews: function() {
         MNButton.setColor(self["nameButton"+index], "#ffffff", 0.8)
       }
     })
-    if (sender.isSelected) {
+    if (button.isSelected) {
       self.setTextview(title)
-      MNButton.setColor(sender, "#9bb2d6", 0.8)
+      MNButton.setColor(button, "#9bb2d6", 0.8)
     }else{
-      MNButton.setColor(sender, "#ffffff", 0.8)
+      MNButton.setColor(button, "#ffffff", 0.8)
     }
+  },
+  changeIconFromPhoto:function (buttonName) {
+    if (toolbarUtils.checkSubscribe(true)) {
+      self.checkPopoverController()
+      self.imagePickerController = UIImagePickerController.new()
+      self.imagePickerController.buttonName = buttonName
+      self.imagePickerController.delegate = self  // 设置代理
+      self.imagePickerController.sourceType = 0  // 设置图片源为相册
+      // self.imagePickerController.allowsEditing = true  // 允许裁剪
+      MNUtil.studyController.presentViewControllerAnimatedCompletion(self.imagePickerController,true,undefined)
+    }
+  },
+  changeIconFromFile:async function (buttonName) {
+    if (toolbarUtils.checkSubscribe(true)) {
+      self.checkPopoverController()
+      let UTI = ["public.image"]
+      let path = await MNUtil.importFile(UTI)
+      let image = MNUtil.getImage(path,1)
+      toolbarConfig.setButtonImage(buttonName, image,true)
+    }
+  },
+  changeIconScale:async function (buttonName) {
+    self.checkPopoverController()
+    let res = await MNUtil.input("Custom scale","自定义图片缩放比例",["cancel","1","2","3","confirm"])
+    if (res.button === 0) {
+      MNUtil.showHUD("Cancel")
+      return
+    }
+    let scale = 1
+    switch (res.button) {
+      case 1:
+        scale = 1
+        toolbarConfig.imageScale[buttonName].scale = 1
+        break;
+      case 2:
+        scale = 2
+        toolbarConfig.imageScale[buttonName].scale = 2
+        break;
+      case 3:
+        scale = 3
+        toolbarConfig.imageScale[buttonName].scale = 3
+        break;
+      default:
+        break;
+    }
+    if (res.button === 4 && res.input.trim()) {
+      scale = parseFloat(res.input.trim())
+      toolbarConfig.imageScale[buttonName].scale = scale
+    }
+    let image = toolbarConfig.imageConfigs[buttonName]
+    toolbarConfig.imageConfigs[buttonName] = UIImage.imageWithDataScale(image.pngData(), scale)
+    MNUtil.postNotification("refreshToolbarButton", {})
+  },
+  resetIcon:function (buttonName) {
+    try {
+    self.checkPopoverController()
+      
+
+    // let filePath = toolbarConfig.imageScale[buttonName].path
+    toolbarConfig.imageScale[buttonName] = undefined
+    toolbarConfig.save("MNToolbar_imageScale")
+    toolbarConfig.imageConfigs[buttonName] = MNUtil.getImage(toolbarConfig.mainPath+"/"+toolbarConfig.getAction(buttonName).image+".png")
+    MNUtil.postNotification("refreshToolbarButton", {})
+    MNUtil.showHUD("Reset button image")
+    // if (MNUtil.isfileExists(toolbarConfig.buttonImageFolder+"/"+filePath)) {
+    //   NSFileManager.defaultManager().removeItemAtPath(toolbarConfig.buttonImageFolder+"/"+filePath)
+    // }
+    } catch (error) {
+      toolbarUtils.addErrorLog(error, "resetIcon")
+    }
+  },
+  imagePickerControllerDidFinishPickingMediaWithInfo:async function (ImagePickerController,info) {
+    try {
+      
+    let image = info.UIImagePickerControllerOriginalImage
+    MNUtil.studyController.dismissViewControllerAnimatedCompletion(true,undefined)
+    toolbarConfig.setButtonImage(ImagePickerController.buttonName, image,true)
+    } catch (error) {
+      MNUtil.showHUD(error)
+    }
+  },
+  imagePickerControllerDidCancel:function (params) {
+    MNUtil.studyController.dismissViewControllerAnimatedCompletion(true,undefined)
+    
   },
   toggleAddonLogo:function (button) {
     if (toolbarUtils.checkSubscribe(true)) {
@@ -1128,9 +1036,8 @@ try {
 /**
  * @this {settingController}
  */
-settingController.prototype.setButtonText = function (names=toolbarConfig.getAllActions(),highlight=self.selectedItem) {
+settingController.prototype.setButtonText = function (names=toolbarConfig.getAllActions(),highlight=this.selectedItem) {
     this.words = names
-    // MNUtil.showHUD("message")
     let actions = toolbarConfig.actions
     let defaultActions = toolbarConfig.getActions()
     // MNUtil.copyJSON(names)
@@ -1501,6 +1408,14 @@ settingController.prototype.setWebviewContent = function (content) {
  */
 settingController.prototype.setJSContent = function (content) {
   this.webviewInput.loadHTMLStringBaseURL(toolbarUtils.JShtml(content))
+}
+
+/**
+ * @this {settingController}
+ */
+settingController.prototype.blur = async function () {
+  this.runJavaScript(`removeFocus()`)
+  this.webviewInput.endEditing(true)
 }
 
 /**

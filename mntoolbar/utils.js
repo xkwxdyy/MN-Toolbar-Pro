@@ -169,6 +169,230 @@ class toolbarUtils {
    * @static
    */
   static textView
+  static template = {
+      "🔨 empty action":{
+          "description": "空白动作",
+          "action": "xxx",
+      },
+      "🔨 empty action with double click":{
+        "description": "空白动作 带双击动作",
+        "action": "xxx",
+        "doubleClick": {
+          "action": "xxx"
+        }
+      },
+      "🔨 empty action with finish action":{
+        "description": "空白动作 带结束动作",
+        "action": "xxx",
+        "onFinish": {
+          "action": "xxx"
+        }
+      },
+      "🔨 setColor default":{},
+      "🔨 with fillpattern: both":{
+        "fillPattern":-1
+      },
+      "🔨 with fillpattern: fill":{
+        "fillPattern":-1
+      },
+      "🔨 with fillpattern: border":{
+        "fillPattern":-1
+      },
+      "🔨 with followAutoStyle":{
+        "followAutoStyle":true
+      },
+      "🔨 insert snippet":{
+        "description": "在输入框中插入文本片段",
+        "action": "insertSnippet",
+        "content": "test"
+      },
+      "🔨 insert snippet with menu":{
+        "description": "弹出菜单,选择要在输入框中插入的文本片段",
+        "action": "insertSnippet",
+        "target": "menu",
+        "menuItems": [
+          {
+            "menuTitle": "插入序号1️⃣",
+            "content": "1️⃣ "
+          },
+          {
+            "menuTitle": "插入序号2️⃣",
+            "content": "2️⃣ "
+          },
+          {
+            "menuTitle": "插入序号3️⃣",
+            "content": "3️⃣ "
+          },
+          {
+            "menuTitle": "插入序号4️⃣",
+            "content": "4️⃣ "
+          },
+          {
+            "menuTitle": "插入序号5️⃣",
+            "content": "5️⃣ "
+          },
+          {
+            "menuTitle": "插入序号6️⃣",
+            "content": "6️⃣ "
+          },
+          {
+            "menuTitle": "插入序号7️⃣",
+            "content": "7️⃣ "
+          },
+          {
+            "menuTitle": "插入序号8️⃣",
+            "content": "8️⃣ "
+          },
+          {
+            "menuTitle": "插入序号9️⃣",
+            "content": "9️⃣ "
+          }
+        ]
+      },
+      "🔨 add note index":{
+          "description": "多选状态下,给选中的卡片标题加序号",
+          "action": "mergeText",
+          "target": "title",
+          "source": [
+              "{{noteIndex}}、{{title}}"
+          ]
+      },
+      "🔨 toggle mindmap":{
+          "description": "开关脑图界面",
+          "action": "command",
+          "command": "ToggleMindMap"
+      },
+      "🔨 smart copy":{
+        "description": "智能复制",
+        "action": "copy",
+        "target": "auto"
+      },
+      "🔨 copy with menu":{
+          "description": "弹出菜单以选择需要复制的内容",
+          "action": "copy",
+          "target": "menu"
+      },
+      "🔨 copy markdown link":{
+        "description": "复制markdown链接, 以卡片内容为标题,卡片url为链接",
+        "action": "copy",
+        "content": "[{{note.allText}}]({{{note.url}}})"
+      },
+      "🔨 toggle markdown":{
+        "description": "切换摘录markdown渲染",
+        "action": "toggleMarkdown"
+      },
+      "🔨 toggle textFirst":{
+        "description": "切换摘录文本优先",
+        "action": "toggleTextFirst"
+      },
+      "🔨 chatAI with menu":{
+        "description": "弹出菜单选择需要执行的prompt",
+        "action": "chatAI",
+        "target": "menu"
+      },
+      "🔨 chatAI in prompt":{
+        "description": "执行预定好的prompt",
+        "action": "chatAI",
+        "target": "翻译"
+      },
+      "🔨 chatAI in custom prompt":{
+        "description": "指定user和system",
+        "action": "chatAI",
+        "user": "test",
+        "system": "test"
+      },
+      "🔨 search with menu":{
+        "description": "弹出菜单选择需要在Browser中搜索的内容",
+        "action": "search",
+        "target": "menu"
+      },
+      "🔨 search in Baidu":{
+        "description": "弹出菜单选择搜索的目的",
+        "action": "search",
+        "target": "Baidu"
+      },
+      "🔨 OCR with menu":{
+        "description": "弹出菜单选择OCR的目的",
+        "action": "ocr",
+        "target": "menu"
+      },
+      "🔨 OCR as chat mode reference":{
+        "description": "OCR 结果作为聊天模式引用",
+        "action": "ocr",
+        "target": "chatModeReference"
+      },
+      "🔨 OCR to clipboard":{
+        "description": "OCR 到剪贴板",
+        "action": "ocr",
+        "target": "clipboard"
+      },
+      "🔨 OCR with onFinish":{
+        "description": "OCR结束后执行特定动作",
+        "action": "ocr",
+        "target": "excerpt",
+        "onFinish":{
+          "action": "xxx"
+        }
+      },
+      "🔨 toggle full doc and tab bar":{
+          "description": "开关文档全屏和标签页",
+          "action": "command",
+          "commands": [
+              "ToggleFullDoc",
+              "ToggleTabsBar"
+          ]
+      },
+      "🔨 merge text of merged notes":{
+          "description": "把合并的卡片的文本合并到主卡片的摘录中",
+          "action": "mergeText",
+          "target": "excerptText",
+          "source": [
+              "{{excerptTexts}},"
+          ],
+          "removeSource": true
+      },
+      "🔨 create & move to main mindmap":{
+        "description": "创建摘录并移动到主脑图",
+        "action": "noteHighlight",
+        "mainMindMap": true
+      },
+      "🔨 create & move as child note":{
+        "description": "创建摘录并移动到指定卡片下",
+        "action": "noteHighlight",
+        "parentNote": "marginnote4app://note/xxx"
+      },
+      "🔨 move note to main mindmap":{
+        "description": "将当前笔记移动到主脑图中",
+        "action": "moveNote",
+        "target": "mainMindMap"
+      },
+    	"🔨 menu with actions":{
+        "description": "弹出菜单以选择要执行的动作",
+        "action": "menu",
+        "menuItems": [
+            "🔽 我是标题",
+            {
+                "action": "copy",
+                "menuTitle": "123",
+                "content": "test"
+            },
+            {
+                "action": "toggleView",
+                "targets": [
+                    "mindmapToolbar",
+                    "addonBar"
+                ],
+                "autoClose": false,
+                "menuTitle": "toggle"
+            }
+        ]
+      },
+      "🔨 focus in float window":{
+        "description": "在浮动窗口中显示当前笔记",
+        "action": "showInFloatWindow",
+        "target": "currentNoteInMindMap"
+      }
+    }
   static init(){
   try {
     this.app = Application.sharedInstance()
@@ -248,12 +472,47 @@ class toolbarUtils {
       // 再将其它的空白符（除了换行符）替换为单个空格
       return tempStr.replace(/[\r\t\f\v ]+/g, ' ').trim();
   }
+static replaceAction(des){
+try {
+
+  let range = des.range ?? "currentNotes"
+  let targetNotes = toolbarUtils.getNotesByRange(range)
+  if ("steps" in des) {//如果有steps则表示是多步替换,优先执行
+    let nSteps = des.steps.length
+    MNUtil.undoGrouping(()=>{
+      targetNotes.forEach(note=>{
+        let content= toolbarUtils._replace_get_content_(note, des)
+        for (let i = 0; i < nSteps; i++) {
+          let step = des.steps[i]
+          let ptt = toolbarUtils._replace_get_ptt_(step)
+          content = content.replace(ptt, step.to)
+        }
+        toolbarUtils._replace_set_content_(note, des, content)
+      })
+    })
+    return;
+  }
+  //如果没有steps则直接执行
+  let ptt = toolbarUtils._replace_get_ptt_(des)
+  MNUtil.undoGrouping(()=>{
+    targetNotes.forEach(note=>{
+      toolbarUtils.replace(note, ptt, des)
+    })
+  })
+  } catch (error) {
+  this.addErrorLog(error, "replace")
+}
+}
 static isPureMNImages(markdown) {
   try {
     // 匹配 base64 图片链接的正则表达式
     const MNImagePattern = /!\[.*?\]\((marginnote4app\:\/\/markdownimg\/png\/.*?)(\))/g;
-    let link = markdown.match(MNImagePattern)[0]
-    return markdown === link
+    let res = markdown.match(MNImagePattern)
+    if (res) {
+      return markdown === res[0]
+    }else{
+      return false
+    }
   } catch (error) {
     editorUtils.addErrorLog(error, "isPureMNImages")
     return false
@@ -5005,7 +5264,6 @@ try {
   static getNoteObject(note,config={},opt={}) {
     try {
       
-
     let noteConfig = config
     noteConfig.id = note.noteId
     noteConfig.notebook = {
@@ -5629,6 +5887,7 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
       MNUtil.showHUD("Missing param: target")
       return
     }
+    targetNote = targetNote.realGroupNoteForTopicId()
     switch (des.target) {
         case "doc":
           targetNote.focusInDocument()
@@ -5742,44 +6001,38 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
       }
     })
   }
-  static async setColor(colorIndex){
+  static async setColor(des){
   try {
     let fillIndex = -1
-    if (toolbarConfig.actions["color"+colorIndex] && toolbarConfig.actions["color"+colorIndex].description) {
-      
-      let description = toolbarConfig.actions["color"+colorIndex].description
-      if (MNUtil.isValidJSON(description)) {
-        let des = JSON.parse(description)
-        if ("fillPattern" in des) {
-          fillIndex = des.fillPattern
-        }
-        if ("followAutoStyle" in des && des.followAutoStyle && (typeof autoUtils !== 'undefined')) {
-          let focusNotes
-          let followAutoStyle = true
-          let selection = MNUtil.currentSelection
-          if (selection.onSelection) {
-            focusNotes = MNNote.new(MNUtil.currentDocController.highlightFromSelection())
-            // followAutoStyle = false
-          }else{
-            focusNotes = MNNote.getFocusNotes()
-          }
-          MNUtil.showHUD("followAutoStyle")
-          MNUtil.undoGrouping(()=>{
-            focusNotes.map(note=>{
-              if (followAutoStyle) {
-                let fillIndex
-                if (note.excerptPic) {
-                  fillIndex = autoUtils.getConfig("image")[colorIndex]
-                }else{
-                  fillIndex = autoUtils.getConfig("text")[colorIndex]
-                }
-              }
-              this.setNoteColor(note,colorIndex,fillIndex)
-            })
-          })
-          return
-        }
+    let colorIndex = des.color
+    if ("fillPattern" in des) {
+      fillIndex = des.fillPattern
+    }
+    if ("followAutoStyle" in des && des.followAutoStyle && (typeof autoUtils !== 'undefined')) {
+      let focusNotes
+      let followAutoStyle = true
+      let selection = MNUtil.currentSelection
+      if (selection.onSelection) {
+        focusNotes = MNNote.new(MNUtil.currentDocController.highlightFromSelection())
+        // followAutoStyle = false
+      }else{
+        focusNotes = MNNote.getFocusNotes()
       }
+      MNUtil.showHUD("followAutoStyle")
+      MNUtil.undoGrouping(()=>{
+        focusNotes.map(note=>{
+          if (followAutoStyle) {
+            let fillIndex
+            if (note.excerptPic) {
+              fillIndex = autoUtils.getConfig("image")[colorIndex]
+            }else{
+              fillIndex = autoUtils.getConfig("text")[colorIndex]
+            }
+          }
+          this.setNoteColor(note,colorIndex,fillIndex)
+        })
+      })
+      return
     }
 
     // MNUtil.copy(description+fillIndex)
@@ -5799,6 +6052,28 @@ document.getElementById('code-block').addEventListener('compositionend', () => {
   } catch (error) {
     toolbarUtils.addErrorLog(error, "setColor")
   }
+  }
+  static switchTitleOrExcerpt() {
+    let focusNotes = MNNote.getFocusNotes()
+    for (const note of focusNotes) {
+      let title = note.noteTitle ?? ""
+      let text = note.excerptText ?? ""
+      // 只允许存在一个
+      MNUtil.undoGrouping(()=>{
+        if ((title && text) && (title !== text)) {
+          note.noteTitle = ""
+          note.excerptText = title
+          note.appendMarkdownComment(text)
+        }else if (title || text) {
+          // 去除划重点留下的 ****
+          note.noteTitle = text.replace(/\*\*(.*?)\*\*/g, "$1")
+          note.excerptText = title
+        }else if (title == text) {
+          // 如果摘录与标题相同，MN 只显示标题，此时我们必然想切换到摘录
+          note.noteTitle = ""
+        }
+      })
+    }
   }
   /**
    * 
@@ -6039,6 +6314,86 @@ static getButtonFrame(button){
   let buttonFrame = button.convertRectToView(button.frame, MNUtil.studyView)
   return buttonFrame
 }
+  static getTempelateNames(item){
+    if (!toolbarConfig.checkCouldSave(item)) {
+      return undefined
+    }
+    switch (item) {
+      case "ocr":
+        return [
+            "🔨 OCR to clipboard",
+            "🔨 OCR as chat mode reference",
+            "🔨 OCR with menu",
+            "🔨 OCR with onFinish"
+          ]
+      case "search":
+        return [
+            "🔨 search with menu",
+            "🔨 search in Baidu"
+          ]
+      case "chatglm":
+        return [
+            "🔨 chatAI with menu",
+            "🔨 chatAI in prompt",
+            "🔨 chatAI in custom prompt"
+          ]
+      case "copy":
+        return [
+            "🔨 smart copy",
+            "🔨 copy with menu",
+            "🔨 copy markdown link"
+          ]
+      case "color1":
+      case "color2":
+      case "color3":
+      case "color4":
+      case "color5":
+      case "color6":
+      case "color7":
+      case "color8":
+      case "color9":
+      case "color10":
+      case "color11":
+      case "color12":
+      case "color13":
+      case "color14":
+      case "color15":
+        return [
+          "🔨 setColor default",
+          "🔨 with fillpattern: both",
+          "🔨 with fillpattern: fill",
+          "🔨 with fillpattern: border",
+          "🔨 with followAutoStyle"
+        ]
+      default:
+        break;
+    }
+    return [
+      "🔨 empty action",
+      "🔨 empty action with double click",
+      "🔨 empty action with finish action",
+      "🔨 insert snippet",
+      "🔨 insert snippet with menu",
+      "🔨 add note index",
+      "🔨 toggle mindmap",
+      "🔨 copy with menu",
+      "🔨 copy markdown link",
+      "🔨 toggle markdown",
+      "🔨 toggle textFirst",
+      "🔨 chatAI with menu",
+      "🔨 search with menu",
+      "🔨 OCR with menu",
+      "🔨 OCR to clipboard",
+      "🔨 OCR as chat mode reference",
+      "🔨 toggle full doc and tab bar",
+      "🔨 merge text of merged notes",
+      "🔨 create & move to main mindmap",
+      "🔨 create & move as child note",
+      "🔨 move note to main mindmap",
+      "🔨 menu with actions",
+      "🔨 focus in float window",
+    ]
+  }
 }
 
 class toolbarConfig {
@@ -6471,6 +6826,49 @@ class toolbarConfig {
     if (refresh) {
       MNUtil.postNotification("refreshToolbarButton", {})
     }
+  }
+  /**
+   * 
+   * @param {string} action 
+   * @param {UIImage} image 
+   * @param {boolean} refresh 
+   * @param {number} scale 
+   * @returns 
+   */
+  static setButtonImage(action,image,refresh = false,scale = 3) {
+  try {
+    let size = image.size
+    if (size.width > 500 || size.height > 500) {
+      MNUtil.showHUD("Image size is too large")
+      return
+    }
+
+    let md5 = MNUtil.MD5(image.pngData().base64Encoding())
+    // let imagePath = this.mainPath+"/"+this.getAction(action).image+".png"
+    // MNUtil.getImage(this.mainPath+"/"+this.getAction(key).image+".png",scale)
+    let localPath = this.buttonImageFolder+"/"+md5+".png"
+    this.imageScale[action] = {path:md5+".png",scale:1}
+    this.save("MNToolbar_imageScale")
+    if (MNUtil.isfileExists(localPath)) {
+      this.imageConfigs[action] = image
+      if (refresh) {
+        MNUtil.postNotification("refreshToolbarButton", {})
+      }
+      return
+    }else{
+      this.imageConfigs[action] = image
+      image.pngData().writeToFileAtomically(localPath, false)
+      if (refresh) {
+        MNUtil.postNotification("refreshToolbarButton", {})
+      }
+    }
+    // }
+    if (refresh) {
+      MNUtil.postNotification("refreshToolbarButton", {})
+    }
+  } catch (error) {
+    toolbarUtils.addErrorLog(error, "setButtonImage")
+  }
   }
   static getAllActions(){
     let allActions = this.action.concat(this.getDefaultActionKeys().slice(this.action.length))
@@ -7425,20 +7823,20 @@ static getDescriptionByName(actionName){
   }
   return undefined
 }
-static checkCouldSave(actionName){
-  if (actionName.includes("custom")) {
-    return true
+  static checkCouldSave(actionName){
+    if (actionName.includes("custom")) {
+      return true
+    }
+    if (actionName.includes("color")) {
+      return true
+    }
+    let whiteNamelist = ["search","copy","chatglm","ocr","edit","searchInEudic","pasteAsTitle"]
+    if (whiteNamelist.includes(actionName)) {
+      return true
+    }
+    MNUtil.showHUD("Only available for Custom Action!")
+    return false
   }
-  if (actionName.includes("color")) {
-    return true
-  }
-  let whiteNamelist = ["search","copy","chatglm","ocr","edit","searchInEudic","pasteAsTitle"]
-  if (whiteNamelist.includes(actionName)) {
-    return true
-  }
-  MNUtil.showHUD("Only available for Custom Action!")
-  return false
-}
 
 }
 class toolbarSandbox{

@@ -40,7 +40,7 @@ body {
           //path: array
           // console.log(input);
           if (input === 'field') {
-            return ['menuTitle','name','input','text','target', 'action', 'description','menu', 'source','color','content','title','markdown','command','commands','OCR','fillPattern','asTitle','tags','tag','find','multi','type','index','removeSource','prompt','user','system','trim','replace','merge','linkType','target','from','to','steps','range','url','engine','targets','onFinish','doubleClick','menuItems','autoClose','parentNote','mainMindMap','method'];
+            return ['followAutoStyle','menuTitle','name','input','text','target', 'action', 'description','menu', 'source','color','content','title','markdown','command','commands','OCR','fillPattern','asTitle','tags','tag','find','multi','type','index','removeSource','prompt','user','system','trim','replace','merge','linkType','target','from','to','steps','range','url','engine','targets','onFinish','doubleClick','menuItems','autoClose','parentNote','mainMindMap','method'];
           }
           if (input === 'value') {
             let parent = path.at(-1)
@@ -57,7 +57,7 @@ body {
               case 'source':
                 return ['photo','camera','file','parentNote','noteDoc','note','currentDoc'];
               case 'action':
-                return ['ocr','moveNote','chatAI','command','setButtonImage','addImageComment','mergeText','toggleView','menu','shortcut','replace','showInFloatWindow','openURL','copy','addComment','export','removeComment','moveComment','paste','setContent','clearContent','search','noteHighlight','cloneAndMerge','cloneAsChildNote','addChildNote','addBrotherNote','crash','link','toggleTextFirst','toggleMarkdown','focus'];
+                return ['switchTitleOrExcerpt','ocr','moveNote','chatAI','command','setButtonImage','addImageComment','mergeText','toggleView','menu','shortcut','replace','showInFloatWindow','openURL','copy','addComment','export','removeComment','moveComment','paste','setContent','clearContent','search','noteHighlight','cloneAndMerge','cloneAsChildNote','addChildNote','addBrotherNote','crash','link','toggleTextFirst','toggleMarkdown','focus'];
               case 'trim':
               case 'markdown':
               case 'autoClose':
@@ -152,6 +152,9 @@ body {
           let tem = decodeURIComponent(data)
           // MNUtil.copy(tem)
           editor.update(JSON.parse(tem))
+          setTimeout(() => {
+            editor.expandAll()
+          }, 100);
         }
         function setContent(data) {
           let tem = decodeURIComponent(data)
@@ -161,7 +164,12 @@ body {
         }
         function getContent() {
           let tem = JSON.stringify(editor.get(),null,2)
+          removeFocus()
           return encodeURIComponent(tem)
+        }
+        function removeFocus() {
+          document.activeElement.blur(); // 先尝试失去当前焦点
+          // document.body.focus(); // 将焦点设置到 body
         }
     </script>
 </body>
