@@ -4811,11 +4811,15 @@ toolbarController.prototype.customActionByDes = async function (button,des,check
             } else {
               focusNotes.forEach(focusNote=>{
                 toolbarUtils.TemplateMakeNote(focusNote)
-                focusNote.addToReview()
+                if (!focusNote.excerptText) {
+                  focusNote.addToReview()
+                }
                 if (focusNote.getNoteTypeZh()=="顶层" || focusNote.getNoteTypeZh()=="归类") {
                   focusNote.descendantNodes.descendant.forEach(descendantNote => {
                     toolbarUtils.TemplateMakeNote(descendantNote)
-                    descendantNote.addToReview()
+                    if (!descendantNote.excerptText) {
+                      descendantNote.addToReview()
+                    }
                   })
                   focusNote.focusInMindMap(0.5)
                 }

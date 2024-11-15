@@ -7279,7 +7279,7 @@ static template(action) {
     case "TemplateMakeNotes":
       config.action = "TemplateMakeNotes"
       config.doubleClick = {
-        "action": "addToReview"
+        "action": "mergeTemplateNotes"
       }
       break;
     default:
